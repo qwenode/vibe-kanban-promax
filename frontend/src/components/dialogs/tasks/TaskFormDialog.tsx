@@ -45,6 +45,7 @@ import {
 } from '@/keyboard';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { cn } from '@/lib/utils';
+import { splitMessageToTitleDescription } from '@/utils/string';
 import type {
   TaskStatus,
   ExecutorProfileId,
@@ -181,10 +182,13 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
     } else {
       const imageIds =
         newlyUploadedImageIds.length > 0 ? newlyUploadedImageIds : null;
+      const { title: descriptionTitle, description: taskDescription } =
+        splitMessageToTitleDescription(value.description);
+      const normalizedTitle = descriptionTitle || value.title.trim();
       const task = {
         project_id: projectId,
-        title: value.title,
-        description: value.description,
+        title: normalizedTitle,
+        description: taskDescription,
         status: null,
         parent_workspace_id:
           mode === 'subtask' ? props.parentTaskAttemptId : null,
@@ -212,7 +216,15 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
   };
 
   const validator = (value: TaskFormValues): string | undefined => {
-    if (!value.title.trim().length) return 'need title';
+    if (editMode) {
+      if (!value.title.trim().length) return 'need title';
+    } else {
+      const { title: descriptionTitle } = splitMessageToTitleDescription(
+        value.description
+      );
+      const normalizedTitle = descriptionTitle || value.title.trim();
+      if (!normalizedTitle.trim().length) return 'need title';
+    }
     if (value.autoStart && !forceCreateOnlyRef.current) {
       if (!value.executorProfileId) return 'need executor profile';
       if (
@@ -338,7 +350,17 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
 
   const canSubmitAlt = useStore(
     form.store,
-    (state) => state.values.title.trim().length > 0 && !state.isSubmitting
+    (state) => {
+      if (editMode) {
+        return state.values.title.trim().length > 0 && !state.isSubmitting;
+      }
+
+      const { title: descriptionTitle } = splitMessageToTitleDescription(
+        state.values.description
+      );
+      const normalizedTitle = descriptionTitle || state.values.title.trim();
+      return normalizedTitle.trim().length > 0 && !state.isSubmitting;
+    }
   );
 
   const handleSubmitCreateOnly = useCallback(() => {
@@ -421,20 +443,22 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
             </div>
           )}
 
-          {/* Title */}
-          <form.Field name="title">
-            {(field) => (
-              <Input
-                id="task-title"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                placeholder={t('taskFormDialog.titlePlaceholder')}
-                disabled={isSubmitting}
-                className="text-base"
-                autoFocus
-              />
-            )}
-          </form.Field>
+          {/* Title (edit only) */}
+          {editMode && (
+            <form.Field name="title">
+              {(field) => (
+                <Input
+                  id="task-title"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder={t('taskFormDialog.titlePlaceholder')}
+                  disabled={isSubmitting}
+                  className="text-base"
+                  autoFocus
+                />
+              )}
+            </form.Field>
+          )}
 
           {/* Description */}
           <form.Field name="description">
@@ -446,6 +470,7 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
                   value={field.state.value}
                   onChange={(desc) => field.handleChange(desc)}
                   disabled={isSubmitting}
+                  autoFocus={!editMode}
                   projectId={projectId}
                   onPasteFiles={onDrop}
                   onCmdEnter={primaryAction}
