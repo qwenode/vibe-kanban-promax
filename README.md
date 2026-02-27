@@ -1,3 +1,5 @@
+> **Note:** This project is forked from [vibe-kanban](https://github.com/BloopAI/vibe-kanban). The new UX in the official project has a poor experience, so this fork was created as an alternative. Once the official UX improves, this project will be discontinued.
+
 <p align="center">
   <a href="https://vibekanban.com">
     <picture>
