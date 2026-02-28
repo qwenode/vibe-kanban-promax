@@ -157,11 +157,14 @@ export function ProjectTasks() {
     };
   }, [enableScope, disableScope]);
 
-  const handleCreateTask = useCallback(() => {
-    if (projectId) {
-      openTaskForm({ mode: 'create', projectId });
-    }
-  }, [projectId]);
+  const handleCreateTask = useCallback(
+    (initialStatus?: TaskStatus) => {
+      if (projectId) {
+        openTaskForm({ mode: 'create', projectId, initialStatus });
+      }
+    },
+    [projectId]
+  );
   const { query: searchQuery, focusInput } = useSearch();
 
   const {
@@ -299,9 +302,12 @@ export function ProjectTasks() {
     [searchParams, setSearchParams]
   );
 
-  const handleCreateNewTask = useCallback(() => {
-    handleCreateTask();
-  }, [handleCreateTask]);
+  const handleCreateNewTask = useCallback(
+    (status?: TaskStatus) => {
+      handleCreateTask(status);
+    },
+    [handleCreateTask]
+  );
 
   const doneTasks = useMemo(
     () => tasks.filter((task) => normalizeStatus(task.status) === 'done'),

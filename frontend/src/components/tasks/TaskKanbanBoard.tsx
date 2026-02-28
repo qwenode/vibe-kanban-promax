@@ -17,7 +17,7 @@ interface TaskKanbanBoardProps {
   onDragEnd: (event: DragEndEvent) => void;
   onViewTaskDetails: (task: TaskWithAttemptStatus) => void;
   selectedTaskId?: string;
-  onCreateTask?: () => void;
+  onCreateTask?: (status: TaskStatus) => void;
   onClearDoneTasks?: () => void;
   canClearDoneTasks?: boolean;
   projectId: string;
@@ -42,7 +42,7 @@ function TaskKanbanBoard({
             <KanbanHeader
               name={statusLabels[statusKey]}
               color={statusBoardColors[statusKey]}
-              onAddTask={onCreateTask}
+              onAddTask={() => onCreateTask?.(statusKey)}
               onClearColumn={
                 statusKey === 'done' ? onClearDoneTasks : undefined
               }
