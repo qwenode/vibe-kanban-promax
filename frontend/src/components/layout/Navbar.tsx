@@ -249,12 +249,6 @@ export function Navbar() {
             {projectId ? (
               <>
                 <div className="flex items-center gap-1">
-                  {isSingleRepoProject && (
-                    <OpenInIdeButton
-                      onClick={handleOpenInIDE}
-                      className="h-9 w-9"
-                    />
-                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -264,6 +258,12 @@ export function Navbar() {
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
+                  {isSingleRepoProject && (
+                    <OpenInIdeButton
+                      onClick={handleOpenInIDE}
+                      className="h-9 w-9"
+                    />
+                  )}
                 </div>
                 <NavDivider />
               </>
