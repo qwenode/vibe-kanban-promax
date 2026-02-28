@@ -68,6 +68,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { AttemptHeaderActions } from '@/components/panels/AttemptHeaderActions';
 import { TaskPanelHeaderActions } from '@/components/panels/TaskPanelHeaderActions';
+import { ClearDoneTasksConfirmationDialog } from '@/components/dialogs/tasks/ClearDoneTasksConfirmationDialog';
 
 import type { TaskWithAttemptStatus, TaskStatus } from 'shared/types';
 
@@ -301,6 +302,23 @@ export function ProjectTasks() {
   const handleCreateNewTask = useCallback(() => {
     handleCreateTask();
   }, [handleCreateTask]);
+
+  const doneTasks = useMemo(
+    () => tasks.filter((task) => normalizeStatus(task.status) === 'done'),
+    [tasks]
+  );
+
+  const handleClearDoneTasks = useCallback(async () => {
+    if (doneTasks.length === 0) return;
+
+    try {
+      await ClearDoneTasksConfirmationDialog.show({
+        tasks: doneTasks,
+      });
+    } catch {
+      return;
+    }
+  }, [doneTasks]);
 
   useKeyCreate(handleCreateNewTask, {
     scope: Scope.KANBAN,
@@ -737,6 +755,8 @@ export function ProjectTasks() {
           onViewTaskDetails={handleViewTaskDetails}
           selectedTaskId={selectedTask?.id}
           onCreateTask={handleCreateNewTask}
+          onClearDoneTasks={handleClearDoneTasks}
+          canClearDoneTasks={doneTasks.length > 0}
           projectId={projectId!}
         />
       </div>

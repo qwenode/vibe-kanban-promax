@@ -18,6 +18,8 @@ interface TaskKanbanBoardProps {
   onViewTaskDetails: (task: TaskWithAttemptStatus) => void;
   selectedTaskId?: string;
   onCreateTask?: () => void;
+  onClearDoneTasks?: () => void;
+  canClearDoneTasks?: boolean;
   projectId: string;
 }
 
@@ -27,6 +29,8 @@ function TaskKanbanBoard({
   onViewTaskDetails,
   selectedTaskId,
   onCreateTask,
+  onClearDoneTasks,
+  canClearDoneTasks,
   projectId,
 }: TaskKanbanBoardProps) {
   return (
@@ -39,6 +43,10 @@ function TaskKanbanBoard({
               name={statusLabels[statusKey]}
               color={statusBoardColors[statusKey]}
               onAddTask={onCreateTask}
+              onClearColumn={
+                statusKey === 'done' ? onClearDoneTasks : undefined
+              }
+              clearDisabled={statusKey === 'done' ? !canClearDoneTasks : false}
             />
             <KanbanCards>
               {tasks.map((task, index) => (

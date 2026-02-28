@@ -21,7 +21,7 @@ import {
 import { type ReactNode, type Ref, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import type { ClientRect } from '@dnd-kit/core';
 import type { Transform } from '@dnd-kit/utilities';
 import { Button } from '../../button';
@@ -153,6 +153,9 @@ export type KanbanHeaderProps =
       color: Status['color'];
       className?: string;
       onAddTask?: () => void;
+      onClearColumn?: () => void;
+      clearDisabled?: boolean;
+      clearLabel?: string;
     };
 
 export const KanbanHeader = (props: KanbanHeaderProps) => {
@@ -161,6 +164,10 @@ export const KanbanHeader = (props: KanbanHeaderProps) => {
   if ('children' in props) {
     return props.children;
   }
+
+  const clearLabel =
+    props.clearLabel ??
+    t('actions.clearDoneTasks', { defaultValue: 'Clear done tasks' });
 
   return (
     <Card
@@ -182,6 +189,22 @@ export const KanbanHeader = (props: KanbanHeaderProps) => {
         <p className="m-0 text-sm">{props.name}</p>
       </span>
       <TooltipProvider>
+        {props.onClearColumn && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className="m-0 p-0 h-0 text-destructive/60 hover:text-destructive"
+                onClick={props.onClearColumn}
+                disabled={props.clearDisabled}
+                aria-label={clearLabel}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">{clearLabel}</TooltipContent>
+          </Tooltip>
+        )}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
