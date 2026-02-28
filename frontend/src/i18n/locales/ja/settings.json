@@ -154,6 +154,12 @@
           "browse": "参照",
           "dialogTitle": "ワークスペースディレクトリを選択",
           "dialogDescription": "ディレクトリを選択してください。ワークスペースはその中の .vibe-kanban-workspaces サブディレクトリに作成されます。"
+        },
+        "commitPrompt": {
+          "enableLabel": "AI コミットメッセージ生成",
+          "enableHelper": "有効にすると、AI エージェントがコミット前に diff を確認し、構造化されたコミットメッセージを生成します。",
+          "useCustom": "カスタムコミットプロンプトを使用",
+          "helper": "コミットメッセージ生成時に AI エージェントに送信するカスタムプロンプト。git ステータスは自動的に追加されます。エージェントは git diff を実行して変更を確認できます。"
         }
       },
       "pullRequests": {

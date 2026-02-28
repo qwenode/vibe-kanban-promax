@@ -154,6 +154,12 @@
           "browse": "瀏覽",
           "dialogTitle": "選擇工作區目錄",
           "dialogDescription": "選擇一個目錄。工作區將在其中的 .vibe-kanban-workspaces 子目錄中建立。"
+        },
+        "commitPrompt": {
+          "enableLabel": "AI 提交訊息生成",
+          "enableHelper": "啟用後，AI 代理會在提交前審查 diff 並生成結構化的提交訊息。",
+          "useCustom": "使用自訂提交提示詞",
+          "helper": "發送給 AI 代理用於生成提交訊息的自訂提示詞。git 狀態會自動追加。代理可以執行 git diff 來檢查變更。"
         }
       },
       "pullRequests": {

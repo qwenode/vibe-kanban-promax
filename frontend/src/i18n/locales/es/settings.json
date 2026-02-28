@@ -154,6 +154,12 @@
           "browse": "Explorar",
           "dialogTitle": "Seleccionar Directorio de Espacios de Trabajo",
           "dialogDescription": "Elija un directorio. Los espacios de trabajo se crearán en un subdirectorio .vibe-kanban-workspaces dentro de él."
+        },
+        "commitPrompt": {
+          "enableLabel": "Generación de mensajes de commit con IA",
+          "enableHelper": "Cuando está habilitado, el agente de IA revisará el diff y generará un mensaje de commit estructurado antes de confirmar.",
+          "useCustom": "Usar prompt de commit personalizado",
+          "helper": "Prompt personalizado enviado al agente de IA para generar mensajes de commit. El estado de git se añadirá automáticamente. El agente puede ejecutar git diff para inspeccionar los cambios."
         }
       },
       "pullRequests": {

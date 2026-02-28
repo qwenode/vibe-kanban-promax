@@ -1,7 +1,10 @@
 use std::{collections::HashMap, env, fs, path::Path};
 
 use schemars::{JsonSchema, Schema, SchemaGenerator, generate::SchemaSettings};
-use services::services::config::{DEFAULT_COMMIT_REMINDER_PROMPT, DEFAULT_PR_DESCRIPTION_PROMPT};
+use services::services::config::{
+    DEFAULT_COMMIT_REMINDER_PROMPT, DEFAULT_MERGE_COMMIT_MESSAGE_TEMPLATE,
+    DEFAULT_PR_DESCRIPTION_PROMPT,
+};
 use ts_rs::TS;
 
 fn generate_types_content() -> String {
@@ -243,9 +246,10 @@ fn generate_types_content() -> String {
 
     // Append exported constants
     let constants = format!(
-        "export const DEFAULT_PR_DESCRIPTION_PROMPT = {};\n\nexport const DEFAULT_COMMIT_REMINDER_PROMPT = {};",
+        "export const DEFAULT_PR_DESCRIPTION_PROMPT = {};\n\nexport const DEFAULT_COMMIT_REMINDER_PROMPT = {};\n\nexport const DEFAULT_MERGE_COMMIT_MESSAGE_TEMPLATE = {};",
         serde_json::to_string(DEFAULT_PR_DESCRIPTION_PROMPT).unwrap(),
-        serde_json::to_string(DEFAULT_COMMIT_REMINDER_PROMPT).unwrap()
+        serde_json::to_string(DEFAULT_COMMIT_REMINDER_PROMPT).unwrap(),
+        serde_json::to_string(DEFAULT_MERGE_COMMIT_MESSAGE_TEMPLATE).unwrap()
     );
 
     format!("{HEADER}\n\n{body}\n\n{constants}")

@@ -20,7 +20,18 @@ Analyze the changes in this branch and write:
 
 Use the appropriate CLI tool to update the PR (gh pr edit for GitHub, az repos pr update for Azure DevOps)."#;
 
-pub const DEFAULT_COMMIT_REMINDER_PROMPT: &str = "There are uncommitted changes. Please stage and commit them now with a descriptive commit message.";
+pub const DEFAULT_COMMIT_REMINDER_PROMPT: &str = r#"There are uncommitted changes. Please review the diff with `git diff` and `git diff --staged`, then stage and commit them.
+
+Generate a commit message following this format:
+- First line: a short header under 50 characters in the format `<type>(<scope>): <subject>`
+  - Use types: feat (features), fix (bug fixes), docs (documentation), style (formatting), refactor (restructuring), perf (performance), test (tests), chore (maintenance), revert (rollbacks)
+  - Include scope to specify the affected area
+- Second line: blank
+- Third line onwards: a full summary explaining the change in detail, including the problem, solution, and context, wrapping lines at 72 characters
+
+Base the commit message on the actual code changes shown in the diff."#;
+
+pub const DEFAULT_MERGE_COMMIT_MESSAGE_TEMPLATE: &str = "{title} (vibe-kanban {id})\n\n{description}";
 
 #[derive(Debug, Error)]
 pub enum ConfigError {

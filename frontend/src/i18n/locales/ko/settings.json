@@ -154,6 +154,12 @@
           "browse": "찾아보기",
           "dialogTitle": "워크스페이스 디렉토리 선택",
           "dialogDescription": "디렉토리를 선택하세요. 워크스페이스는 해당 디렉토리 내의 .vibe-kanban-workspaces 하위 디렉토리에 생성됩니다."
+        },
+        "commitPrompt": {
+          "enableLabel": "AI 커밋 메시지 생성",
+          "enableHelper": "활성화하면 AI 에이전트가 커밋 전에 diff를 검토하고 구조화된 커밋 메시지를 생성합니다.",
+          "useCustom": "사용자 정의 커밋 프롬프트 사용",
+          "helper": "커밋 메시지 생성 시 AI 에이전트에 전송되는 사용자 정의 프롬프트. git 상태가 자동으로 추가됩니다. 에이전트는 git diff를 실행하여 변경 사항을 확인할 수 있습니다."
         }
       },
       "pullRequests": {

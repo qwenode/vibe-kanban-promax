@@ -22,6 +22,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FolderOpen, Loader2, Volume2 } from 'lucide-react';
 import {
+  DEFAULT_COMMIT_REMINDER_PROMPT,
   DEFAULT_PR_DESCRIPTION_PROMPT,
   EditorType,
   SoundFile,
@@ -505,6 +506,76 @@ export function GeneralSettings() {
             <p className="text-sm text-muted-foreground">
               {t('settings.general.git.workspaceDir.helper')}
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="commit-reminder-enabled"
+                checked={draft?.commit_reminder_enabled ?? true}
+                onCheckedChange={(checked: boolean) =>
+                  updateDraft({ commit_reminder_enabled: checked })
+                }
+              />
+              <div className="space-y-0.5">
+                <Label
+                  htmlFor="commit-reminder-enabled"
+                  className="cursor-pointer"
+                >
+                  {t('settings.general.git.commitPrompt.enableLabel')}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('settings.general.git.commitPrompt.enableHelper')}
+                </p>
+              </div>
+            </div>
+            {draft?.commit_reminder_enabled && (
+              <>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="use-custom-commit-prompt"
+                    checked={draft?.commit_reminder_prompt != null}
+                    onCheckedChange={(checked: boolean) => {
+                      if (checked) {
+                        updateDraft({
+                          commit_reminder_prompt:
+                            DEFAULT_COMMIT_REMINDER_PROMPT,
+                        });
+                      } else {
+                        updateDraft({ commit_reminder_prompt: null });
+                      }
+                    }}
+                  />
+                  <Label
+                    htmlFor="use-custom-commit-prompt"
+                    className="cursor-pointer"
+                  >
+                    {t('settings.general.git.commitPrompt.useCustom')}
+                  </Label>
+                </div>
+                <textarea
+                  id="commit-reminder-prompt"
+                  className={`flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                    draft?.commit_reminder_prompt == null
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
+                  }`}
+                  value={
+                    draft?.commit_reminder_prompt ??
+                    DEFAULT_COMMIT_REMINDER_PROMPT
+                  }
+                  disabled={draft?.commit_reminder_prompt == null}
+                  onChange={(e) =>
+                    updateDraft({
+                      commit_reminder_prompt: e.target.value,
+                    })
+                  }
+                />
+                <p className="text-sm text-muted-foreground">
+                  {t('settings.general.git.commitPrompt.helper')}
+                </p>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

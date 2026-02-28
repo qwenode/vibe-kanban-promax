@@ -521,15 +521,26 @@ pub async fn merge_task_attempt(
     let task_uuid_str = task.id.to_string();
     let first_uuid_section = task_uuid_str.split('-').next().unwrap_or(&task_uuid_str);
 
-    let mut commit_message = format!("{} (vibe-kanban {})", task.title, first_uuid_section);
-
-    // Add description on next line if it exists
-    if let Some(description) = &task.description
-        && !description.trim().is_empty()
-    {
-        commit_message.push_str("\n\n");
-        commit_message.push_str(description);
-    }
+    // Try to use the agent-generated commit messages from the task branch.
+    // If the agent committed with a well-formed message, preserve it in the squash merge.
+    // Fall back to the default format if no commit messages are found.
+    let commit_message = match deployment.git().get_branch_commit_messages(
+        &repo.path,
+        &workspace.branch,
+        &workspace_repo.target_branch,
+    ) {
+        Ok(messages) if !messages.is_empty() => messages.join("\n\n"),
+        _ => {
+            let mut msg = format!("{} (vibe-kanban {})", task.title, first_uuid_section);
+            if let Some(description) = &task.description
+                && !description.trim().is_empty()
+            {
+                msg.push_str("\n\n");
+                msg.push_str(description);
+            }
+            msg
+        }
+    };
 
     let merge_commit_id = deployment.git().merge_changes(
         &repo.path,

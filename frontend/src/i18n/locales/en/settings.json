@@ -154,6 +154,12 @@
           "browse": "Browse",
           "dialogTitle": "Select Workspace Directory",
           "dialogDescription": "Choose a directory. Workspaces will be created in a .vibe-kanban-workspaces subdirectory within it."
+        },
+        "commitPrompt": {
+          "enableLabel": "AI commit message generation",
+          "enableHelper": "When enabled, the AI agent will review the diff and generate a structured commit message before committing.",
+          "useCustom": "Use custom commit prompt",
+          "helper": "Custom prompt sent to the AI agent for generating commit messages. The git status will be appended automatically. The agent can run git diff to inspect changes."
         }
       },
       "pullRequests": {

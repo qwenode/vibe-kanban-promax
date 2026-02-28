@@ -61,6 +61,8 @@ pub struct Config {
     #[serde(default)]
     pub commit_reminder_prompt: Option<String>,
     #[serde(default)]
+    pub merge_commit_message_template: Option<String>,
+    #[serde(default)]
     pub send_message_shortcut: SendMessageShortcut,
 }
 
@@ -91,6 +93,7 @@ impl Config {
             beta_workspaces_invitation_sent: false,
             commit_reminder_enabled: true,
             commit_reminder_prompt: None,
+            merge_commit_message_template: None,
             send_message_shortcut: SendMessageShortcut::default(),
         }
     }
@@ -146,6 +149,7 @@ impl Default for Config {
             beta_workspaces_invitation_sent: false,
             commit_reminder_enabled: true,
             commit_reminder_prompt: None,
+            merge_commit_message_template: None,
             send_message_shortcut: SendMessageShortcut::default(),
         }
     }

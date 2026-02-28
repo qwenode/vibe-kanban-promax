@@ -949,6 +949,48 @@ impl GitService {
         )
     }
 
+    /// Collect commit messages from `branch_name` that are ahead of `base_branch_name`.
+    /// Returns messages in chronological order (oldest first).
+    pub fn get_branch_commit_messages(
+        &self,
+        repo_path: &Path,
+        branch_name: &str,
+        base_branch_name: &str,
+    ) -> Result<Vec<String>, GitServiceError> {
+        let repo = Repository::open(repo_path)?;
+        let branch = Self::find_branch(&repo, branch_name)?;
+        let base_branch = Self::find_branch(&repo, base_branch_name)?;
+
+        let branch_oid = branch
+            .get()
+            .peel_to_commit()?
+            .id();
+        let base_oid = base_branch
+            .get()
+            .peel_to_commit()?
+            .id();
+
+        let mut revwalk = repo.revwalk()?;
+        revwalk.push(branch_oid)?;
+        revwalk.hide(base_oid)?;
+        revwalk.set_sorting(git2::Sort::TIME | git2::Sort::REVERSE)?;
+
+        let mut messages = Vec::new();
+        for oid_result in revwalk {
+            let oid = oid_result?;
+            if let Ok(commit) = repo.find_commit(oid) {
+                if let Some(msg) = commit.message() {
+                    let trimmed = msg.trim();
+                    if !trimmed.is_empty() {
+                        messages.push(trimmed.to_string());
+                    }
+                }
+            }
+        }
+
+        Ok(messages)
+    }
+
     pub fn get_base_commit(
         &self,
         repo_path: &Path,
