@@ -425,6 +425,7 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
         open={modal.visible}
         onOpenChange={handleDialogClose}
         uncloseable={showDiscardWarning}
+        className="max-w-[700px] my-auto"
       >
         <div
           {...getRootProps()}
@@ -466,11 +467,12 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
               <div className="border p-3">
                 <WYSIWYGEditor
                   placeholder={t('taskFormDialog.descriptionPlaceholder')}
-                  className="w-full h-24 overflow-auto"
+                  className="w-full min-h-[360px] max-h-[500px] overflow-auto"
                   value={field.state.value}
                   onChange={(desc) => field.handleChange(desc)}
                   disabled={isSubmitting}
                   autoFocus={!editMode}
+                  repoIds={projectRepos.map((r) => r.id)}
                   projectId={projectId}
                   onPasteFiles={onDrop}
                   onCmdEnter={primaryAction}

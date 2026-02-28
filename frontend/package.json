@@ -58,7 +58,6 @@
     "@xterm/addon-web-links": "^0.11.0",
     "@xterm/xterm": "^5.5.0",
     "class-variance-authority": "^0.7.0",
-    "click-to-react-component": "^1.1.2",
     "clsx": "^2.0.0",
     "cmdk": "^1.1.1",
     "developer-icons": "^6.0.4",

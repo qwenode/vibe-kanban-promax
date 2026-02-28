@@ -70,11 +70,32 @@ function clampMenuHeight(height: number) {
   );
 }
 
+/**
+ * Get the bounding rect of the current DOM selection cursor.
+ * Falls back to the Lexical anchor element if no selection is available.
+ */
+function getCursorRect(anchorEl: HTMLElement): DOMRect {
+  try {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      // A valid rect has non-zero dimensions or position
+      if (rect.width > 0 || rect.height > 0 || rect.top > 0 || rect.left > 0) {
+        return rect;
+      }
+    }
+  } catch {
+    // fall through
+  }
+  return anchorEl.getBoundingClientRect();
+}
+
 function getPlacement(
   anchorEl: HTMLElement,
   previousSide?: VerticalSide
 ): TypeaheadPlacement {
-  const anchorRect = anchorEl.getBoundingClientRect();
+  const anchorRect = getCursorRect(anchorEl);
   const { above, below } = getAvailableVerticalSpace(anchorRect);
   const side = chooseStableSide(previousSide, above, below);
   const rawHeight = side === 'bottom' ? below : above;
@@ -147,7 +168,7 @@ function TypeaheadMenuRoot({ anchorEl, children }: TypeaheadMenuProps) {
           placement.side === 'bottom'
             ? `${placement.top}px`
             : `calc(${placement.top}px - var(--typeahead-menu-max-height))`,
-        zIndex: 50,
+        zIndex: 10001,
       }) as CSSProperties,
     [placement.left, placement.maxHeight, placement.side, placement.top]
   );
