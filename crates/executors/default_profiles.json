@@ -333,6 +333,11 @@
           "model": "glm-4.6"
         }
       }
+    },
+    "AUGGIE": {
+      "DEFAULT": {
+        "AUGGIE": {}
+      }
     }
   }
 }
