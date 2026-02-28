@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { PrimaryButton } from '@/components/ui-new/primitives/PrimaryButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -186,17 +185,18 @@ const InviteMemberDialogImpl = NiceModal.create<InviteMemberDialogProps>(
                       <p className="text-sm text-muted-foreground mb-2">
                         {t('inviteDialog.upgradePrompt')}
                       </p>
-                      <PrimaryButton
+                      <Button
                         onClick={() =>
                           window.open(
                             `${REMOTE_API_URL}/upgrade?org_id=${organizationId}`,
                             '_blank'
                           )
                         }
-                        actionIcon={ArrowSquareOut}
+                        variant="outline"
                       >
+                        <ArrowSquareOut className="mr-2 h-4 w-4" />
                         {t('inviteDialog.upgradeButton')}
-                      </PrimaryButton>
+                      </Button>
                     </div>
                   )}
                 </AlertDescription>

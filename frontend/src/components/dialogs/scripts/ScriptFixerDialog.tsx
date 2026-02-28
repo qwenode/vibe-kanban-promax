@@ -20,8 +20,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AutoExpandingTextarea } from '@/components/ui/auto-expanding-textarea';
-import { VirtualizedProcessLogs } from '@/components/ui-new/containers/VirtualizedProcessLogs';
-import { RunningDots } from '@/components/ui-new/primitives/RunningDots';
 import { defineModal } from '@/lib/modals';
 import { repoApi, attemptsApi } from '@/lib/api';
 import { useLogStream } from '@/hooks/useLogStream';
@@ -345,7 +343,7 @@ const ScriptFixerDialogImpl = NiceModal.create<ScriptFixerDialogProps>(
                   <div className="flex items-center gap-2 text-sm">
                     {isProcessRunning ? (
                       <>
-                        <RunningDots />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         <span className="text-muted-foreground">
                           {t('scriptFixer.statusRunning')}
                         </span>
@@ -379,13 +377,19 @@ const ScriptFixerDialogImpl = NiceModal.create<ScriptFixerDialogProps>(
               </div>
               <div className="bg-secondary py-base flex-1 border rounded-md bg-muted overflow-hidden min-w-0">
                 {latestProcess ? (
-                  <VirtualizedProcessLogs
-                    logs={logs}
-                    error={logsError}
-                    searchQuery=""
-                    matchIndices={[]}
-                    currentMatchIndex={-1}
-                  />
+                  <div className="h-full overflow-auto px-3 py-2 font-mono text-xs">
+                    {logsError ? (
+                      <div className="text-destructive">{String(logsError)}</div>
+                    ) : logs.length === 0 ? (
+                      <div className="text-muted-foreground">
+                        {t('scriptFixer.noLogs')}
+                      </div>
+                    ) : (
+                      logs.map((log, index) => (
+                        <div key={index}>{log.content}</div>
+                      ))
+                    )}
+                  </div>
                 ) : (
                   <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
                     {t('scriptFixer.noLogs')}

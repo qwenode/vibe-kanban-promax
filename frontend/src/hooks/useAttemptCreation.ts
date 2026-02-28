@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { attemptsApi } from '@/lib/api';
-import { workspaceSummaryKeys } from '@/components/ui-new/hooks/useWorkspaces';
 import type {
   ExecutorProfileId,
   WorkspaceRepoInput,
@@ -35,8 +34,6 @@ export function useAttemptCreation({
         ['taskAttempts', taskId],
         (old: Workspace[] = []) => [newAttempt, ...old]
       );
-      // Invalidate workspace summaries to include the new workspace
-      queryClient.invalidateQueries({ queryKey: workspaceSummaryKeys.all });
       onSuccess?.(newAttempt);
     },
   });

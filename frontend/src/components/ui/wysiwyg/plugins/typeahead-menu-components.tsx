@@ -8,11 +8,6 @@ import {
   type MouseEvent,
   type CSSProperties,
 } from 'react';
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from '@/components/ui-new/primitives/Popover';
 
 // --- Headless Compound Components ---
 
@@ -21,6 +16,8 @@ type VerticalSide = 'top' | 'bottom';
 interface TypeaheadPlacement {
   side: VerticalSide;
   maxHeight: number;
+  left: number;
+  top: number;
 }
 
 const VIEWPORT_PADDING = 16;
@@ -85,6 +82,11 @@ function getPlacement(
   return {
     side,
     maxHeight: clampMenuHeight(rawHeight),
+    left: anchorRect.left,
+    top:
+      side === 'bottom'
+        ? anchorRect.bottom + MENU_SIDE_OFFSET
+        : anchorRect.top - MENU_SIDE_OFFSET,
   };
 }
 
@@ -139,26 +141,23 @@ function TypeaheadMenuRoot({ anchorEl, children }: TypeaheadMenuProps) {
     () =>
       ({
         '--typeahead-menu-max-height': `${placement.maxHeight}px`,
+        position: 'fixed',
+        left: `${placement.left}px`,
+        top:
+          placement.side === 'bottom'
+            ? `${placement.top}px`
+            : `calc(${placement.top}px - var(--typeahead-menu-max-height))`,
+        zIndex: 50,
       }) as CSSProperties,
-    [placement.maxHeight]
+    [placement.left, placement.maxHeight, placement.side, placement.top]
   );
 
   return (
-    <Popover open>
-      <PopoverAnchor virtualRef={{ current: anchorEl }} />
-      <PopoverContent
-        side={placement.side}
-        align="start"
-        sideOffset={MENU_SIDE_OFFSET}
-        avoidCollisions={false}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onCloseAutoFocus={(e) => e.preventDefault()}
-        style={contentStyle}
-        className="w-auto min-w-80 max-w-[370px] p-0 overflow-hidden !bg-background"
-      >
+    <div style={contentStyle}>
+      <div className="w-auto min-w-80 max-w-[370px] rounded-md border bg-background p-0 shadow-md overflow-hidden">
         {children}
-      </PopoverContent>
-    </Popover>
+      </div>
+    </div>
   );
 }
 

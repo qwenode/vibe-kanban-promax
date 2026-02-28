@@ -4,8 +4,7 @@ import { PlusIcon, PencilSimpleIcon, TrashIcon } from '@phosphor-icons/react';
 import { SpinnerGap } from '@phosphor-icons/react';
 import { tagsApi } from '@/lib/api';
 import { TagEditDialog } from '@/components/dialogs/tasks/TagEditDialog';
-import { PrimaryButton } from '@/components/ui-new/primitives/PrimaryButton';
-import { IconButton } from '@/components/ui-new/primitives/IconButton';
+import { Button } from '@/components/ui/button';
 import type { Tag } from 'shared/types';
 
 export function TagManager() {
@@ -82,13 +81,10 @@ export function TagManager() {
         <h3 className="text-lg font-semibold">
           {t('settings.general.tags.manager.title')}
         </h3>
-        <PrimaryButton
-          variant="tertiary"
-          onClick={() => handleOpenDialog()}
-          actionIcon={PlusIcon}
-        >
+        <Button variant="outline" onClick={() => handleOpenDialog()}>
+          <PlusIcon className="mr-2 h-4 w-4" />
           {t('settings.general.tags.manager.addTag')}
-        </PrimaryButton>
+        </Button>
       </div>
 
       {tags.length === 0 ? (
@@ -131,22 +127,28 @@ export function TagManager() {
                     </td>
                     <td className="p-2">
                       <div className="flex justify-end gap-1">
-                        <IconButton
-                          icon={PencilSimpleIcon}
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           aria-label="edit"
                           onClick={() => handleOpenDialog(tag)}
                           title={t(
                             'settings.general.tags.manager.actions.editTag'
                           )}
-                        />
-                        <IconButton
-                          icon={TrashIcon}
+                        >
+                          <PencilSimpleIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           aria-label="delete"
                           onClick={() => handleDelete(tag)}
                           title={t(
                             'settings.general.tags.manager.actions.deleteTag'
                           )}
-                        />
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
                       </div>
                     </td>
                   </tr>

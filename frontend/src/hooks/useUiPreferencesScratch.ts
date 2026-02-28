@@ -13,8 +13,8 @@ import {
   type RightMainPanelMode,
   type ContextBarPosition,
   type WorkspacePanelState,
+  type RepoAction,
 } from '@/stores/useUiPreferencesStore';
-import type { RepoAction } from '@/components/ui-new/primitives/RepoCard';
 
 // Stable UUID for global UI preferences (not tied to a workspace/user)
 // This is a deterministic UUID v5 generated from the namespace "ui-preferences"
