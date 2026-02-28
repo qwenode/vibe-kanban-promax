@@ -36,6 +36,7 @@ function createFilteredLogger() {
 function executorSchemasPlugin(): Plugin {
   const VIRTUAL_ID = 'virtual:executor-schemas';
   const RESOLVED_VIRTUAL_ID = '\0' + VIRTUAL_ID;
+  const schemasDir = path.resolve(__dirname, '../shared/schemas');
 
   return {
     name: 'executor-schemas-plugin',
@@ -46,7 +47,6 @@ function executorSchemasPlugin(): Plugin {
     load(id) {
       if (id !== RESOLVED_VIRTUAL_ID) return null;
 
-      const schemasDir = path.resolve(__dirname, '../shared/schemas');
       const files = fs.existsSync(schemasDir)
         ? fs.readdirSync(schemasDir).filter((f) => f.endsWith('.json'))
         : [];
@@ -73,6 +73,24 @@ ${entries.join(',\n')}
 export default schemas;
 `;
       return code;
+    },
+    configureServer(server) {
+      // Watch the schemas directory so new/changed schema files
+      // invalidate the virtual module without a dev-server restart.
+      server.watcher.add(schemasDir);
+      server.watcher.on('all', (event, filePath) => {
+        if (
+          filePath.startsWith(schemasDir) &&
+          filePath.endsWith('.json') &&
+          ['add', 'change', 'unlink'].includes(event)
+        ) {
+          const mod = server.moduleGraph.getModuleById(RESOLVED_VIRTUAL_ID);
+          if (mod) {
+            server.moduleGraph.invalidateModule(mod);
+            server.ws.send({ type: 'full-reload' });
+          }
+        }
+      });
     },
   };
 }
