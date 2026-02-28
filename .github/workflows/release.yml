@@ -231,9 +231,9 @@ jobs:
 
             | Platform | Link |
             |----------|------|
-            | 🪟 Windows (x64) | [vibe-kanban-promax-${tag}-windows-x64.zip](https://github.com/${repo.owner}/${repo.repo}/releases/download/${tag}/vibe-kanban-promax-${tag}-windows-x64.zip) |
-            | 🍎 macOS (x64) | [vibe-kanban-promax-${tag}-macos-x64.zip](https://github.com/${repo.owner}/${repo.repo}/releases/download/${tag}/vibe-kanban-promax-${tag}-macos-x64.zip) |
-            | 🐧 Linux (x64) | [vibe-kanban-promax-${tag}-linux-x64.zip](https://github.com/${repo.owner}/${repo.repo}/releases/download/${tag}/vibe-kanban-promax-${tag}-linux-x64.zip) |
+            | Windows (x64) | [vibe-kanban-promax-${tag}-windows-x64.zip](https://github.com/${repo.owner}/${repo.repo}/releases/download/${tag}/vibe-kanban-promax-${tag}-windows-x64.zip) |
+            | macOS (x64) | [vibe-kanban-promax-${tag}-macos-x64.zip](https://github.com/${repo.owner}/${repo.repo}/releases/download/${tag}/vibe-kanban-promax-${tag}-macos-x64.zip) |
+            | Linux (x64) | [vibe-kanban-promax-${tag}-linux-x64.zip](https://github.com/${repo.owner}/${repo.repo}/releases/download/${tag}/vibe-kanban-promax-${tag}-linux-x64.zip) |
 
             ${autoNotes}
             `.replace(/^            /gm, '');
