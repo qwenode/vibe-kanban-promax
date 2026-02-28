@@ -1,6 +1,10 @@
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import { useCallback } from 'react';
-import { siDiscord } from 'simple-icons';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,6 +23,7 @@ import {
   Plus,
   LogOut,
   LogIn,
+  ChevronDown,
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { SearchBar } from '@/components/SearchBar';
@@ -28,7 +33,7 @@ import { useProject } from '@/contexts/ProjectContext';
 import { useOpenProjectInEditor } from '@/hooks/useOpenProjectInEditor';
 import { OpenInIdeButton } from '@/components/ide/OpenInIdeButton';
 import { useProjectRepos } from '@/hooks';
-import { useDiscordOnlineCount } from '@/hooks/useDiscordOnlineCount';
+import { useProjects } from '@/hooks/useProjects';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -75,11 +80,12 @@ function NavDivider() {
 
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { projectId, project } = useProject();
   const { query, setQuery, active, clear, registerInputRef } = useSearch();
   const handleOpenInEditor = useOpenProjectInEditor(project || null);
-  const { data: onlineCount } = useDiscordOnlineCount();
+  const { projects } = useProjects();
   const { loginStatus, reloadSystem } = useUserSystem();
 
   const { data: repos } = useProjectRepos(projectId);
@@ -123,6 +129,29 @@ export function Navbar() {
     handleOpenInEditor();
   };
 
+  const handleProjectSwitch = useCallback(
+    (nextProjectId: string) => {
+      if (!nextProjectId || nextProjectId === projectId) {
+        return;
+      }
+
+      const pathMatch = location.pathname.match(/^\/local-projects\/[^/]+(\/.*)?$/);
+      if (pathMatch) {
+        const suffix = pathMatch[1] ?? '';
+        if (suffix.startsWith('/tasks')) {
+          navigate(`/local-projects/${nextProjectId}/tasks${location.search}`);
+          return;
+        }
+
+        navigate(`/local-projects/${nextProjectId}${location.search}`);
+        return;
+      }
+
+      navigate(`/local-projects/${nextProjectId}/tasks`);
+    },
+    [location.pathname, location.search, navigate, projectId]
+  );
+
   const handleOpenOAuth = async () => {
     const profile = await OAuthDialog.show();
     if (profile) {
@@ -149,32 +178,35 @@ export function Navbar() {
             <Link to="/local-projects">
               <Logo />
             </Link>
-            <a
-              href="https://discord.gg/AC4nwVtJM3"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Join our Discord"
-              className="hidden sm:inline-flex items-center ml-3 text-xs font-medium overflow-hidden border h-6"
-            >
-              <span className="bg-muted text-foreground flex items-center p-2 border-r">
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true"
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="ml-3 h-8 w-44 justify-between gap-2 px-3 sm:w-64"
+                  aria-label="Select project"
                 >
-                  <path d={siDiscord.path} />
-                </svg>
-              </span>
-              <span
-                className=" h-full items-center flex p-2"
-                aria-live="polite"
-              >
-                {onlineCount != null
-                  ? `${onlineCount.toLocaleString()} online`
-                  : 'online'}
-              </span>
-            </a>
+                  <span className="truncate text-sm font-medium">
+                    {project?.name ?? 'Select project'}
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-72">
+                {projects.length > 0 ? (
+                  projects.map((item) => (
+                    <DropdownMenuItem
+                      key={item.id}
+                      onSelect={() => handleProjectSwitch(item.id)}
+                      className={item.id === projectId ? 'bg-accent' : ''}
+                    >
+                      <span className="truncate">{item.name}</span>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>No projects</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="hidden sm:flex items-center gap-2">
