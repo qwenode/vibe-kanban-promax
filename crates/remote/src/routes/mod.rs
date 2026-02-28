@@ -29,6 +29,7 @@ mod billing {
         Router::new()
     }
 }
+pub(crate) mod access;
 mod electric_proxy;
 pub(crate) mod error;
 mod github_app;
@@ -43,8 +44,6 @@ pub mod issues;
 mod migration;
 pub mod notifications;
 mod oauth;
-pub(crate) mod organization_members;
-mod organizations;
 pub mod project_statuses;
 pub mod projects;
 mod pull_requests;
@@ -102,7 +101,6 @@ pub fn router(state: AppState) -> Router {
     let v1_public = Router::<AppState>::new()
         .route("/health", get(health))
         .merge(oauth::public_router())
-        .merge(organization_members::public_router())
         .merge(tokens::public_router())
         .merge(review::public_router())
         .merge(github_app::public_router())
@@ -111,8 +109,6 @@ pub fn router(state: AppState) -> Router {
     let v1_protected = Router::<AppState>::new()
         .merge(identity::router())
         .merge(projects::router())
-        .merge(organizations::router())
-        .merge(organization_members::protected_router())
         .merge(oauth::protected_router())
         .merge(electric_proxy::router())
         .merge(github_app::protected_router())

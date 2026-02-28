@@ -437,9 +437,6 @@ impl IntoResponse for ApiError {
                 "MigrationError",
                 "Not authenticated - please log in first.",
             ),
-            ApiError::Migration(MigrationError::OrganizationNotFound) => {
-                ErrorInfo::not_found("MigrationError", "Organization not found for user.")
-            }
             ApiError::Migration(MigrationError::EntityNotFound { entity_type, id }) => {
                 ErrorInfo::not_found(
                     "MigrationError",

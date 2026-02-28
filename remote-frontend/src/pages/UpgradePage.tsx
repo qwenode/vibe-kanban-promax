@@ -1,84 +1,35 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { isLoggedIn } from "../auth";
 import {
   initOAuth,
-  listOrganizations,
-  createCheckoutSession,
   type OAuthProvider,
-  type OrganizationWithRole,
 } from "../api";
 import { generateVerifier, generateChallenge, storeVerifier } from "../pkce";
 
-const UPGRADE_ORG_KEY = "upgrade_org_id";
 const UPGRADE_RETURN_KEY = "upgrade_return";
 
-type Step = "plan-selection" | "sign-in" | "org-selection";
+type Step = "plan-selection" | "sign-in";
 
 export default function UpgradePage() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   const [step, setStep] = useState<Step>("plan-selection");
-  const [organizations, setOrganizations] = useState<OrganizationWithRole[]>(
-    [],
-  );
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [oauthLoading, setOauthLoading] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
-    // Save org_id from URL to localStorage
-    const orgId = searchParams.get("org_id");
-    if (orgId) {
-      localStorage.setItem(UPGRADE_ORG_KEY, orgId);
-    }
-
     // Check if returning from OAuth
     const returning = sessionStorage.getItem(UPGRADE_RETURN_KEY);
     if (returning && isLoggedIn()) {
       sessionStorage.removeItem(UPGRADE_RETURN_KEY);
-      loadOrganizations();
-      setStep("org-selection");
     }
   }, [searchParams]);
 
-  async function loadOrganizations() {
-    setLoading(true);
-    setError(null);
-    try {
-      const orgs = await listOrganizations();
-      // Filter to non-personal orgs where user is admin
-      const eligibleOrgs = orgs.filter(
-        (org) => !org.is_personal && org.user_role === "ADMIN",
-      );
-      setOrganizations(eligibleOrgs);
-
-      // Pre-select org from localStorage if available
-      const savedOrgId = localStorage.getItem(UPGRADE_ORG_KEY);
-      if (savedOrgId) {
-        const matchingOrg = eligibleOrgs.find((org) => org.id === savedOrgId);
-        if (matchingOrg) {
-          setSelectedOrgId(savedOrgId);
-        } else if (eligibleOrgs.length > 0) {
-          setSelectedOrgId(eligibleOrgs[0].id);
-        }
-      } else if (eligibleOrgs.length > 0) {
-        setSelectedOrgId(eligibleOrgs[0].id);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load organizations");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   const handleSubscribe = async () => {
     if (isLoggedIn()) {
-      await loadOrganizations();
-      setStep("org-selection");
+      // Already signed in - nothing more to do for now
+      return;
     } else {
       setStep("sign-in");
     }
@@ -104,26 +55,6 @@ export default function UpgradePage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "OAuth init failed");
       setOauthLoading(false);
-    }
-  };
-
-  const handleCheckout = async () => {
-    if (!selectedOrgId) return;
-
-    setCheckoutLoading(true);
-    setError(null);
-    try {
-      const appBase =
-        import.meta.env.VITE_APP_BASE_URL || window.location.origin;
-      const { url } = await createCheckoutSession(
-        selectedOrgId,
-        `${appBase}/upgrade/success`,
-        `${appBase}/upgrade?org_id=${selectedOrgId}`,
-      );
-      window.location.href = url;
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to start checkout");
-      setCheckoutLoading(false);
     }
   };
 
@@ -197,7 +128,7 @@ export default function UpgradePage() {
             <PlanCard
               name="Enterprise"
               price="Custom"
-              description="For large organizations"
+              description="For large teams"
               features={[
                 "50+ users",
                 "All Pro features",
@@ -238,89 +169,6 @@ export default function UpgradePage() {
               <button
                 onClick={() => setStep("plan-selection")}
                 className="w-full text-sm text-gray-600 hover:text-gray-900 pt-2"
-              >
-                Back to plans
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step: Organization Selection */}
-        {step === "org-selection" && (
-          <div className="max-w-md mx-auto">
-            <div className="bg-white shadow rounded-lg p-6 space-y-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Select Organization
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  Choose which organization to upgrade
-                </p>
-              </div>
-
-              {loading ? (
-                <div className="py-8 text-center text-gray-500">
-                  Loading organizations...
-                </div>
-              ) : organizations.length === 0 ? (
-                <div className="py-4">
-                  <p className="text-gray-600 text-sm mb-4">
-                    You don't have any organizations available to upgrade. You
-                    need to be an admin of a non-personal organization to
-                    subscribe.
-                  </p>
-                  <button
-                    onClick={() => navigate("/account")}
-                    className="w-full py-2 px-4 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
-                  >
-                    Create Organization
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="border-t border-gray-200 pt-4 space-y-2">
-                    {organizations.map((org) => (
-                      <label
-                        key={org.id}
-                        className={`flex items-center p-3 rounded-lg border cursor-pointer transition-colors ${
-                          selectedOrgId === org.id
-                            ? "border-gray-900 bg-gray-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="organization"
-                          value={org.id}
-                          checked={selectedOrgId === org.id}
-                          onChange={() => setSelectedOrgId(org.id)}
-                          className="h-4 w-4 text-gray-900 focus:ring-gray-900"
-                        />
-                        <div className="ml-3">
-                          <p className="font-medium text-gray-900">
-                            {org.name}
-                          </p>
-                          <p className="text-sm text-gray-500">@{org.slug}</p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={handleCheckout}
-                    disabled={!selectedOrgId || checkoutLoading}
-                    className="w-full py-3 px-4 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {checkoutLoading
-                      ? "Redirecting..."
-                      : "Continue to Checkout"}
-                  </button>
-                </>
-              )}
-
-              <button
-                onClick={() => setStep("plan-selection")}
-                className="w-full text-sm text-gray-600 hover:text-gray-900"
               >
                 Back to plans
               </button>

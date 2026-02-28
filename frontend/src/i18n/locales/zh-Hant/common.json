@@ -85,23 +85,6 @@
   "breadcrumb": {
     "more": "更多"
   },
-  "orgMembers": {
-    "moreCount": "還有 {{count}} 位"
-  },
-  "orgSwitcher": {
-    "title": "切換組織",
-    "description": "選擇要切換到的組織。",
-    "loadError": "載入組織失敗。請重試。",
-    "noOrganizations": "您不是任何組織的成員。",
-    "menuItem": "組織",
-    "loadingPlaceholder": "載入組織中...",
-    "selectPlaceholder": "選擇組織",
-    "currentBadge": "（目前）",
-    "organizations": "組織",
-    "createOrganization": "建立組織",
-    "orgSettings": "組織設定",
-    "migrate": "遷移"
-  },
   "ok": "確定",
   "error": "錯誤",
   "signIn": "登入",

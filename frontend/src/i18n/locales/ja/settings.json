@@ -22,8 +22,6 @@
         "agentsDesc": "コーディングエージェントの設定",
         "mcp": "MCPサーバー",
         "mcpDesc": "モデルコンテキストプロトコルサーバー",
-        "organizations": "Organization Settings",
-        "organizationsDesc": "Manage organization members and permissions",
         "remote-projects": "プロジェクト",
         "remote-projectsDesc": "プロジェクトを管理"
       }

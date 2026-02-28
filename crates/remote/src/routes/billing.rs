@@ -8,7 +8,7 @@ use axum::{
 };
 use uuid::Uuid;
 
-use super::{error::ErrorResponse, organization_members::ensure_admin_access};
+use super::error::ErrorResponse;
 use crate::{
     AppState,
     auth::RequestContext,
@@ -16,7 +16,6 @@ use crate::{
         BillingError, BillingStatus, BillingStatusResponse, CreateCheckoutRequest,
         CreatePortalRequest,
     },
-    db::organization_members,
 };
 
 pub fn public_router() -> Router<AppState> {
@@ -38,13 +37,9 @@ pub fn protected_router() -> Router<AppState> {
 
 pub async fn get_billing_status(
     State(state): State<AppState>,
-    Extension(ctx): Extension<RequestContext>,
+    Extension(_ctx): Extension<RequestContext>,
     Path(org_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ErrorResponse> {
-    organization_members::assert_membership(&state.pool, org_id, ctx.user.id)
-        .await
-        .map_err(|_| ErrorResponse::new(StatusCode::FORBIDDEN, "Access denied"))?;
-
     match state.billing().provider() {
         Some(billing) => {
             let status = billing
@@ -63,14 +58,10 @@ pub async fn get_billing_status(
 
 pub async fn create_portal_session(
     State(state): State<AppState>,
-    Extension(ctx): Extension<RequestContext>,
+    Extension(_ctx): Extension<RequestContext>,
     Path(org_id): Path<Uuid>,
     Json(payload): Json<CreatePortalRequest>,
 ) -> Result<impl IntoResponse, ErrorResponse> {
-    ensure_admin_access(&state.pool, org_id, ctx.user.id)
-        .await
-        .map_err(|_| ErrorResponse::new(StatusCode::FORBIDDEN, "Admin access required"))?;
-
     let billing = state.billing().provider().ok_or_else(|| {
         ErrorResponse::new(StatusCode::SERVICE_UNAVAILABLE, "Billing not configured")
     })?;
@@ -85,14 +76,10 @@ pub async fn create_portal_session(
 
 pub async fn create_checkout_session(
     State(state): State<AppState>,
-    Extension(ctx): Extension<RequestContext>,
+    Extension(_ctx): Extension<RequestContext>,
     Path(org_id): Path<Uuid>,
     Json(payload): Json<CreateCheckoutRequest>,
 ) -> Result<impl IntoResponse, ErrorResponse> {
-    ensure_admin_access(&state.pool, org_id, ctx.user.id)
-        .await
-        .map_err(|_| ErrorResponse::new(StatusCode::FORBIDDEN, "Admin access required"))?;
-
     let billing = state.billing().provider().ok_or_else(|| {
         ErrorResponse::new(StatusCode::SERVICE_UNAVAILABLE, "Billing not configured")
     })?;

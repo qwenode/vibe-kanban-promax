@@ -3,13 +3,12 @@
 use std::time::Duration;
 
 use api_types::{
-    AcceptInvitationResponse, CreateInvitationRequest, CreateInvitationResponse,
-    CreateOrganizationRequest, CreateOrganizationResponse, CreateWorkspaceRequest,
-    DeleteWorkspaceRequest, GetInvitationResponse, GetOrganizationResponse, HandoffInitRequest,
-    HandoffInitResponse, HandoffRedeemRequest, HandoffRedeemResponse, ListInvitationsResponse,
-    ListMembersResponse, ListOrganizationsResponse, Organization, ProfileResponse,
-    RevokeInvitationRequest, TokenRefreshRequest, TokenRefreshResponse, UpdateMemberRoleRequest,
-    UpdateMemberRoleResponse, UpdateOrganizationRequest, UpdateWorkspaceRequest,
+    CreateWorkspaceRequest,
+    DeleteWorkspaceRequest, HandoffInitRequest,
+    HandoffInitResponse, HandoffRedeemRequest, HandoffRedeemResponse,
+    ProfileResponse,
+    TokenRefreshRequest, TokenRefreshResponse,
+    UpdateWorkspaceRequest,
     UpsertPullRequestRequest,
 };
 use backon::{ExponentialBuilder, Retryable};
@@ -251,15 +250,6 @@ impl RemoteClient {
             .map_err(|e| self.map_api_error(e))
     }
 
-    /// Gets an invitation by token (public, no auth required).
-    pub async fn get_invitation(
-        &self,
-        invitation_token: &str,
-    ) -> Result<GetInvitationResponse, RemoteClientError> {
-        self.get_public(&format!("/v1/invitations/{invitation_token}"))
-            .await
-    }
-
     async fn send<B>(
         &self,
         method: reqwest::Method,
@@ -422,127 +412,6 @@ impl RemoteClient {
     /// Revokes the session associated with the token.
     pub async fn logout(&self) -> Result<(), RemoteClientError> {
         self.delete_authed("/v1/oauth/logout").await
-    }
-
-    /// Lists organizations for the authenticated user.
-    pub async fn list_organizations(&self) -> Result<ListOrganizationsResponse, RemoteClientError> {
-        self.get_authed("/v1/organizations").await
-    }
-
-    /// Gets a specific organization by ID.
-    pub async fn get_organization(
-        &self,
-        org_id: Uuid,
-    ) -> Result<GetOrganizationResponse, RemoteClientError> {
-        self.get_authed(&format!("/v1/organizations/{org_id}"))
-            .await
-    }
-
-    /// Creates a new organization.
-    pub async fn create_organization(
-        &self,
-        request: &CreateOrganizationRequest,
-    ) -> Result<CreateOrganizationResponse, RemoteClientError> {
-        self.post_authed("/v1/organizations", Some(request)).await
-    }
-
-    /// Updates an organization's name.
-    pub async fn update_organization(
-        &self,
-        org_id: Uuid,
-        request: &UpdateOrganizationRequest,
-    ) -> Result<Organization, RemoteClientError> {
-        self.patch_authed(&format!("/v1/organizations/{org_id}"), request)
-            .await
-    }
-
-    /// Deletes an organization.
-    pub async fn delete_organization(&self, org_id: Uuid) -> Result<(), RemoteClientError> {
-        self.delete_authed(&format!("/v1/organizations/{org_id}"))
-            .await
-    }
-
-    /// Creates an invitation to an organization.
-    pub async fn create_invitation(
-        &self,
-        org_id: Uuid,
-        request: &CreateInvitationRequest,
-    ) -> Result<CreateInvitationResponse, RemoteClientError> {
-        self.post_authed(
-            &format!("/v1/organizations/{org_id}/invitations"),
-            Some(request),
-        )
-        .await
-    }
-
-    /// Lists invitations for an organization.
-    pub async fn list_invitations(
-        &self,
-        org_id: Uuid,
-    ) -> Result<ListInvitationsResponse, RemoteClientError> {
-        self.get_authed(&format!("/v1/organizations/{org_id}/invitations"))
-            .await
-    }
-
-    pub async fn revoke_invitation(
-        &self,
-        org_id: Uuid,
-        invitation_id: Uuid,
-    ) -> Result<(), RemoteClientError> {
-        let body = RevokeInvitationRequest { invitation_id };
-        self.send(
-            reqwest::Method::POST,
-            &format!("/v1/organizations/{org_id}/invitations/revoke"),
-            true,
-            Some(&body),
-        )
-        .await?;
-        Ok(())
-    }
-
-    /// Accepts an invitation.
-    pub async fn accept_invitation(
-        &self,
-        invitation_token: &str,
-    ) -> Result<AcceptInvitationResponse, RemoteClientError> {
-        self.post_authed(
-            &format!("/v1/invitations/{invitation_token}/accept"),
-            None::<&()>,
-        )
-        .await
-    }
-
-    /// Lists members of an organization.
-    pub async fn list_members(
-        &self,
-        org_id: Uuid,
-    ) -> Result<ListMembersResponse, RemoteClientError> {
-        self.get_authed(&format!("/v1/organizations/{org_id}/members"))
-            .await
-    }
-
-    /// Removes a member from an organization.
-    pub async fn remove_member(
-        &self,
-        org_id: Uuid,
-        user_id: Uuid,
-    ) -> Result<(), RemoteClientError> {
-        self.delete_authed(&format!("/v1/organizations/{org_id}/members/{user_id}"))
-            .await
-    }
-
-    /// Updates a member's role in an organization.
-    pub async fn update_member_role(
-        &self,
-        org_id: Uuid,
-        user_id: Uuid,
-        request: &UpdateMemberRoleRequest,
-    ) -> Result<UpdateMemberRoleResponse, RemoteClientError> {
-        self.patch_authed(
-            &format!("/v1/organizations/{org_id}/members/{user_id}/role"),
-            request,
-        )
-        .await
     }
 
     /// Deletes a workspace on the remote server by its local workspace ID.

@@ -3,7 +3,7 @@
 use crate::shape_definition::{ShapeDefinition, ShapeExport};
 use api_types::{
     Issue, IssueAssignee, IssueComment, IssueCommentReaction, IssueFollower, IssueRelationship,
-    IssueTag, Notification, OrganizationMember, Project, ProjectStatus, PullRequest, Tag, User,
+    IssueTag, Notification, Project, ProjectStatus, PullRequest, Tag, User,
     Workspace,
 };
 
@@ -25,18 +25,11 @@ pub const NOTIFICATIONS_SHAPE: ShapeDefinition<Notification> = crate::define_sha
     params: ["organization_id", "user_id"],
 );
 
-pub const ORGANIZATION_MEMBERS_SHAPE: ShapeDefinition<OrganizationMember> = crate::define_shape!(
-    table: "organization_member_metadata",
-    where_clause: r#""organization_id" = $1"#,
-    url: "/shape/organization_members",
-    params: ["organization_id"],
-);
-
 pub const USERS_SHAPE: ShapeDefinition<User> = crate::define_shape!(
     table: "users",
-    where_clause: r#""id" IN (SELECT user_id FROM organization_member_metadata WHERE "organization_id" = $1)"#,
+    where_clause: r#""id" IS NOT NULL"#,
     url: "/shape/users",
-    params: ["organization_id"],
+    params: [],
 );
 
 // =============================================================================
@@ -149,7 +142,6 @@ pub fn all_shapes() -> Vec<(&'static str, &'static dyn ShapeExport)> {
     named_shapes![
         PROJECTS_SHAPE,
         NOTIFICATIONS_SHAPE,
-        ORGANIZATION_MEMBERS_SHAPE,
         USERS_SHAPE,
         PROJECT_TAGS_SHAPE,
         PROJECT_PROJECT_STATUSES_SHAPE,

@@ -19,9 +19,6 @@ pub enum MigrationError {
     #[error("not authenticated - please log in first")]
     NotAuthenticated,
 
-    #[error("organization not found for user")]
-    OrganizationNotFound,
-
     #[error("entity not found: {entity_type} with id {id}")]
     EntityNotFound { entity_type: String, id: String },
 

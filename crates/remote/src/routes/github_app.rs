@@ -17,8 +17,7 @@ use crate::{
     AppState,
     auth::RequestContext,
     db::{
-        github_app::GitHubAppRepository2, identity_errors::IdentityError,
-        organizations::OrganizationRepository, reviews::ReviewRepository,
+        github_app::GitHubAppRepository2, reviews::ReviewRepository,
     },
     github_app::{PrReviewParams, PrReviewService, verify_webhook_signature},
 };
@@ -131,34 +130,6 @@ pub async fn get_install_url(
         ErrorResponse::new(StatusCode::NOT_IMPLEMENTED, "GitHub App not configured")
     })?;
 
-    // Check user is admin of organization
-    let org_repo = OrganizationRepository::new(state.pool());
-    org_repo
-        .assert_admin(org_id, ctx.user.id)
-        .await
-        .map_err(|e| match e {
-            IdentityError::PermissionDenied => {
-                ErrorResponse::new(StatusCode::FORBIDDEN, "Admin access required")
-            }
-            IdentityError::NotFound => {
-                ErrorResponse::new(StatusCode::NOT_FOUND, "Organization not found")
-            }
-            _ => ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, "Database error"),
-        })?;
-
-    // Check not a personal org
-    let is_personal = org_repo
-        .is_personal(org_id)
-        .await
-        .map_err(|_| ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, "Database error"))?;
-
-    if is_personal {
-        return Err(ErrorResponse::new(
-            StatusCode::BAD_REQUEST,
-            "GitHub App cannot be installed on personal organizations",
-        ));
-    }
-
     // Generate state token (simple format: org_id:user_id:timestamp)
     // In production, you'd want to sign this with HMAC
     let expires_at = Utc::now() + Duration::minutes(10);
@@ -191,18 +162,6 @@ pub async fn get_status(
     axum::extract::Extension(ctx): axum::extract::Extension<RequestContext>,
     Path(org_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ErrorResponse> {
-    // Check user is member of organization
-    let org_repo = OrganizationRepository::new(state.pool());
-    org_repo
-        .assert_membership(org_id, ctx.user.id)
-        .await
-        .map_err(|e| match e {
-            IdentityError::PermissionDenied | IdentityError::NotFound => {
-                ErrorResponse::new(StatusCode::FORBIDDEN, "Access denied")
-            }
-            _ => ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, "Database error"),
-        })?;
-
     let gh_repo = GitHubAppRepository2::new(state.pool());
 
     let installation = gh_repo.get_by_organization(org_id).await.map_err(|e| {
@@ -255,21 +214,6 @@ pub async fn uninstall(
     axum::extract::Extension(ctx): axum::extract::Extension<RequestContext>,
     Path(org_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ErrorResponse> {
-    // Check user is admin of organization
-    let org_repo = OrganizationRepository::new(state.pool());
-    org_repo
-        .assert_admin(org_id, ctx.user.id)
-        .await
-        .map_err(|e| match e {
-            IdentityError::PermissionDenied => {
-                ErrorResponse::new(StatusCode::FORBIDDEN, "Admin access required")
-            }
-            IdentityError::NotFound => {
-                ErrorResponse::new(StatusCode::NOT_FOUND, "Organization not found")
-            }
-            _ => ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, "Database error"),
-        })?;
-
     let gh_repo = GitHubAppRepository2::new(state.pool());
     gh_repo.delete_by_organization(org_id).await.map_err(|e| {
         error!(?e, "Failed to delete GitHub App installation");
@@ -288,21 +232,6 @@ pub async fn update_repo_review_enabled(
     Path((org_id, repo_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<UpdateRepoReviewEnabledRequest>,
 ) -> Result<impl IntoResponse, ErrorResponse> {
-    // Check user is admin of organization
-    let org_repo = OrganizationRepository::new(state.pool());
-    org_repo
-        .assert_admin(org_id, ctx.user.id)
-        .await
-        .map_err(|e| match e {
-            IdentityError::PermissionDenied => {
-                ErrorResponse::new(StatusCode::FORBIDDEN, "Admin access required")
-            }
-            IdentityError::NotFound => {
-                ErrorResponse::new(StatusCode::NOT_FOUND, "Organization not found")
-            }
-            _ => ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, "Database error"),
-        })?;
-
     // Get installation for this org
     let gh_repo = GitHubAppRepository2::new(state.pool());
     let installation = gh_repo
@@ -347,18 +276,6 @@ pub async fn fetch_repositories(
     axum::extract::Extension(ctx): axum::extract::Extension<RequestContext>,
     Path(org_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ErrorResponse> {
-    // Check user is member of organization
-    let org_repo = OrganizationRepository::new(state.pool());
-    org_repo
-        .assert_membership(org_id, ctx.user.id)
-        .await
-        .map_err(|e| match e {
-            IdentityError::PermissionDenied | IdentityError::NotFound => {
-                ErrorResponse::new(StatusCode::FORBIDDEN, "Access denied")
-            }
-            _ => ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, "Database error"),
-        })?;
-
     let gh_repo = GitHubAppRepository2::new(state.pool());
 
     let installation = gh_repo
@@ -419,21 +336,6 @@ pub async fn bulk_update_review_enabled(
     Path(org_id): Path<Uuid>,
     Json(payload): Json<UpdateRepoReviewEnabledRequest>,
 ) -> Result<impl IntoResponse, ErrorResponse> {
-    // Check user is admin of organization
-    let org_repo = OrganizationRepository::new(state.pool());
-    org_repo
-        .assert_admin(org_id, ctx.user.id)
-        .await
-        .map_err(|e| match e {
-            IdentityError::PermissionDenied => {
-                ErrorResponse::new(StatusCode::FORBIDDEN, "Admin access required")
-            }
-            IdentityError::NotFound => {
-                ErrorResponse::new(StatusCode::NOT_FOUND, "Organization not found")
-            }
-            _ => ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, "Database error"),
-        })?;
-
     let gh_repo = GitHubAppRepository2::new(state.pool());
     let installation = gh_repo
         .get_by_organization(org_id)

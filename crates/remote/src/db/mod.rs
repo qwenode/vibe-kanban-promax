@@ -1,7 +1,7 @@
+pub mod access;
 pub mod auth;
 pub mod github_app;
 pub mod identity_errors;
-pub mod invitations;
 pub mod issue_assignees;
 pub mod issue_comment_reactions;
 pub mod issue_comments;
@@ -13,8 +13,6 @@ pub mod migration;
 pub mod notifications;
 pub mod oauth;
 pub mod oauth_accounts;
-pub mod organization_members;
-pub mod organizations;
 pub mod project_notification_preferences;
 pub mod project_statuses;
 pub mod projects;

@@ -5,7 +5,6 @@ import InvitationCompletePage from "./pages/InvitationCompletePage";
 import ReviewPage from "./pages/ReviewPage";
 import AccountPage from "./pages/AccountPage";
 import AccountCompletePage from "./pages/AccountCompletePage";
-import OrganizationPage from "./pages/OrganizationPage";
 import UpgradePage from "./pages/UpgradePage";
 import UpgradeCompletePage from "./pages/UpgradeCompletePage";
 import UpgradeSuccessPage from "./pages/UpgradeSuccessPage";
@@ -35,10 +34,6 @@ const router = createBrowserRouter([
   {
     path: "/account/complete",
     element: <AccountCompletePage />,
-  },
-  {
-    path: "/account/organizations/:orgId",
-    element: <OrganizationPage />,
   },
   {
     path: "/upgrade",

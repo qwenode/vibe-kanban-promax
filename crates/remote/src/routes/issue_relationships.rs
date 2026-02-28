@@ -7,8 +7,8 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use super::{
+    access::ensure_issue_access,
     error::{ErrorResponse, db_error},
-    organization_members::ensure_issue_access,
 };
 use crate::{
     AppState,

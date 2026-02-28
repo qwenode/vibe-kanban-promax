@@ -4,7 +4,6 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MigrateProjectRequest {
-    pub organization_id: Uuid,
     pub name: String,
     pub color: String,
     pub created_at: DateTime<Utc>,

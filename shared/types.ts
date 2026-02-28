@@ -192,49 +192,7 @@ export type ProviderProfile = { provider: string, username: string | null, displ
 
 export type StatusResponse = { logged_in: boolean, profile: ProfileResponse | null, degraded: boolean | null, };
 
-export enum MemberRole { ADMIN = "ADMIN", MEMBER = "MEMBER" }
-
-export enum InvitationStatus { PENDING = "PENDING", ACCEPTED = "ACCEPTED", DECLINED = "DECLINED", EXPIRED = "EXPIRED" }
-
-export type Organization = { id: string, name: string, slug: string, is_personal: boolean, issue_prefix: string, created_at: string, updated_at: string, };
-
-export type OrganizationWithRole = { id: string, name: string, slug: string, is_personal: boolean, issue_prefix: string, created_at: string, updated_at: string, user_role: MemberRole, };
-
-export type ListOrganizationsResponse = { organizations: Array<OrganizationWithRole>, };
-
-export type GetOrganizationResponse = { organization: Organization, user_role: string, };
-
-export type CreateOrganizationRequest = { name: string, slug: string, };
-
-export type CreateOrganizationResponse = { organization: OrganizationWithRole, };
-
-export type UpdateOrganizationRequest = { name: string, };
-
-export type Invitation = { id: string, organization_id: string, invited_by_user_id: string | null, email: string, role: MemberRole, status: InvitationStatus, token: string, created_at: string, expires_at: string, };
-
-export type CreateInvitationRequest = { email: string, role: MemberRole, };
-
-export type CreateInvitationResponse = { invitation: Invitation, };
-
-export type ListInvitationsResponse = { invitations: Array<Invitation>, };
-
-export type GetInvitationResponse = { id: string, organization_slug: string, role: MemberRole, expires_at: string, };
-
-export type AcceptInvitationResponse = { organization_id: string, organization_slug: string, role: MemberRole, };
-
-export type RevokeInvitationRequest = { invitation_id: string, };
-
-export type OrganizationMemberInfo = { user_id: string, role: MemberRole, joined_at: string, };
-
-export type OrganizationMemberWithProfile = { user_id: string, role: MemberRole, joined_at: string, first_name: string | null, last_name: string | null, username: string | null, email: string | null, avatar_url: string | null, };
-
-export type ListMembersResponse = { members: Array<OrganizationMemberWithProfile>, };
-
-export type UpdateMemberRoleRequest = { role: MemberRole, };
-
-export type UpdateMemberRoleResponse = { user_id: string, role: MemberRole, };
-
-export type MigrationRequest = { organization_id: string, 
+export type MigrationRequest = { 
 /**
  * List of local project IDs to migrate.
  */

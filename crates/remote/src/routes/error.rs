@@ -5,8 +5,6 @@ use axum::{
 };
 use serde_json::json;
 
-use crate::db::identity_errors::IdentityError;
-
 #[derive(Debug)]
 pub struct ErrorResponse {
     status: StatusCode,
@@ -51,19 +49,4 @@ pub(crate) fn db_error(
     }
 
     ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, fallback_message)
-}
-
-pub(crate) fn membership_error(error: IdentityError, forbidden_message: &str) -> ErrorResponse {
-    match error {
-        IdentityError::NotFound | IdentityError::PermissionDenied => {
-            ErrorResponse::new(StatusCode::FORBIDDEN, forbidden_message)
-        }
-        IdentityError::Database(_) => {
-            ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, "Database error")
-        }
-        other => {
-            tracing::warn!(?other, "unexpected membership error");
-            ErrorResponse::new(StatusCode::FORBIDDEN, forbidden_message)
-        }
-    }
 }

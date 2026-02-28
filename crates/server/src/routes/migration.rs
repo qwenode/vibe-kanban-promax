@@ -24,7 +24,7 @@ async fn start_migration(
     let service = MigrationService::new(sqlite_pool, remote_client);
     let project_ids = request.project_id_set();
     let report = service
-        .run_migration(request.organization_id, project_ids)
+        .run_migration(project_ids)
         .await?;
 
     Ok(ResponseJson(ApiResponse::success(MigrationResponse {

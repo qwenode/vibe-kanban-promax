@@ -26,7 +26,6 @@ use crate::{
             OAuthHandoffRepository,
         },
         oauth_accounts::{OAuthAccountError, OAuthAccountInsert, OAuthAccountRepository},
-        organizations::OrganizationRepository,
         users::{UpsertUser, UserRepository},
     },
 };
@@ -365,10 +364,6 @@ impl OAuthHandoffService {
 
         let user_repo = UserRepository::new(&self.pool);
         let user = user_repo.fetch_user(user_id).await?;
-        let org_repo = OrganizationRepository::new(&self.pool);
-        let _organization = org_repo
-            .ensure_personal_org_and_admin_membership(user.id, user.username.as_deref())
-            .await?;
 
         let provider_token = self
             .jwt
@@ -431,7 +426,6 @@ impl OAuthHandoffService {
     ) -> Result<IdentityUser, HandoffError> {
         let account_repo = OAuthAccountRepository::new(&self.pool);
         let user_repo = UserRepository::new(&self.pool);
-        let org_repo = OrganizationRepository::new(&self.pool);
 
         let email = ensure_email(provider.name(), profile);
         let username = derive_username(provider.name(), profile);
@@ -456,10 +450,6 @@ impl OAuthHandoffService {
                 last_name: last_name.as_deref(),
                 username: username.as_deref(),
             })
-            .await?;
-
-        org_repo
-            .ensure_personal_org_and_admin_membership(user.id, username.as_deref())
             .await?;
 
         account_repo

@@ -85,23 +85,6 @@
   "breadcrumb": {
     "more": "Plus"
   },
-  "orgMembers": {
-    "moreCount": "+{{count}} autres"
-  },
-  "orgSwitcher": {
-    "title": "Changer d'organisation",
-    "description": "Sélectionnez une organisation vers laquelle basculer.",
-    "loadError": "Échec du chargement des organisations. Veuillez réessayer.",
-    "noOrganizations": "Vous n'êtes membre d'aucune organisation.",
-    "menuItem": "Organisation",
-    "loadingPlaceholder": "Chargement des organisations...",
-    "selectPlaceholder": "Sélectionner une organisation",
-    "currentBadge": " (actuelle)",
-    "organizations": "Organisations",
-    "createOrganization": "Créer une organisation",
-    "orgSettings": "Paramètres de l'organisation",
-    "migrate": "Migrer"
-  },
   "navbar": {
     "tryNewUI": "essayer la nouvelle interface"
   },

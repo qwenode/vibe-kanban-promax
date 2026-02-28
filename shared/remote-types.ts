@@ -42,10 +42,6 @@ export type UserData = { user_id: string, first_name: string | null, last_name: 
 
 export type User = { id: string, email: string, first_name: string | null, last_name: string | null, username: string | null, created_at: string, updated_at: string, };
 
-export enum MemberRole { ADMIN = "ADMIN", MEMBER = "MEMBER" }
-
-export type OrganizationMember = { organization_id: string, user_id: string, role: MemberRole, joined_at: string, last_seen_at: string | null, };
-
 export type CreateProjectRequest = { 
 /**
  * Optional client-generated ID. If not provided, server generates one.
@@ -167,15 +163,9 @@ export const NOTIFICATIONS_SHAPE = defineShape<Notification>(
   '/v1/shape/notifications'
 );
 
-export const ORGANIZATION_MEMBERS_SHAPE = defineShape<OrganizationMember>(
-  'organization_member_metadata',
-  ['organization_id'] as const,
-  '/v1/shape/organization_members'
-);
-
 export const USERS_SHAPE = defineShape<User>(
   'users',
-  ['organization_id'] as const,
+  [] as const,
   '/v1/shape/users'
 );
 

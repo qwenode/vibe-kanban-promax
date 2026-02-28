@@ -44,8 +44,6 @@ pub enum ShareError {
     MissingAuth,
     #[error("invalid user ID format")]
     InvalidUserId,
-    #[error("invalid organization ID format")]
-    InvalidOrganizationId,
     #[error(transparent)]
     RemoteClientError(#[from] RemoteClientError),
 }

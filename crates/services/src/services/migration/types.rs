@@ -7,7 +7,6 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct MigrationRequest {
-    pub organization_id: Uuid,
     /// List of local project IDs to migrate.
     pub project_ids: Vec<Uuid>,
 }

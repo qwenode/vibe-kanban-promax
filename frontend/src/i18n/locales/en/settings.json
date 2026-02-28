@@ -22,8 +22,6 @@
         "agentsDesc": "Coding agent configurations",
         "mcp": "MCP Servers",
         "mcpDesc": "Model Context Protocol servers",
-        "organizations": "Organization Settings",
-        "organizationsDesc": "Manage organization members and permissions",
         "remote-projects": "Projects",
         "remote-projectsDesc": "Manage projects"
       }

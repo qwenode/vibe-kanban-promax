@@ -13,8 +13,8 @@ use api_types::{
 };
 
 use super::{
+    access::{ensure_issue_access, ensure_project_access},
     error::ErrorResponse,
-    organization_members::{ensure_issue_access, ensure_member_access, ensure_project_access},
 };
 use crate::{AppState, auth::RequestContext, db::migration::MigrationRepository};
 
@@ -32,16 +32,7 @@ async fn migrate_projects(
     Extension(ctx): Extension<RequestContext>,
     Json(payload): Json<BulkMigrateRequest<MigrateProjectRequest>>,
 ) -> Result<Json<BulkMigrateResponse>, ErrorResponse> {
-    let org_ids: HashSet<_> = payload
-        .items
-        .iter()
-        .map(|item| item.organization_id)
-        .collect();
-    for org_id in org_ids {
-        ensure_member_access(state.pool(), org_id, ctx.user.id).await?;
-    }
-
-    let ids = MigrationRepository::bulk_create_projects(state.pool(), payload.items)
+    let ids = MigrationRepository::bulk_create_projects(state.pool(), ctx.user.id, payload.items)
         .await
         .map_err(|error| {
             tracing::error!(?error, "failed to migrate projects");

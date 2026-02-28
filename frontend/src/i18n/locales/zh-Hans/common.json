@@ -85,23 +85,6 @@
   "breadcrumb": {
     "more": "更多"
   },
-  "orgMembers": {
-    "moreCount": "还有 {{count}} 位"
-  },
-  "orgSwitcher": {
-    "title": "切换组织",
-    "description": "选择要切换到的组织。",
-    "loadError": "加载组织失败。请重试。",
-    "noOrganizations": "您不是任何组织的成员。",
-    "menuItem": "组织",
-    "loadingPlaceholder": "加载组织中...",
-    "selectPlaceholder": "选择组织",
-    "currentBadge": "（当前）",
-    "organizations": "组织",
-    "createOrganization": "创建组织",
-    "orgSettings": "组织设置",
-    "migrate": "迁移"
-  },
   "navbar": {
     "tryNewUI": "试用新界面"
   },

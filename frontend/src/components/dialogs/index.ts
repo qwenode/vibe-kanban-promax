@@ -6,16 +6,6 @@ export {
 } from './global/OnboardingDialog';
 export { ReleaseNotesDialog } from './global/ReleaseNotesDialog';
 
-// Organization dialogs
-export {
-  CreateOrganizationDialog,
-  type CreateOrganizationResult,
-} from './org/CreateOrganizationDialog';
-export {
-  InviteMemberDialog,
-  type InviteMemberResult,
-} from './org/InviteMemberDialog';
-
 // Project-related dialogs
 export {
   ProjectFormDialog,

@@ -24,6 +24,7 @@ pub struct MigrationRepository;
 impl MigrationRepository {
     pub async fn bulk_create_projects(
         pool: &PgPool,
+        user_id: Uuid,
         inputs: Vec<MigrateProjectRequest>,
     ) -> Result<Vec<Uuid>, MigrationError> {
         if inputs.is_empty() {
@@ -32,7 +33,21 @@ impl MigrationRepository {
 
         let mut tx = pool.begin().await?;
 
-        let org_ids: Vec<Uuid> = inputs.iter().map(|i| i.organization_id).collect();
+        // Find the user's organization
+        let org_id = sqlx::query_scalar!(
+            r#"
+            SELECT organization_id
+            FROM organization_member_metadata
+            WHERE user_id = $1
+            LIMIT 1
+            "#,
+            user_id
+        )
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or_else(|| MigrationError::Database(sqlx::Error::RowNotFound))?;
+
+        let org_ids: Vec<Uuid> = vec![org_id; inputs.len()];
         let names: Vec<String> = inputs.iter().map(|i| i.name.clone()).collect();
         let colors: Vec<String> = inputs.iter().map(|i| i.color.clone()).collect();
         let created_ats: Vec<DateTime<Utc>> = inputs.iter().map(|i| i.created_at).collect();

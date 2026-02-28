@@ -14,7 +14,7 @@ use serde::Deserialize;
 use tracing::error;
 use uuid::Uuid;
 
-use crate::{AppState, auth::RequestContext, db::organization_members, shape_definition::ShapeExport, shapes};
+use crate::{AppState, auth::RequestContext, db::access, shape_definition::ShapeExport, shapes};
 
 #[derive(Deserialize)]
 struct OrgShapeQuery {
@@ -36,10 +36,6 @@ pub fn router() -> Router<AppState> {
         // Org-scoped
         .route(shapes::PROJECTS_SHAPE.url, get(proxy_projects))
         .route(shapes::NOTIFICATIONS_SHAPE.url, get(proxy_notifications))
-        .route(
-            shapes::ORGANIZATION_MEMBERS_SHAPE.url,
-            get(proxy_organization_members),
-        )
         .route(shapes::USERS_SHAPE.url, get(proxy_users))
         // Project-scoped
         .route(shapes::USER_WORKSPACES_SHAPE.url, get(proxy_workspaces))
@@ -83,13 +79,9 @@ pub fn router() -> Router<AppState> {
 
 async fn proxy_projects(
     State(state): State<AppState>,
-    Extension(ctx): Extension<RequestContext>,
+    Extension(_ctx): Extension<RequestContext>,
     Query(query): Query<OrgShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_membership(state.pool(), query.organization_id, ctx.user.id)
-        .await
-        .map_err(|e| ProxyError::Authorization(e.to_string()))?;
-
     proxy_table(
         &state,
         &shapes::PROJECTS_SHAPE,
@@ -104,10 +96,6 @@ async fn proxy_notifications(
     Extension(ctx): Extension<RequestContext>,
     Query(query): Query<OrgShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_membership(state.pool(), query.organization_id, ctx.user.id)
-        .await
-        .map_err(|e| ProxyError::Authorization(e.to_string()))?;
-
     proxy_table(
         &state,
         &shapes::NOTIFICATIONS_SHAPE,
@@ -117,38 +105,16 @@ async fn proxy_notifications(
     .await
 }
 
-async fn proxy_organization_members(
-    State(state): State<AppState>,
-    Extension(ctx): Extension<RequestContext>,
-    Query(query): Query<OrgShapeQuery>,
-) -> Result<Response, ProxyError> {
-    organization_members::assert_membership(state.pool(), query.organization_id, ctx.user.id)
-        .await
-        .map_err(|e| ProxyError::Authorization(e.to_string()))?;
-
-    proxy_table(
-        &state,
-        &shapes::ORGANIZATION_MEMBERS_SHAPE,
-        &query.params,
-        &[query.organization_id.to_string()],
-    )
-    .await
-}
-
 async fn proxy_users(
     State(state): State<AppState>,
-    Extension(ctx): Extension<RequestContext>,
+    Extension(_ctx): Extension<RequestContext>,
     Query(query): Query<OrgShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_membership(state.pool(), query.organization_id, ctx.user.id)
-        .await
-        .map_err(|e| ProxyError::Authorization(e.to_string()))?;
-
     proxy_table(
         &state,
         &shapes::USERS_SHAPE,
         &query.params,
-        &[query.organization_id.to_string()],
+        &[],
     )
     .await
 }
@@ -173,7 +139,7 @@ async fn proxy_project_workspaces(
     Path(project_id): Path<Uuid>,
     Query(query): Query<ShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_project_access(state.pool(), project_id, ctx.user.id)
+    access::assert_project_access(state.pool(), project_id, ctx.user.id)
         .await
         .map_err(|e| ProxyError::Authorization(e.to_string()))?;
 
@@ -192,7 +158,7 @@ async fn proxy_project_statuses(
     Path(project_id): Path<Uuid>,
     Query(query): Query<ShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_project_access(state.pool(), project_id, ctx.user.id)
+    access::assert_project_access(state.pool(), project_id, ctx.user.id)
         .await
         .map_err(|e| ProxyError::Authorization(e.to_string()))?;
 
@@ -211,7 +177,7 @@ async fn proxy_tags(
     Path(project_id): Path<Uuid>,
     Query(query): Query<ShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_project_access(state.pool(), project_id, ctx.user.id)
+    access::assert_project_access(state.pool(), project_id, ctx.user.id)
         .await
         .map_err(|e| ProxyError::Authorization(e.to_string()))?;
 
@@ -230,7 +196,7 @@ async fn proxy_issues(
     Path(project_id): Path<Uuid>,
     Query(query): Query<ShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_project_access(state.pool(), project_id, ctx.user.id)
+    access::assert_project_access(state.pool(), project_id, ctx.user.id)
         .await
         .map_err(|e| ProxyError::Authorization(e.to_string()))?;
 
@@ -249,7 +215,7 @@ async fn proxy_issue_assignees(
     Path(project_id): Path<Uuid>,
     Query(query): Query<ShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_project_access(state.pool(), project_id, ctx.user.id)
+    access::assert_project_access(state.pool(), project_id, ctx.user.id)
         .await
         .map_err(|e| ProxyError::Authorization(e.to_string()))?;
 
@@ -268,7 +234,7 @@ async fn proxy_issue_followers(
     Path(project_id): Path<Uuid>,
     Query(query): Query<ShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_project_access(state.pool(), project_id, ctx.user.id)
+    access::assert_project_access(state.pool(), project_id, ctx.user.id)
         .await
         .map_err(|e| ProxyError::Authorization(e.to_string()))?;
 
@@ -287,7 +253,7 @@ async fn proxy_issue_tags(
     Path(project_id): Path<Uuid>,
     Query(query): Query<ShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_project_access(state.pool(), project_id, ctx.user.id)
+    access::assert_project_access(state.pool(), project_id, ctx.user.id)
         .await
         .map_err(|e| ProxyError::Authorization(e.to_string()))?;
 
@@ -306,7 +272,7 @@ async fn proxy_issue_comments(
     Path(issue_id): Path<Uuid>,
     Query(query): Query<ShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_issue_access(state.pool(), issue_id, ctx.user.id)
+    access::assert_issue_access(state.pool(), issue_id, ctx.user.id)
         .await
         .map_err(|e| ProxyError::Authorization(e.to_string()))?;
 
@@ -325,7 +291,7 @@ async fn proxy_issue_relationships(
     Path(project_id): Path<Uuid>,
     Query(query): Query<ShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_project_access(state.pool(), project_id, ctx.user.id)
+    access::assert_project_access(state.pool(), project_id, ctx.user.id)
         .await
         .map_err(|e| ProxyError::Authorization(e.to_string()))?;
 
@@ -344,7 +310,7 @@ async fn proxy_pull_requests(
     Path(project_id): Path<Uuid>,
     Query(query): Query<ShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_project_access(state.pool(), project_id, ctx.user.id)
+    access::assert_project_access(state.pool(), project_id, ctx.user.id)
         .await
         .map_err(|e| ProxyError::Authorization(e.to_string()))?;
 
@@ -363,7 +329,7 @@ async fn proxy_issue_comment_reactions(
     Path(issue_id): Path<Uuid>,
     Query(query): Query<ShapeQuery>,
 ) -> Result<Response, ProxyError> {
-    organization_members::assert_issue_access(state.pool(), issue_id, ctx.user.id)
+    access::assert_issue_access(state.pool(), issue_id, ctx.user.id)
         .await
         .map_err(|e| ProxyError::Authorization(e.to_string()))?;
 

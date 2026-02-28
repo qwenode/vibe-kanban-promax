@@ -8,26 +8,15 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useProjects } from '@/hooks/useProjects';
-import { useUserOrganizations } from '@/hooks/useUserOrganizations';
 import { migrationApi } from '@/lib/api';
 import type { MigrationReport } from 'shared/types';
 
 export function Migration() {
   const { projects, isLoading: projectsLoading } = useProjects();
-  const { data: orgsData, isLoading: orgsLoading } = useUserOrganizations();
-  const organizations = orgsData?.organizations ?? [];
 
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(
     new Set()
   );
@@ -56,7 +45,7 @@ export function Migration() {
   };
 
   const handleStartMigration = async () => {
-    if (!selectedOrgId || selectedProjectIds.size === 0) return;
+    if (selectedProjectIds.size === 0) return;
 
     setMigrating(true);
     setError(null);
@@ -64,7 +53,6 @@ export function Migration() {
 
     try {
       const response = await migrationApi.start({
-        organization_id: selectedOrgId,
         project_ids: Array.from(selectedProjectIds),
       });
       setReport(response.report);
@@ -75,9 +63,7 @@ export function Migration() {
     }
   };
 
-  const isLoading = projectsLoading || orgsLoading;
-
-  if (isLoading) {
+  if (projectsLoading) {
     return (
       <div className="container py-8 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -133,39 +119,6 @@ export function Migration() {
           </AlertDescription>
         </Alert>
       )}
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Target Organization</CardTitle>
-          <CardDescription>
-            Select the remote organization to migrate data to.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {organizations.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No organizations available. Please sign in and create an
-              organization first.
-            </p>
-          ) : (
-            <Select
-              value={selectedOrgId ?? undefined}
-              onValueChange={setSelectedOrgId}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select organization" />
-              </SelectTrigger>
-              <SelectContent>
-                {organizations.map((org) => (
-                  <SelectItem key={org.id} value={org.id}>
-                    {org.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </CardContent>
-      </Card>
 
       <Card className="mb-6">
         <CardHeader>
@@ -226,9 +179,7 @@ export function Migration() {
       <div className="flex justify-end">
         <Button
           onClick={handleStartMigration}
-          disabled={
-            migrating || !selectedOrgId || selectedProjectIds.size === 0
-          }
+          disabled={migrating || selectedProjectIds.size === 0}
         >
           {migrating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {migrating ? 'Migrating...' : 'Start Migration'}

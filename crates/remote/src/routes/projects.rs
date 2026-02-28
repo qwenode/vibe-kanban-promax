@@ -6,10 +6,7 @@ use axum::{
 use tracing::instrument;
 use uuid::Uuid;
 
-use super::{
-    error::{ErrorResponse, db_error},
-    organization_members::ensure_member_access,
-};
+use super::error::{ErrorResponse, db_error};
 use crate::{
     AppState,
     auth::RequestContext,
@@ -45,8 +42,6 @@ async fn list_projects(
     Extension(ctx): Extension<RequestContext>,
     Query(query): Query<ListProjectsQuery>,
 ) -> Result<Json<ListProjectsResponse>, ErrorResponse> {
-    ensure_member_access(state.pool(), query.organization_id, ctx.user.id).await?;
-
     let projects = ProjectRepository::list_by_organization(state.pool(), query.organization_id)
         .await
         .map_err(|error| {
@@ -75,8 +70,6 @@ async fn get_project(
         })?
         .ok_or_else(|| ErrorResponse::new(StatusCode::NOT_FOUND, "project not found"))?;
 
-    ensure_member_access(state.pool(), project.organization_id, ctx.user.id).await?;
-
     Ok(Json(project))
 }
 
@@ -90,8 +83,6 @@ async fn create_project(
     Extension(ctx): Extension<RequestContext>,
     Json(payload): Json<CreateProjectRequest>,
 ) -> Result<Json<MutationResponse<Project>>, ErrorResponse> {
-    ensure_member_access(state.pool(), payload.organization_id, ctx.user.id).await?;
-
     if !is_valid_hsl_color(&payload.color) {
         return Err(ErrorResponse::new(
             StatusCode::BAD_REQUEST,
@@ -145,8 +136,6 @@ async fn update_project(
         })?
         .ok_or_else(|| ErrorResponse::new(StatusCode::NOT_FOUND, "project not found"))?;
 
-    ensure_member_access(state.pool(), existing.organization_id, ctx.user.id).await?;
-
     if let Some(ref color) = payload.color
         && !is_valid_hsl_color(color)
     {
@@ -183,8 +172,6 @@ async fn delete_project(
             ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, "failed to load project")
         })?
         .ok_or_else(|| ErrorResponse::new(StatusCode::NOT_FOUND, "project not found"))?;
-
-    ensure_member_access(state.pool(), project.organization_id, ctx.user.id).await?;
 
     let response = ProjectRepository::delete(state.pool(), project_id)
         .await

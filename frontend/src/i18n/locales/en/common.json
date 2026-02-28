@@ -87,23 +87,6 @@
   "breadcrumb": {
     "more": "More"
   },
-  "orgMembers": {
-    "moreCount": "+{{count}} more"
-  },
-  "orgSwitcher": {
-    "title": "Switch Organization",
-    "description": "Select an organization to switch to.",
-    "loadError": "Failed to load organizations. Please try again.",
-    "noOrganizations": "You are not a member of any organizations.",
-    "menuItem": "Organization",
-    "loadingPlaceholder": "Loading organizations...",
-    "selectPlaceholder": "Select an organization",
-    "currentBadge": " (current)",
-    "organizations": "Organizations",
-    "createOrganization": "Create organization",
-    "orgSettings": "Organization settings",
-    "migrate": "Migrate"
-  },
   "navbar": {
     "tryNewUI": "try the new UI"
   },

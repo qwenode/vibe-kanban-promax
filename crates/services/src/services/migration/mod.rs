@@ -39,19 +39,17 @@ impl MigrationService {
 
     pub async fn run_migration(
         &self,
-        organization_id: Uuid,
         project_ids: HashSet<Uuid>,
     ) -> Result<MigrationReport, MigrationError> {
         let mut report = MigrationReport::default();
 
         info!(
-            "Starting migration to organization {} for {} projects",
-            organization_id,
+            "Starting migration for {} projects",
             project_ids.len()
         );
 
         info!("Phase 1: Migrating projects...");
-        self.migrate_projects(organization_id, &project_ids, &mut report)
+        self.migrate_projects(&project_ids, &mut report)
             .await?;
 
         info!("Phase 2: Migrating tasks to issues...");
@@ -107,16 +105,14 @@ impl MigrationService {
 
     pub async fn resume_migration(
         &self,
-        organization_id: Uuid,
         project_ids: HashSet<Uuid>,
     ) -> Result<MigrationReport, MigrationError> {
         MigrationState::reset_failed(&self.sqlite_pool).await?;
-        self.run_migration(organization_id, project_ids).await
+        self.run_migration(project_ids).await
     }
 
     async fn migrate_projects(
         &self,
-        organization_id: Uuid,
         project_ids: &HashSet<Uuid>,
         report: &mut MigrationReport,
     ) -> Result<(), MigrationError> {
@@ -141,7 +137,7 @@ impl MigrationService {
         }
 
         for chunk in pending_projects.chunks(BATCH_SIZE) {
-            self.migrate_project_batch(organization_id, chunk, report)
+            self.migrate_project_batch(chunk, report)
                 .await?;
         }
 
@@ -150,7 +146,6 @@ impl MigrationService {
 
     async fn migrate_project_batch(
         &self,
-        organization_id: Uuid,
         projects: &[Project],
         report: &mut MigrationReport,
     ) -> Result<(), MigrationError> {
@@ -169,7 +164,6 @@ impl MigrationService {
             .iter()
             .enumerate()
             .map(|(i, p)| MigrateProjectRequest {
-                organization_id,
                 name: p.name.clone(),
                 color: generate_hsl_color(i),
                 created_at: p.created_at,

@@ -9,8 +9,8 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use super::{
+    access::ensure_project_access,
     error::{ErrorResponse, db_error},
-    organization_members::ensure_project_access,
 };
 use api_types::{DeleteWorkspaceRequest, UpdateWorkspaceRequest, Workspace};
 use crate::{
