@@ -13,7 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -129,15 +128,21 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
     const baseProfile = system.config?.executor_profile || null;
 
     switch (mode) {
-      case 'edit':
+      case 'edit': {
+        // Merge title into description so the editor is the single source of truth
+        const existingDesc = props.task.description || '';
+        const mergedDescription = existingDesc
+          ? `${props.task.title}\n${existingDesc}`
+          : props.task.title;
         return {
-          title: props.task.title,
-          description: props.task.description || '',
+          title: '',
+          description: mergedDescription,
           status: props.task.status,
           executorProfileId: baseProfile,
           repoBranches: defaultRepoBranches,
           autoStart: false,
         };
+      }
 
       case 'duplicate':
         return {
@@ -166,12 +171,15 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
   // Form submission handler
   const handleSubmit = async ({ value }: { value: TaskFormValues }) => {
     if (editMode) {
+      const { title: extractedTitle, description: extractedDescription } =
+        splitMessageToTitleDescription(value.description);
+      const normalizedTitle = extractedTitle || value.description.trim();
       await updateTask.mutateAsync(
         {
           taskId: props.task.id,
           data: {
-            title: value.title,
-            description: value.description,
+            title: normalizedTitle,
+            description: extractedDescription,
             status: value.status,
             parent_workspace_id: null,
             image_ids: images.length > 0 ? images.map((img) => img.id) : null,
@@ -216,9 +224,7 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
   };
 
   const validator = (value: TaskFormValues): string | undefined => {
-    if (editMode) {
-      if (!value.title.trim().length) return 'need title';
-    } else {
+    {
       const { title: descriptionTitle } = splitMessageToTitleDescription(
         value.description
       );
@@ -351,10 +357,6 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
   const canSubmitAlt = useStore(
     form.store,
     (state) => {
-      if (editMode) {
-        return state.values.title.trim().length > 0 && !state.isSubmitting;
-      }
-
       const { title: descriptionTitle } = splitMessageToTitleDescription(
         state.values.description
       );
@@ -444,23 +446,6 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
             </div>
           )}
 
-          {/* Title (edit only) */}
-          {editMode && (
-            <form.Field name="title">
-              {(field) => (
-                <Input
-                  id="task-title"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder={t('taskFormDialog.titlePlaceholder')}
-                  disabled={isSubmitting}
-                  className="text-base"
-                  autoFocus
-                />
-              )}
-            </form.Field>
-          )}
-
           {/* Description */}
           <form.Field name="description">
             {(field) => (
@@ -471,7 +456,7 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
                   value={field.state.value}
                   onChange={(desc) => field.handleChange(desc)}
                   disabled={isSubmitting}
-                  autoFocus={!editMode}
+                  autoFocus
                   repoIds={projectRepos.map((r) => r.id)}
                   projectId={projectId}
                   onPasteFiles={onDrop}
