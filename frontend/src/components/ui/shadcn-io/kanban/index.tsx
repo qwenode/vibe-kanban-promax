@@ -194,7 +194,8 @@ export const KanbanHeader = (props: KanbanHeaderProps) => {
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                className="m-0 p-0 h-0 text-destructive/60 hover:text-destructive"
+                size="icon"
+                className="h-7 w-7 text-destructive/60 hover:text-destructive"
                 onClick={props.onClearColumn}
                 disabled={props.clearDisabled}
                 aria-label={clearLabel}
@@ -209,7 +210,8 @@ export const KanbanHeader = (props: KanbanHeaderProps) => {
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              className="m-0 p-0 h-0 text-foreground/50 hover:text-foreground"
+              size="icon"
+              className="h-7 w-7 text-foreground/50 hover:text-foreground"
               onClick={props.onAddTask}
               aria-label={t('actions.addTask')}
             >
