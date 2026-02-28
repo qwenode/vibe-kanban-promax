@@ -19,6 +19,8 @@ use db::models::{
     workspace::{CreateWorkspace, Workspace},
     workspace_repo::{CreateWorkspaceRepo, WorkspaceRepo},
 };
+use git::GitService;
+};
 use deployment::Deployment;
 use executors::profile::ExecutorProfileId;
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
@@ -309,10 +311,15 @@ pub async fn delete_task(
 
     let repositories = WorkspaceRepo::find_unique_repos_for_task(pool, task.id).await?;
 
-    // Collect workspace directories that need cleanup
+    // Collect workspace directories and branch names that need cleanup
     let workspace_dirs: Vec<PathBuf> = attempts
         .iter()
         .filter_map(|attempt| attempt.container_ref.as_ref().map(PathBuf::from))
+        .collect();
+
+    let workspace_branches: Vec<String> = attempts
+        .iter()
+        .map(|attempt| attempt.branch.clone())
         .collect();
 
     // Use a transaction to ensure atomicity: either all operations succeed or all are rolled back
@@ -386,6 +393,31 @@ pub async fn delete_task(
                 tracing::error!("Failed to delete orphaned repos: {}", e);
             }
             _ => {}
+        }
+
+        // Clean up git branches (vk/... or custom prefix) for each workspace
+        let git_service = GitService::new();
+        let repo_paths: Vec<PathBuf> = repositories.iter().map(|r| r.path.clone()).collect();
+        for branch_name in &workspace_branches {
+            for repo_path in &repo_paths {
+                match git_service.delete_branch(repo_path, branch_name) {
+                    Ok(()) => {
+                        tracing::info!(
+                            "Deleted branch '{}' from repo {:?}",
+                            branch_name,
+                            repo_path
+                        );
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            "Failed to delete branch '{}' from repo {:?}: {}",
+                            branch_name,
+                            repo_path,
+                            e
+                        );
+                    }
+                }
+            }
         }
 
         tracing::info!("Background cleanup completed for task {}", task_id);
