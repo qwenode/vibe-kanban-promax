@@ -12,9 +12,16 @@
       "default": null
     },
     "model": {
+      "title": "Model",
+      "description": "Model to use for Auggie",
       "type": [
         "string",
         "null"
+      ],
+      "enum": [
+        "claude-opus-4-6",
+        "gpt-5.2",
+        null
       ]
     },
     "base_command_override": {
