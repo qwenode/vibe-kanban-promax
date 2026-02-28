@@ -326,7 +326,7 @@ export function ProjectTasks() {
     }
   }, [doneTasks]);
 
-  useKeyCreate(handleCreateNewTask, {
+  useKeyCreate(() => handleCreateNewTask(), {
     scope: Scope.KANBAN,
     preventDefault: true,
   });
@@ -736,7 +736,7 @@ export function ProjectTasks() {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-muted-foreground">{t('empty.noTasks')}</p>
-            <Button className="mt-4" onClick={handleCreateNewTask}>
+            <Button className="mt-4" onClick={() => handleCreateNewTask()}>
               <Plus className="h-4 w-4 mr-2" />
               {t('empty.createFirst')}
             </Button>

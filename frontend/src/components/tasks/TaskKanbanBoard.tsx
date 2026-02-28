@@ -23,9 +23,6 @@ interface TaskKanbanBoardProps {
   projectId: string;
 }
 
-/** Statuses that are NOT merged into the combined column */
-const STANDALONE_STATUSES: TaskStatus[] = ['todo', 'done', 'cancelled'];
-
 function renderColumn(
   statusKey: TaskStatus,
   tasks: TaskWithAttemptStatus[],
