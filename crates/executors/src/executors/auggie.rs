@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use derivative::Derivative;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use strum_macros::AsRefStr;
 use ts_rs::TS;
 use workspace_utils::msg_store::MsgStore;
 
@@ -17,13 +18,27 @@ use crate::{
     },
 };
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS, JsonSchema, AsRefStr)]
+#[serde(rename_all = "kebab-case")]
+#[strum(serialize_all = "kebab-case")]
+#[ts(rename = "AuggieModel")]
+pub enum AuggieModel {
+    #[serde(rename = "claude-opus-4-6")]
+    #[strum(serialize = "opus4.6")]
+    ClaudeOpus46,
+    #[serde(rename = "gpt-5.2")]
+    #[strum(serialize = "gpt5.2")]
+    Gpt52,
+}
+
 #[derive(Derivative, Clone, Serialize, Deserialize, TS, JsonSchema)]
 #[derivative(Debug, PartialEq)]
 pub struct Auggie {
     #[serde(default)]
     pub append_prompt: AppendPrompt,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub model: Option<String>,
+    #[schemars(title = "Model", description = "Model to use for Auggie")]
+    pub model: Option<AuggieModel>,
     #[serde(flatten)]
     pub cmd: CmdOverrides,
     #[serde(skip)]
@@ -37,7 +52,7 @@ impl Auggie {
         let mut builder = CommandBuilder::new("auggie");
 
         if let Some(model) = &self.model {
-            builder = builder.extend_params(["--model", model.as_str()]);
+            builder = builder.extend_params(["--model", model.as_ref()]);
         }
 
         builder = builder.extend_params(["--acp"]);
