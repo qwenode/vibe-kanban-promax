@@ -1181,52 +1181,31 @@ export const approvalsApi = {
   },
 };
 
-// OAuth API
+// OAuth API (login removed - stubs only)
 export const oauthApi = {
   handoffInit: async (
-    provider: string,
-    returnTo: string
+    _provider: string,
+    _returnTo: string
   ): Promise<{ handoff_id: string; authorize_url: string }> => {
-    const response = await makeRequest('/api/auth/handoff/init', {
-      method: 'POST',
-      body: JSON.stringify({ provider, return_to: returnTo }),
-    });
-    return handleApiResponse<{ handoff_id: string; authorize_url: string }>(
-      response
-    );
+    throw new Error('Login has been removed');
   },
 
   status: async (): Promise<StatusResponse> => {
-    const response = await makeRequest('/api/auth/status', {
-      cache: 'no-store',
-    });
-    return handleApiResponse<StatusResponse>(response);
+    return { logged_in: false, profile: null, degraded: null };
   },
 
   logout: async (): Promise<void> => {
-    const response = await makeRequest('/api/auth/logout', {
-      method: 'POST',
-    });
-    if (!response.ok) {
-      throw new ApiError(
-        `Logout failed with status ${response.status}`,
-        response.status,
-        response
-      );
-    }
+    // no-op
   },
 
   /** Returns the current access token for the remote server (auto-refreshes if needed) */
   getToken: async (): Promise<TokenResponse | null> => {
-    const response = await makeRequest('/api/auth/token');
-    if (!response.ok) return null;
-    return handleApiResponse<TokenResponse>(response);
+    return null;
   },
 
   /** Returns the user ID of the currently authenticated user */
   getCurrentUser: async (): Promise<CurrentUserResponse> => {
-    const response = await makeRequest('/api/auth/user');
-    return handleApiResponse<CurrentUserResponse>(response);
+    throw new Error('Login has been removed');
   },
 };
 

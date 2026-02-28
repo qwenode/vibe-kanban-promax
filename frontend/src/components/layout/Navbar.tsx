@@ -21,8 +21,6 @@ import {
   MessageCircle,
   Menu,
   Plus,
-  LogOut,
-  LogIn,
   ChevronDown,
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
@@ -42,9 +40,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { OAuthDialog } from '@/components/dialogs/global/OAuthDialog';
-import { useUserSystem } from '@/components/ConfigProvider';
-import { oauthApi } from '@/lib/api';
 
 const INTERNAL_NAV = [
   { label: 'Projects', icon: FolderOpen, to: '/local-projects' },
@@ -86,7 +81,6 @@ export function Navbar() {
   const { query, setQuery, active, clear, registerInputRef } = useSearch();
   const handleOpenInEditor = useOpenProjectInEditor(project || null);
   const { projects } = useProjects();
-  const { loginStatus, reloadSystem } = useUserSystem();
 
   const { data: repos } = useProjectRepos(projectId);
   const isSingleRepoProject = repos?.length === 1;
@@ -135,7 +129,9 @@ export function Navbar() {
         return;
       }
 
-      const pathMatch = location.pathname.match(/^\/local-projects\/[^/]+(\/.*)?$/);
+      const pathMatch = location.pathname.match(
+        /^\/local-projects\/[^/]+(\/.*)?$/
+      );
       if (pathMatch) {
         const suffix = pathMatch[1] ?? '';
         if (suffix.startsWith('/tasks')) {
@@ -151,24 +147,6 @@ export function Navbar() {
     },
     [location.pathname, location.search, navigate, projectId]
   );
-
-  const handleOpenOAuth = async () => {
-    const profile = await OAuthDialog.show();
-    if (profile) {
-      await reloadSystem();
-    }
-  };
-
-  const handleOAuthLogout = async () => {
-    try {
-      await oauthApi.logout();
-      await reloadSystem();
-    } catch (err) {
-      console.error('Error logging out:', err);
-    }
-  };
-
-  const isOAuthLoggedIn = loginStatus?.status === 'loggedin';
 
   return (
     <div className="border-b bg-background">
@@ -222,7 +200,7 @@ export function Navbar() {
           </div>
 
           <div className="flex flex-1 items-center justify-end gap-1">
-            {isOAuthLoggedIn && shouldShowSharedToggle ? (
+            {shouldShowSharedToggle ? (
               <>
                 <div className="flex items-center gap-4">
                   <TooltipProvider>
@@ -268,14 +246,6 @@ export function Navbar() {
                 <NavDivider />
               </>
             ) : null}
-
-            {/* <Button variant="ghost" size="sm" className="h-9 gap-1.5" asChild>
-              <Link to="/workspaces">
-                <Sparkles className="h-4 w-4" />
-                {t('common:navbar.tryNewUI')}
-              </Link>
-            </Button>
-            <NavDivider /> */}
 
             <div className="flex items-center gap-1">
               <Button
@@ -343,20 +313,6 @@ export function Navbar() {
                       </DropdownMenuItem>
                     );
                   })}
-
-                  <DropdownMenuSeparator />
-
-                  {isOAuthLoggedIn ? (
-                    <DropdownMenuItem onSelect={handleOAuthLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      {t('common:signOut')}
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onSelect={handleOpenOAuth}>
-                      <LogIn className="mr-2 h-4 w-4" />
-                      {t('common:signIn')}
-                    </DropdownMenuItem>
-                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

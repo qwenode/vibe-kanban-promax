@@ -22,9 +22,6 @@ import { useOrganizationSelection } from '@/hooks/useOrganizationSelection';
 import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';
 import { useOrganizationInvitations } from '@/hooks/useOrganizationInvitations';
 import { useOrganizationMutations } from '@/hooks/useOrganizationMutations';
-import { useUserSystem } from '@/components/ConfigProvider';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { LoginRequiredPrompt } from '@/components/dialogs/shared/LoginRequiredPrompt';
 import { CreateOrganizationDialog } from '@/components/dialogs/org/CreateOrganizationDialog';
 import { InviteMemberDialog } from '@/components/dialogs/org/InviteMemberDialog';
 import type {
@@ -39,8 +36,6 @@ import { useTranslation } from 'react-i18next';
 
 export function OrganizationSettings() {
   const { t } = useTranslation('organization');
-  const { loginStatus } = useUserSystem();
-  const { isSignedIn, isLoaded } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -66,8 +61,7 @@ export function OrganizationSettings() {
   const currentUserRole = selectedOrg?.user_role;
   const isAdmin = currentUserRole === MemberRoleEnum.ADMIN;
   const isPersonalOrg = selectedOrg?.is_personal ?? false;
-  const currentUserId =
-    loginStatus?.status === 'loggedin' ? loginStatus.profile.user_id : null;
+  const currentUserId = null;
 
   // Fetch members using query hook
   const { data: members = [], isLoading: loadingMembers } =
@@ -202,23 +196,11 @@ export function OrganizationSettings() {
     deleteOrganization.mutate(selectedOrgId);
   };
 
-  if (!isLoaded || orgsLoading) {
+  if (orgsLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin" />
         <span className="ml-2">{t('settings.loadingOrganizations')}</span>
-      </div>
-    );
-  }
-
-  if (!isSignedIn) {
-    return (
-      <div className="py-8">
-        <LoginRequiredPrompt
-          title={t('loginRequired.title')}
-          description={t('loginRequired.description')}
-          actionLabel={t('loginRequired.action')}
-        />
       </div>
     );
   }

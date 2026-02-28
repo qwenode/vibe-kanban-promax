@@ -8,7 +8,6 @@ import {
 import { useShape } from '@/lib/electric/hooks';
 import { USER_WORKSPACES_SHAPE, type Workspace } from 'shared/remote-types';
 import type { SyncError } from '@/lib/electric/types';
-import { useAuth } from '@/hooks/auth/useAuth';
 
 /**
  * UserContext provides user-scoped data.
@@ -36,11 +35,9 @@ interface UserProviderProps {
 }
 
 export function UserProvider({ children }: UserProviderProps) {
-  const { isSignedIn } = useAuth();
-
   // No params needed - backend gets user from auth context
   const params = useMemo(() => ({}), []);
-  const enabled = isSignedIn;
+  const enabled = false;
 
   // Shape subscriptions
   const workspacesResult = useShape(USER_WORKSPACES_SHAPE, params, { enabled });

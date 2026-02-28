@@ -20,7 +20,7 @@ use services::services::{
     pr_monitor::PrMonitorService,
     project::ProjectService,
     queued_message::QueuedMessageService,
-    remote_client::{RemoteClient, RemoteClientError},
+    remote_client::RemoteClient,
     repo::RepoService,
     worktree_manager::WorktreeManager,
 };
@@ -291,33 +291,7 @@ impl LocalDeployment {
     }
 
     pub async fn get_login_status(&self) -> LoginStatus {
-        if self.auth_context.get_credentials().await.is_none() {
-            self.auth_context.clear_profile().await;
-            return LoginStatus::LoggedOut;
-        };
-
-        if let Some(cached_profile) = self.auth_context.cached_profile().await {
-            return LoginStatus::LoggedIn {
-                profile: cached_profile,
-            };
-        }
-
-        let Ok(client) = self.remote_client() else {
-            return LoginStatus::LoggedOut;
-        };
-
-        match client.profile().await {
-            Ok(profile) => {
-                self.auth_context.set_profile(profile.clone()).await;
-                LoginStatus::LoggedIn { profile }
-            }
-            Err(RemoteClientError::Auth) => {
-                let _ = self.auth_context.clear_credentials().await;
-                self.auth_context.clear_profile().await;
-                LoginStatus::LoggedOut
-            }
-            Err(_) => LoginStatus::LoggedOut,
-        }
+        LoginStatus::LoggedOut
     }
 
     pub async fn store_oauth_handoff(

@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { TaskWithAttemptStatus, Workspace } from 'shared/types';
 import { Loader2 } from 'lucide-react';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
-import { useAuth, useRepoBranches } from '@/hooks';
+import { useRepoBranches } from '@/hooks';
 import {
   GhCliHelpInstructions,
   GhCliSetupDialog,
@@ -50,7 +50,7 @@ const CreatePRDialogImpl = NiceModal.create<CreatePRDialogProps>(
   ({ attempt, task, repoId, targetBranch }) => {
     const modal = useModal();
     const { t } = useTranslation('tasks');
-    const { isLoaded } = useAuth();
+    const isLoaded = true; // Login removed
     const { environment, config } = useUserSystem();
     const [prTitle, setPrTitle] = useState('');
     const [prBody, setPrBody] = useState('');
