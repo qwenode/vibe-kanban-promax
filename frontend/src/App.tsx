@@ -7,7 +7,6 @@ import { ProjectTasks } from '@/pages/ProjectTasks';
 import { FullAttemptLogsPage } from '@/pages/FullAttemptLogs';
 import { Migration } from '@/pages/Migration';
 import { NormalLayout } from '@/components/layout/NormalLayout';
-import { SharedAppLayout } from '@/components/ui-new/containers/SharedAppLayout';
 import { usePostHog } from 'posthog-js/react';
 import { useAuth } from '@/hooks';
 import { usePreviousPath } from '@/hooks/usePreviousPath';
@@ -39,17 +38,6 @@ import { ClickedElementsProvider } from './contexts/ClickedElementsProvider';
 
 // Design scope components
 import { LegacyDesignScope } from '@/components/legacy-design/LegacyDesignScope';
-import { NewDesignScope } from '@/components/ui-new/scope/NewDesignScope';
-import { VSCodeScope } from '@/components/ui-new/scope/VSCodeScope';
-import { TerminalProvider } from '@/contexts/TerminalContext';
-
-// New design pages
-import { Workspaces } from '@/pages/ui-new/Workspaces';
-import { VSCodeWorkspacePage } from '@/pages/ui-new/VSCodeWorkspacePage';
-import { WorkspacesLanding } from '@/pages/ui-new/WorkspacesLanding';
-import { ElectricTestPage } from '@/pages/ui-new/ElectricTestPage';
-import { ProjectKanban } from '@/pages/ui-new/ProjectKanban';
-import { MigratePage } from '@/pages/ui-new/MigratePage';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -189,65 +177,20 @@ function AppContent() {
                 path="/local-projects/:projectId/tasks/:taskId/attempts/:attemptId"
                 element={<ProjectTasks />}
               />
-            </Route>
 
-            {/* ========== NEW DESIGN ROUTES ========== */}
-            {/* VS Code workspace route (standalone, no layout, no keyboard shortcuts) */}
-            <Route
-              path="/workspaces/:workspaceId/vscode"
-              element={
-                <VSCodeScope>
-                  <TerminalProvider>
-                    <VSCodeWorkspacePage />
-                  </TerminalProvider>
-                </VSCodeScope>
-              }
-            />
-
-            {/* Unified layout for workspaces and projects - AppBar/Navbar rendered once */}
-            <Route
-              element={
-                <NewDesignScope>
-                  <TerminalProvider>
-                    <SharedAppLayout />
-                  </TerminalProvider>
-                </NewDesignScope>
-              }
-            >
-              {/* Workspaces routes */}
-              <Route path="/workspaces" element={<WorkspacesLanding />} />
-              <Route path="/workspaces/create" element={<Workspaces />} />
+              {/* Redirect disabled new UI routes back to legacy UI */}
               <Route
-                path="/workspaces/electric-test"
-                element={<ElectricTestPage />}
-              />
-              <Route path="/workspaces/:workspaceId" element={<Workspaces />} />
-
-              {/* Projects routes */}
-              <Route path="/projects/:projectId" element={<ProjectKanban />} />
-              <Route
-                path="/projects/:projectId/issues/new"
-                element={<ProjectKanban />}
+                path="/workspaces/*"
+                element={<Navigate to="/local-projects" replace />}
               />
               <Route
-                path="/projects/:projectId/issues/:issueId"
-                element={<ProjectKanban />}
+                path="/projects/*"
+                element={<Navigate to="/local-projects" replace />}
               />
               <Route
-                path="/projects/:projectId/issues/:issueId/workspaces/:workspaceId"
-                element={<ProjectKanban />}
+                path="/migrate"
+                element={<Navigate to="/migration" replace />}
               />
-              <Route
-                path="/projects/:projectId/issues/:issueId/workspaces/create/:draftId"
-                element={<ProjectKanban />}
-              />
-              <Route
-                path="/projects/:projectId/workspaces/create/:draftId"
-                element={<ProjectKanban />}
-              />
-
-              {/* Migration route */}
-              <Route path="/migrate" element={<MigratePage />} />
             </Route>
           </SentryRoutes>
         </SearchProvider>
