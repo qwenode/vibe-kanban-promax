@@ -97,7 +97,7 @@
   },
   "oauth": {
     "title": "登录 Vibe Kanban",
-    "description": "登录以加入组织并与团队共享任务",
+    "description": "登录以与团队共享任务",
     "continueWithGitHub": "使用 GitHub 继续",
     "continueWithGoogle": "使用 Google 继续",
     "waitingTitle": "完成身份验证",
@@ -346,7 +346,7 @@
     "noStatusesFound": "未找到此项目的状态",
     "noVisibleStatuses": "所有状态已隐藏。请使用显示设置或切换到其他标签页查看问题。",
     "noProjectFound": "未找到项目",
-    "noOrganizationFound": "未找到组织",
+
     "unassigned": "未分配",
     "noTagsAvailable": "无可用标签",
     "createNewIssue": "创建新问题",

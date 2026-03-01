@@ -15,20 +15,6 @@ use tracing::{Level, Span, field};
 
 use crate::{AppState, auth::require_session};
 
-#[cfg(feature = "vk-billing")]
-mod billing;
-#[cfg(not(feature = "vk-billing"))]
-mod billing {
-    use axum::Router;
-
-    use crate::AppState;
-    pub fn public_router() -> Router<AppState> {
-        Router::new()
-    }
-    pub fn protected_router() -> Router<AppState> {
-        Router::new()
-    }
-}
 pub(crate) mod access;
 mod electric_proxy;
 pub(crate) mod error;
@@ -103,8 +89,7 @@ pub fn router(state: AppState) -> Router {
         .merge(oauth::public_router())
         .merge(tokens::public_router())
         .merge(review::public_router())
-        .merge(github_app::public_router())
-        .merge(billing::public_router());
+        .merge(github_app::public_router());
 
     let v1_protected = Router::<AppState>::new()
         .merge(identity::router())
@@ -124,7 +109,6 @@ pub fn router(state: AppState) -> Router {
         .merge(pull_requests::router())
         .merge(notifications::router())
         .merge(workspaces::router())
-        .merge(billing::protected_router())
         .merge(migration::router())
         .layer(middleware::from_fn_with_state(
             state.clone(),

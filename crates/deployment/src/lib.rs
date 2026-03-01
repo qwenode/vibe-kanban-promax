@@ -15,9 +15,7 @@ use executors::executors::ExecutorError;
 use futures::{StreamExt, TryStreamExt};
 use git::{GitService, GitServiceError};
 use git2::Error as Git2Error;
-use serde_json::Value;
 use services::services::{
-    analytics::AnalyticsService,
     approvals::Approvals,
     auth::AuthContext,
     config::{Config, ConfigError},
@@ -36,7 +34,6 @@ use services::services::{
 use sqlx::Error as SqlxError;
 use thiserror::Error;
 use tokio::sync::RwLock;
-use utils::sentry as sentry_utils;
 
 #[derive(Debug, Clone, Copy, Error)]
 #[error("Remote client not configured")]
@@ -86,8 +83,6 @@ pub trait Deployment: Clone + Send + Sync + 'static {
 
     fn db(&self) -> &DBService;
 
-    fn analytics(&self) -> &Option<AnalyticsService>;
-
     fn container(&self) -> &impl ContainerService;
 
     fn git(&self) -> &GitService;
@@ -112,24 +107,6 @@ pub trait Deployment: Clone + Send + Sync + 'static {
 
     fn remote_client(&self) -> Result<RemoteClient, RemoteClientNotConfigured> {
         Err(RemoteClientNotConfigured)
-    }
-
-    async fn update_sentry_scope(&self) -> Result<(), DeploymentError> {
-        let user_id = self.user_id();
-        let config = self.config().read().await;
-        let username = config.github.username.as_deref();
-        let email = config.github.primary_email.as_deref();
-        sentry_utils::configure_user_scope(user_id, username, email);
-
-        Ok(())
-    }
-
-    async fn track_if_analytics_allowed(&self, event_name: &str, properties: Value) {
-        let analytics_enabled = self.config().read().await.analytics_enabled;
-        // Track events unless user has explicitly opted out
-        if analytics_enabled && let Some(analytics) = self.analytics() {
-            analytics.track_event(self.user_id(), event_name, Some(properties.clone()));
-        }
     }
 
     /// Trigger background auto-setup of default projects for new users
@@ -173,17 +150,6 @@ pub trait Deployment: Clone + Send + Sync + 'static {
                                 project.name,
                                 repo_path
                             );
-
-                            // Track project creation event
-                            self.track_if_analytics_allowed(
-                                "project_created",
-                                serde_json::json!({
-                                    "project_id": project.id.to_string(),
-                                    "repository_count": 1,
-                                    "trigger": "auto_setup",
-                                }),
-                            )
-                            .await;
                         }
                         Err(e) => {
                             tracing::warn!(

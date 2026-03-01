@@ -23,7 +23,6 @@ interface UserSystemState {
   environment: Environment | null;
   profiles: Record<string, ExecutorConfig> | null;
   capabilities: Record<string, BaseAgentCapability[]> | null;
-  analyticsUserId: string | null;
   loginStatus: LoginStatus | null;
 }
 
@@ -41,7 +40,6 @@ interface UserSystemContextType {
   environment: Environment | null;
   profiles: Record<string, ExecutorConfig> | null;
   capabilities: Record<string, BaseAgentCapability[]> | null;
-  analyticsUserId: string | null;
   loginStatus: LoginStatus | null;
   setEnvironment: (env: Environment | null) => void;
   setProfiles: (profiles: Record<string, ExecutorConfig> | null) => void;
@@ -73,7 +71,6 @@ export function UserSystemProvider({ children }: UserSystemProviderProps) {
 
   const config = userSystemInfo?.config || null;
   const environment = userSystemInfo?.environment || null;
-  const analyticsUserId = userSystemInfo?.analytics_user_id || null;
   const loginStatus = userSystemInfo?.login_status || null;
   const profiles =
     (userSystemInfo?.executors as Record<string, ExecutorConfig> | null) ||
@@ -186,14 +183,12 @@ export function UserSystemProvider({ children }: UserSystemProviderProps) {
         environment,
         profiles,
         capabilities,
-        analyticsUserId,
         loginStatus,
       },
       config,
       environment,
       profiles,
       capabilities,
-      analyticsUserId,
       loginStatus,
       updateConfig,
       saveConfig,
@@ -209,7 +204,6 @@ export function UserSystemProvider({ children }: UserSystemProviderProps) {
       environment,
       profiles,
       capabilities,
-      analyticsUserId,
       loginStatus,
       updateConfig,
       saveConfig,

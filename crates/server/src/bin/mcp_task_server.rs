@@ -3,7 +3,6 @@ use server::mcp::task_server::TaskServer;
 use tracing_subscriber::{EnvFilter, prelude::*};
 use utils::{
     port_file::read_port_file,
-    sentry::{self as sentry_utils, SentrySource, sentry_layer},
 };
 
 fn main() -> anyhow::Result<()> {
@@ -12,7 +11,6 @@ fn main() -> anyhow::Result<()> {
         .install_default()
         .expect("Failed to install rustls crypto provider");
 
-    sentry_utils::init_once(SentrySource::Mcp);
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
@@ -24,7 +22,6 @@ fn main() -> anyhow::Result<()> {
                         .with_writer(std::io::stderr)
                         .with_filter(EnvFilter::new("debug")),
                 )
-                .with(sentry_layer())
                 .init();
 
             let version = env!("CARGO_PKG_VERSION");

@@ -334,16 +334,6 @@ pub async fn create_pr(
                 tracing::warn!("Failed to open PR in browser: {}", e);
             }
 
-            deployment
-                .track_if_analytics_allowed(
-                    "pr_created",
-                    serde_json::json!({
-                        "workspace_id": workspace.id.to_string(),
-                        "provider": format!("{:?}", provider),
-                    }),
-                )
-                .await;
-
             // Trigger auto-description follow-up if enabled
             if request.auto_generate_description
                 && let Err(e) = trigger_pr_description_follow_up(
@@ -783,19 +773,6 @@ pub async fn create_workspace_from_pr(
             }
         }
     }
-
-    deployment
-        .track_if_analytics_allowed(
-            "workspace_created_from_pr",
-            serde_json::json!({
-                "task_id": task.id.to_string(),
-                "workspace_id": workspace.id.to_string(),
-                "project_id": project_id.to_string(),
-                "pr_number": payload.pr_number,
-                "run_setup": payload.run_setup,
-            }),
-        )
-        .await;
 
     tracing::info!(
         "Created workspace {} from PR #{} for task {}",

@@ -1,5 +1,4 @@
 // vite.config.ts
-import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { createLogger, defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
@@ -117,7 +116,6 @@ export default defineConfig({
         ],
       },
     }),
-    sentryVitePlugin({ org: 'bloop-ai', project: 'vibe-kanban' }),
     executorSchemasPlugin(),
   ],
   resolve: {

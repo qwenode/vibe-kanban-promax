@@ -1,13 +1,8 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import InvitationPage from "./pages/InvitationPage";
-import InvitationCompletePage from "./pages/InvitationCompletePage";
 import ReviewPage from "./pages/ReviewPage";
 import AccountPage from "./pages/AccountPage";
 import AccountCompletePage from "./pages/AccountCompletePage";
-import UpgradePage from "./pages/UpgradePage";
-import UpgradeCompletePage from "./pages/UpgradeCompletePage";
-import UpgradeSuccessPage from "./pages/UpgradeSuccessPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 const router = createBrowserRouter([
@@ -20,32 +15,12 @@ const router = createBrowserRouter([
     element: <ReviewPage />,
   },
   {
-    path: "/invitations/:token/accept",
-    element: <InvitationPage />,
-  },
-  {
-    path: "/invitations/:token/complete",
-    element: <InvitationCompletePage />,
-  },
-  {
     path: "/account",
     element: <AccountPage />,
   },
   {
     path: "/account/complete",
     element: <AccountCompletePage />,
-  },
-  {
-    path: "/upgrade",
-    element: <UpgradePage />,
-  },
-  {
-    path: "/upgrade/complete",
-    element: <UpgradeCompletePage />,
-  },
-  {
-    path: "/upgrade/success",
-    element: <UpgradeSuccessPage />,
   },
   {
     path: "*",

@@ -97,7 +97,7 @@
   },
   "oauth": {
     "title": "Sign in to Vibe Kanban",
-    "description": "Sign in to join organizations and share tasks with your team",
+    "description": "Sign in to share tasks with your team",
     "continueWithGitHub": "Continue with GitHub",
     "continueWithGoogle": "Continue with Google",
     "waitingTitle": "Complete Authentication",
@@ -346,7 +346,7 @@
     "noStatusesFound": "No statuses found for this project",
     "noVisibleStatuses": "All statuses are hidden. Use display settings or switch to another tab to view issues.",
     "noProjectFound": "No project found",
-    "noOrganizationFound": "No organization found",
+
     "unassigned": "Unassigned",
     "noTagsAvailable": "No tags available",
     "createNewIssue": "Create new issue",

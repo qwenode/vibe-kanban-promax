@@ -123,7 +123,6 @@ export function useKanbanNavigation() {
       if (!projectId || !isCreateMode) return;
 
       const params = new URLSearchParams(searchParams);
-      params.delete('orgId');
       if (options.statusId !== undefined) {
         params.set('statusId', options.statusId);
       }

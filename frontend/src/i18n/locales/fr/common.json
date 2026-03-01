@@ -97,7 +97,7 @@
   },
   "oauth": {
     "title": "Se connecter à Vibe Kanban",
-    "description": "Connectez-vous pour rejoindre des organisations et partager des tâches avec votre équipe",
+    "description": "Connectez-vous pour partager des tâches avec votre équipe",
     "continueWithGitHub": "Continuer avec GitHub",
     "continueWithGoogle": "Continuer avec Google",
     "waitingTitle": "Terminer l'authentification",
@@ -346,7 +346,7 @@
     "noStatusesFound": "Aucun statut trouvé pour ce projet",
     "noVisibleStatuses": "Tous les statuts sont masqués. Utilisez les paramètres d'affichage ou changez d'onglet pour voir les problèmes.",
     "noProjectFound": "Aucun projet trouvé",
-    "noOrganizationFound": "Aucune organisation trouvée",
+
     "unassigned": "Non assigné",
     "noTagsAvailable": "Aucun tag disponible",
     "createNewIssue": "Créer un nouveau ticket",

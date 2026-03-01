@@ -237,44 +237,5 @@ export async function logout(): Promise<void> {
   }
 }
 
-// Invitation types
-export type Invitation = {
-  id: string;
-  organization_slug: string;
-  organization_name: string;
-  role: string;
-  expires_at: string;
-};
 
-export type AcceptInvitationResponse = {
-  organization_id: string;
-  organization_slug: string;
-  role: string;
-};
-
-// Invitation APIs
-export async function getInvitation(token: string): Promise<Invitation> {
-  const res = await fetch(`${API_BASE}/v1/invitations/${token}`);
-  if (!res.ok) {
-    throw new Error(`Invitation not found (${res.status})`);
-  }
-  return res.json();
-}
-
-export async function acceptInvitation(
-  token: string,
-  accessToken: string,
-): Promise<AcceptInvitationResponse> {
-  const res = await fetch(`${API_BASE}/v1/invitations/${token}/accept`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to accept invitation (${res.status})`);
-  }
-  return res.json();
-}
 

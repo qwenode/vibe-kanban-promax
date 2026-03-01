@@ -25,7 +25,6 @@ function bytesToHex(bytes: Uint8Array): string {
 }
 
 const VERIFIER_KEY = "oauth_verifier";
-const TOKEN_KEY = "invitation_token";
 
 export function storeVerifier(verifier: string): void {
   sessionStorage.setItem(VERIFIER_KEY, verifier);
@@ -37,16 +36,4 @@ export function retrieveVerifier(): string | null {
 
 export function clearVerifier(): void {
   sessionStorage.removeItem(VERIFIER_KEY);
-}
-
-export function storeInvitationToken(token: string): void {
-  sessionStorage.setItem(TOKEN_KEY, token);
-}
-
-export function retrieveInvitationToken(): string | null {
-  return sessionStorage.getItem(TOKEN_KEY);
-}
-
-export function clearInvitationToken(): void {
-  sessionStorage.removeItem(TOKEN_KEY);
 }

@@ -1,4 +1,8 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{HashMap, hash_map::DefaultHasher},
+    hash::{Hash, Hasher},
+    sync::Arc,
+};
 
 use api_types::LoginStatus;
 use async_trait::async_trait;
@@ -7,7 +11,6 @@ use deployment::{Deployment, DeploymentError, RemoteClientNotConfigured};
 use executors::profile::ExecutorConfigs;
 use git::GitService;
 use services::services::{
-    analytics::{AnalyticsConfig, AnalyticsContext, AnalyticsService, generate_user_id},
     approvals::Approvals,
     auth::AuthContext,
     config::{Config, load_config_from_file, save_config_to_file},
@@ -42,7 +45,6 @@ pub struct LocalDeployment {
     config: Arc<RwLock<Config>>,
     user_id: String,
     db: DBService,
-    analytics: Option<AnalyticsService>,
     container: LocalContainerService,
     git: GitService,
     project: ProjectService,
@@ -99,7 +101,6 @@ impl Deployment for LocalDeployment {
 
         let config = Arc::new(RwLock::new(raw_config));
         let user_id = generate_user_id();
-        let analytics = AnalyticsConfig::new().map(AnalyticsService::new);
         let git = GitService::new();
         let project = ProjectService::new();
         let repo = RepoService::new();
@@ -165,19 +166,12 @@ impl Deployment for LocalDeployment {
 
         let oauth_handoffs = Arc::new(RwLock::new(HashMap::new()));
 
-        // We need to make analytics accessible to the ContainerService
-        // TODO: Handle this more gracefully
-        let analytics_ctx = analytics.as_ref().map(|s| AnalyticsContext {
-            user_id: user_id.clone(),
-            analytics_service: s.clone(),
-        });
         let container = LocalContainerService::new(
             db.clone(),
             msg_stores.clone(),
             config.clone(),
             git.clone(),
             image.clone(),
-            analytics_ctx,
             approvals.clone(),
             queued_message_service.clone(),
             remote_client.clone().ok(),
@@ -191,20 +185,15 @@ impl Deployment for LocalDeployment {
         let pty = PtyService::new();
         {
             let db = db.clone();
-            let analytics = analytics.as_ref().map(|s| AnalyticsContext {
-                user_id: user_id.clone(),
-                analytics_service: s.clone(),
-            });
             let container = container.clone();
             let rc = remote_client.clone().ok();
-            PrMonitorService::spawn(db, analytics, container, rc).await;
+            PrMonitorService::spawn(db, container, rc).await;
         }
 
         let deployment = Self {
             config,
             user_id,
             db,
-            analytics,
             container,
             git,
             project,
@@ -234,10 +223,6 @@ impl Deployment for LocalDeployment {
 
     fn db(&self) -> &DBService {
         &self.db
-    }
-
-    fn analytics(&self) -> &Option<AnalyticsService> {
-        &self.analytics
     }
 
     fn container(&self) -> &impl ContainerService {
@@ -320,4 +305,55 @@ impl LocalDeployment {
     pub fn pty(&self) -> &PtyService {
         &self.pty
     }
+}
+
+/// Generates a consistent, anonymous user ID based on machine identity.
+fn generate_user_id() -> String {
+    let mut hasher = DefaultHasher::new();
+
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(output) = std::process::Command::new("ioreg")
+            .args(["-rd1", "-c", "IOPlatformExpertDevice"])
+            .output()
+        {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            if let Some(line) = stdout.lines().find(|l| l.contains("IOPlatformUUID")) {
+                line.hash(&mut hasher);
+            }
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        if let Ok(machine_id) = std::fs::read_to_string("/etc/machine-id") {
+            machine_id.trim().hash(&mut hasher);
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(output) = std::process::Command::new("powershell")
+            .args(&[
+                "-NoProfile",
+                "-Command",
+                "(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Cryptography').MachineGuid",
+            ])
+            .output()
+        {
+            if output.status.success() {
+                output.stdout.hash(&mut hasher);
+            }
+        }
+    }
+
+    if let Ok(user) = std::env::var("USER").or_else(|_| std::env::var("USERNAME")) {
+        user.hash(&mut hasher);
+    }
+
+    if let Ok(home) = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")) {
+        home.hash(&mut hasher);
+    }
+
+    format!("user_{:016x}", hasher.finish())
 }

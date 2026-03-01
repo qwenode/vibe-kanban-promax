@@ -99,8 +99,6 @@ async fn create_issue_comment(
 ) -> Result<Json<MutationResponse<IssueComment>>, ErrorResponse> {
     let _organization_id = ensure_issue_access(state.pool(), ctx.user.id, payload.issue_id).await?;
 
-    let is_reply = payload.parent_id.is_some();
-
     let response = IssueCommentRepository::create(
         state.pool(),
         payload.id,
@@ -114,18 +112,6 @@ async fn create_issue_comment(
         tracing::error!(?error, "failed to create issue comment");
         db_error(error, "failed to create issue comment")
     })?;
-
-    if let Some(analytics) = state.analytics() {
-        analytics.track(
-            ctx.user.id,
-            "issue_comment_created",
-            serde_json::json!({
-                "comment_id": response.data.id,
-                "issue_id": response.data.issue_id,
-                "is_reply": is_reply,
-            }),
-        );
-    }
 
     Ok(Json(response))
 }

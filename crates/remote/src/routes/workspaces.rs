@@ -88,17 +88,6 @@ async fn create_workspace(
             );
         }
 
-        if let Some(analytics) = state.analytics() {
-            analytics.track(
-                ctx.user.id,
-                "workspace_created_from_issue",
-                serde_json::json!({
-                    "workspace_id": workspace.id,
-                    "project_id": workspace.project_id,
-                    "issue_id": issue_id,
-                }),
-            );
-        }
     }
 
     Ok(Json(workspace))

@@ -38,7 +38,6 @@ pub struct Config {
     pub notifications: NotificationConfig,
     pub editor: EditorConfig,
     pub github: GitHubConfig,
-    pub analytics_enabled: bool,
     pub workspace_dir: Option<String>,
     pub last_app_version: Option<String>,
     pub show_release_notes: bool,
@@ -68,9 +67,6 @@ pub struct Config {
 
 impl Config {
     fn from_v7_config(old_config: v7::Config) -> Self {
-        // Convert Option<bool> to bool: None or Some(true) become true, Some(false) stays false
-        let analytics_enabled = old_config.analytics_enabled.unwrap_or(true);
-
         Self {
             config_version: "v8".to_string(),
             theme: old_config.theme,
@@ -80,7 +76,6 @@ impl Config {
             notifications: old_config.notifications,
             editor: old_config.editor,
             github: old_config.github,
-            analytics_enabled,
             workspace_dir: old_config.workspace_dir,
             last_app_version: old_config.last_app_version,
             show_release_notes: old_config.show_release_notes,
@@ -136,7 +131,6 @@ impl Default for Config {
             notifications: NotificationConfig::default(),
             editor: EditorConfig::default(),
             github: GitHubConfig::default(),
-            analytics_enabled: true,
             workspace_dir: None,
             last_app_version: None,
             show_release_notes: false,

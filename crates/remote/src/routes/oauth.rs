@@ -73,14 +73,6 @@ pub async fn web_redeem(
         .await
     {
         Ok(result) => {
-            if let Some(analytics) = state.analytics() {
-                analytics.track(
-                    result.user_id,
-                    "$identify",
-                    serde_json::json!({ "email": result.email }),
-                );
-            }
-
             (
                 StatusCode::OK,
                 Json(HandoffRedeemResponse {

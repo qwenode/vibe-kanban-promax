@@ -11,7 +11,7 @@ use api_types::{
     CreateIssueTagRequest, CreateNotificationRequest, CreateProjectRequest,
     CreateProjectStatusRequest, CreateTagRequest, Issue, IssueAssignee, IssueComment,
     IssueCommentReaction, IssueFollower, IssueRelationship, IssueRelationshipType, IssueTag,
-    IssuePriority, MemberRole, Notification, NotificationType, OrganizationMember, Project,
+    IssuePriority, Notification, NotificationType, Project,
     ProjectStatus, PullRequest, PullRequestStatus, Tag, UpdateIssueCommentReactionRequest,
     UpdateIssueCommentRequest, UpdateIssueRequest, UpdateNotificationRequest, UpdateProjectRequest,
     UpdateProjectStatusRequest, UpdateTagRequest, User, UserData, Workspace,
@@ -83,8 +83,6 @@ fn export_shapes() -> String {
         PullRequest::decl(),
         UserData::decl(),
         User::decl(),
-        MemberRole::decl(),
-        OrganizationMember::decl(),
         // Mutation request types
         CreateProjectRequest::decl(),
         UpdateProjectRequest::decl(),

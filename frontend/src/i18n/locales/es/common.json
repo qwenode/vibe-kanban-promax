@@ -97,7 +97,7 @@
   },
   "oauth": {
     "title": "Iniciar sesión en Vibe Kanban",
-    "description": "Inicia sesión para unirte a organizaciones y compartir tareas con tu equipo",
+    "description": "Inicia sesión para compartir tareas con tu equipo",
     "continueWithGitHub": "Continuar con GitHub",
     "continueWithGoogle": "Continuar con Google",
     "waitingTitle": "Completar Autenticación",
@@ -346,7 +346,7 @@
     "noStatusesFound": "No se encontraron estados para este proyecto",
     "noVisibleStatuses": "Todos los estados están ocultos. Usa la configuración de visualización o cambia a otra pestaña para ver los problemas.",
     "noProjectFound": "No se encontró el proyecto",
-    "noOrganizationFound": "No se encontró la organización",
+
     "unassigned": "Sin asignar",
     "noTagsAvailable": "No hay etiquetas disponibles",
     "createNewIssue": "Crear nuevo issue",
