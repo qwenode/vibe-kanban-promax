@@ -1,5 +1,4 @@
 pub mod approvals;
-pub mod auth;
 pub mod config;
 pub mod container;
 pub mod diff_stream;
@@ -11,7 +10,6 @@ pub mod filesystem_watcher;
 pub mod git_host;
 pub mod image;
 pub mod notification;
-pub mod oauth_credentials;
 pub mod pr_monitor;
 pub mod project;
 #[cfg(feature = "qa-mode")]

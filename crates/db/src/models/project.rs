@@ -22,7 +22,6 @@ pub struct Project {
     pub id: Uuid,
     pub name: String,
     pub default_agent_working_dir: Option<String>,
-    pub remote_project_id: Option<Uuid>,
     #[ts(type = "Date")]
     pub created_at: DateTime<Utc>,
     #[ts(type = "Date")]
@@ -70,7 +69,6 @@ impl Project {
             r#"SELECT id as "id!: Uuid",
                       name,
                       default_agent_working_dir,
-                      remote_project_id as "remote_project_id: Uuid",
                       created_at as "created_at!: DateTime<Utc>",
                       updated_at as "updated_at!: DateTime<Utc>"
                FROM projects
@@ -87,7 +85,6 @@ impl Project {
             r#"
             SELECT p.id as "id!: Uuid", p.name,
                    p.default_agent_working_dir,
-                   p.remote_project_id as "remote_project_id: Uuid",
                    p.created_at as "created_at!: DateTime<Utc>", p.updated_at as "updated_at!: DateTime<Utc>"
             FROM projects p
             WHERE p.id IN (
@@ -110,7 +107,6 @@ impl Project {
             r#"SELECT id as "id!: Uuid",
                       name,
                       default_agent_working_dir,
-                      remote_project_id as "remote_project_id: Uuid",
                       created_at as "created_at!: DateTime<Utc>",
                       updated_at as "updated_at!: DateTime<Utc>"
                FROM projects
@@ -127,7 +123,6 @@ impl Project {
             r#"SELECT id as "id!: Uuid",
                       name,
                       default_agent_working_dir,
-                      remote_project_id as "remote_project_id: Uuid",
                       created_at as "created_at!: DateTime<Utc>",
                       updated_at as "updated_at!: DateTime<Utc>"
                FROM projects
@@ -154,7 +149,6 @@ impl Project {
                 RETURNING id as "id!: Uuid",
                           name,
                           default_agent_working_dir,
-                          remote_project_id as "remote_project_id: Uuid",
                           created_at as "created_at!: DateTime<Utc>",
                           updated_at as "updated_at!: DateTime<Utc>""#,
             project_id,
@@ -183,7 +177,6 @@ impl Project {
                RETURNING id as "id!: Uuid",
                          name,
                          default_agent_working_dir,
-                         remote_project_id as "remote_project_id: Uuid",
                          created_at as "created_at!: DateTime<Utc>",
                          updated_at as "updated_at!: DateTime<Utc>""#,
             id,

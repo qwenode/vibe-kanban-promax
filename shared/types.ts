@@ -4,7 +4,7 @@
 
 // If you are an AI, and you absolutely have to edit this file, please confirm with the user first.
 
-export type Project = { id: string, name: string, default_agent_working_dir: string | null, remote_project_id: string | null, created_at: Date, updated_at: Date, };
+export type Project = { id: string, name: string, default_agent_working_dir: string | null, created_at: Date, updated_at: Date, };
 
 export type CreateProject = { name: string, repositories: Array<CreateProjectRepo>, };
 
@@ -54,7 +54,7 @@ export type DraftFollowUpData = { message: string, executor_profile_id: Executor
 
 export type DraftWorkspaceData = { message: string, project_id: string | null, repos: Array<DraftWorkspaceRepo>, selected_profile: ExecutorProfileId | null, linked_issue: DraftWorkspaceLinkedIssue | null, };
 
-export type DraftWorkspaceLinkedIssue = { issue_id: string, simple_id: string, title: string, remote_project_id: string, };
+export type DraftWorkspaceLinkedIssue = { issue_id: string, simple_id: string, title: string, };
 
 export type DraftWorkspaceRepo = { repo_id: string, target_branch: string, };
 
@@ -184,21 +184,13 @@ export type DiffChangeKind = "added" | "deleted" | "modified" | "renamed" | "cop
 
 export type ApiResponse<T, E = T> = { success: boolean, data: T | null, error_data: E | null, message: string | null, };
 
-export type LoginStatus = { "status": "loggedout" } | { "status": "loggedin", profile: ProfileResponse, };
-
-export type ProfileResponse = { user_id: string, username: string | null, email: string, providers: Array<ProviderProfile>, };
-
-export type ProviderProfile = { provider: string, username: string | null, display_name: string | null, email: string | null, avatar_url: string | null, };
-
-export type StatusResponse = { logged_in: boolean, profile: ProfileResponse | null, degraded: boolean | null, };
-
 export type RegisterRepoRequest = { path: string, display_name: string | null, };
 
 export type InitRepoRequest = { parent_path: string, folder_name: string, };
 
 export type TagSearchParams = { search: string | null, };
 
-export type UserSystemInfo = { config: Config, login_status: LoginStatus, environment: Environment, 
+export type UserSystemInfo = { config: Config, environment: Environment, 
 /**
  * Capabilities supported per executor (e.g., { "CLAUDE_CODE": ["SESSION_FORK"] })
  */

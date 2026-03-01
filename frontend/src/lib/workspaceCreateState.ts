@@ -29,15 +29,13 @@ export function buildWorkspaceCreatePrompt(
 }
 
 export function buildLinkedIssueCreateState(
-  issue: LinkedIssueSource | null | undefined,
-  projectId: string
+  issue: LinkedIssueSource | null | undefined
 ): NonNullable<CreateModeInitialState['linkedIssue']> | null {
   if (!issue) return null;
   return {
     issueId: issue.id,
     simpleId: issue.simple_id,
     title: issue.title,
-    remoteProjectId: projectId,
   };
 }
 

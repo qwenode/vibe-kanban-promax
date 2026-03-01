@@ -21,7 +21,6 @@ interface LinkedIssue {
   issueId: string;
   simpleId?: string;
   title?: string;
-  remoteProjectId: string;
 }
 
 export interface CreateModeInitialState {
@@ -394,7 +393,6 @@ export function useCreateModeState({
             issue_id: state.linkedIssue.issueId,
             simple_id: state.linkedIssue.simpleId ?? '',
             title: state.linkedIssue.title ?? '',
-            remote_project_id: state.linkedIssue.remoteProjectId,
           }
         : null,
     });
@@ -645,7 +643,6 @@ async function initializeState({
           issueId: scratchData.linked_issue.issue_id,
           simpleId: scratchData.linked_issue.simple_id || undefined,
           title: scratchData.linked_issue.title || undefined,
-          remoteProjectId: scratchData.linked_issue.remote_project_id,
         };
       }
 
