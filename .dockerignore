@@ -11,8 +11,6 @@ dist/
 build/
 *.tgz
 *.tar.gz
-remote-frontend/dist/
-
 # IDE and editor files
 .vscode/
 .idea/

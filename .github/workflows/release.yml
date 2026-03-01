@@ -235,6 +235,15 @@ jobs:
             | macOS (x64) | [vibe-kanban-promax-${tag}-macos-x64.zip](https://github.com/${repo.owner}/${repo.repo}/releases/download/${tag}/vibe-kanban-promax-${tag}-macos-x64.zip) |
             | Linux (x64) | [vibe-kanban-promax-${tag}-linux-x64.zip](https://github.com/${repo.owner}/${repo.repo}/releases/download/${tag}/vibe-kanban-promax-${tag}-linux-x64.zip) |
 
+            ## macOS 用户注意
+
+            macOS 可能会提示"无法验证开发者"而阻止运行。请在终端中执行以下命令解除限制：
+
+            \`\`\`bash
+            # 解除 quarantine 属性（在解压后的文件所在目录执行）
+            xattr -cr vibe-kanban-promax
+            \`\`\`
+
             ${autoNotes}
             `.replace(/^            /gm, '');
 

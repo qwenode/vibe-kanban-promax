@@ -16,7 +16,6 @@ bindings/
 
 # Environment variables
 .env
-.env.remote
 .env.local
 .env.development.local
 .env.test.local
@@ -67,7 +66,6 @@ coverage/
 
 .env
 frontend/dist
-remote-frontend/dist
 
 build-npm-package-codesign.sh
 

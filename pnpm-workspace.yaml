@@ -1,6 +1,5 @@
 packages:
   - frontend
-  - remote-frontend
 
 onlyBuiltDependencies:
   - core-js

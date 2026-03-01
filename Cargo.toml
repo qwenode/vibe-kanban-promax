@@ -12,7 +12,6 @@ members = [
     "crates/deployment",
     "crates/review",
 ]
-exclude = ["crates/remote"]
 
 [workspace.dependencies]
 tokio = { version = "1.0", features = ["full"] }
