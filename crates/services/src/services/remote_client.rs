@@ -312,18 +312,6 @@ impl RemoteClient {
     }
 
     // Public endpoint helpers (no auth required)
-    async fn get_public<T>(&self, path: &str) -> Result<T, RemoteClientError>
-    where
-        T: for<'de> Deserialize<'de>,
-    {
-        let res = self
-            .send(reqwest::Method::GET, path, false, None::<&()>)
-            .await?;
-        res.json::<T>()
-            .await
-            .map_err(|e| RemoteClientError::Serde(e.to_string()))
-    }
-
     async fn post_public<T, B>(&self, path: &str, body: Option<&B>) -> Result<T, RemoteClientError>
     where
         T: for<'de> Deserialize<'de>,
@@ -358,19 +346,6 @@ impl RemoteClient {
         B: Serialize,
     {
         let res = self.send(reqwest::Method::POST, path, true, body).await?;
-        res.json::<T>()
-            .await
-            .map_err(|e| RemoteClientError::Serde(e.to_string()))
-    }
-
-    async fn patch_authed<T, B>(&self, path: &str, body: &B) -> Result<T, RemoteClientError>
-    where
-        T: for<'de> Deserialize<'de>,
-        B: Serialize,
-    {
-        let res = self
-            .send(reqwest::Method::PATCH, path, true, Some(body))
-            .await?;
         res.json::<T>()
             .await
             .map_err(|e| RemoteClientError::Serde(e.to_string()))
