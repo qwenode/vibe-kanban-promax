@@ -7,7 +7,7 @@ use std::{
 use api_types::LoginStatus;
 use async_trait::async_trait;
 use db::DBService;
-use deployment::{Deployment, DeploymentError, RemoteClientNotConfigured};
+use deployment::{Deployment, DeploymentError};
 use executors::profile::ExecutorConfigs;
 use git::GitService;
 use services::services::{
@@ -23,7 +23,6 @@ use services::services::{
     pr_monitor::PrMonitorService,
     project::ProjectService,
     queued_message::QueuedMessageService,
-    remote_client::RemoteClient,
     repo::RepoService,
     worktree_manager::WorktreeManager,
 };
@@ -55,7 +54,6 @@ pub struct LocalDeployment {
     file_search_cache: Arc<FileSearchCache>,
     approvals: Approvals,
     queued_message_service: QueuedMessageService,
-    remote_client: Result<RemoteClient, RemoteClientNotConfigured>,
     auth_context: AuthContext,
     oauth_handoffs: Arc<RwLock<HashMap<Uuid, PendingHandoff>>>,
     pty: PtyService,
@@ -143,27 +141,6 @@ impl Deployment for LocalDeployment {
         let profile_cache = Arc::new(RwLock::new(None));
         let auth_context = AuthContext::new(oauth_credentials.clone(), profile_cache.clone());
 
-        let api_base = std::env::var("VK_SHARED_API_BASE")
-            .ok()
-            .or_else(|| option_env!("VK_SHARED_API_BASE").map(|s| s.to_string()));
-
-        let remote_client = match api_base {
-            Some(url) => match RemoteClient::new(&url, auth_context.clone()) {
-                Ok(client) => {
-                    tracing::info!("Remote client initialized with URL: {}", url);
-                    Ok(client)
-                }
-                Err(e) => {
-                    tracing::error!(?e, "failed to create remote client");
-                    Err(RemoteClientNotConfigured)
-                }
-            },
-            None => {
-                tracing::info!("VK_SHARED_API_BASE not set; remote features disabled");
-                Err(RemoteClientNotConfigured)
-            }
-        };
-
         let oauth_handoffs = Arc::new(RwLock::new(HashMap::new()));
 
         let container = LocalContainerService::new(
@@ -174,7 +151,6 @@ impl Deployment for LocalDeployment {
             image.clone(),
             approvals.clone(),
             queued_message_service.clone(),
-            remote_client.clone().ok(),
         )
         .await;
 
@@ -186,8 +162,7 @@ impl Deployment for LocalDeployment {
         {
             let db = db.clone();
             let container = container.clone();
-            let rc = remote_client.clone().ok();
-            PrMonitorService::spawn(db, container, rc).await;
+            PrMonitorService::spawn(db, container).await;
         }
 
         let deployment = Self {
@@ -204,7 +179,6 @@ impl Deployment for LocalDeployment {
             file_search_cache,
             approvals,
             queued_message_service,
-            remote_client,
             auth_context,
             oauth_handoffs,
             pty,
@@ -271,10 +245,6 @@ impl Deployment for LocalDeployment {
 }
 
 impl LocalDeployment {
-    pub fn remote_client(&self) -> Result<RemoteClient, RemoteClientNotConfigured> {
-        self.remote_client.clone()
-    }
-
     pub async fn get_login_status(&self) -> LoginStatus {
         LoginStatus::LoggedOut
     }

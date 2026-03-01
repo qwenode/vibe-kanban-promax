@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { create } from 'zustand';
-import type { IssuePriority } from 'shared/remote-types';
+export type IssuePriority = 'urgent' | 'high' | 'medium' | 'low';
 
 export type RepoAction =
   | 'pull-request'

@@ -27,17 +27,12 @@ use services::services::{
     image::{ImageError, ImageService},
     project::ProjectService,
     queued_message::QueuedMessageService,
-    remote_client::RemoteClient,
     repo::RepoService,
     worktree_manager::WorktreeError,
 };
 use sqlx::Error as SqlxError;
 use thiserror::Error;
 use tokio::sync::RwLock;
-
-#[derive(Debug, Clone, Copy, Error)]
-#[error("Remote client not configured")]
-pub struct RemoteClientNotConfigured;
 
 #[derive(Debug, Error)]
 pub enum DeploymentError {
@@ -67,8 +62,6 @@ pub enum DeploymentError {
     Event(#[from] EventError),
     #[error(transparent)]
     Config(#[from] ConfigError),
-    #[error("Remote client not configured")]
-    RemoteClientNotConfigured,
     #[error(transparent)]
     Other(#[from] AnyhowError),
 }
@@ -104,10 +97,6 @@ pub trait Deployment: Clone + Send + Sync + 'static {
     fn queued_message_service(&self) -> &QueuedMessageService;
 
     fn auth_context(&self) -> &AuthContext;
-
-    fn remote_client(&self) -> Result<RemoteClient, RemoteClientNotConfigured> {
-        Err(RemoteClientNotConfigured)
-    }
 
     /// Trigger background auto-setup of default projects for new users
     async fn trigger_auto_project_setup(&self) {

@@ -53,7 +53,6 @@ import {
   RunAgentSetupResponse,
   GhCliSetupError,
   RunScriptError,
-  StatusResponse,
   OpenEditorResponse,
   OpenEditorRequest,
   PrError,
@@ -62,8 +61,6 @@ import {
   CreateScratch,
   UpdateScratch,
   PushError,
-  TokenResponse,
-  CurrentUserResponse,
   QueueStatus,
   PrCommentsResponse,
   MergeTaskAttemptRequest,
@@ -81,8 +78,6 @@ import {
   CreateWorkspaceFromPrBody,
   CreateWorkspaceFromPrResponse,
   CreateFromPrError,
-  MigrationRequest,
-  MigrationResponse,
 } from 'shared/types';
 import type { WorkspaceWithSession } from '@/types/attempt';
 import { createWorkspaceWithSession } from '@/types/attempt';
@@ -1169,43 +1164,6 @@ export const approvalsApi = {
   },
 };
 
-// OAuth API (login removed - stubs only)
-export const oauthApi = {
-  handoffInit: async (
-    _provider: string,
-    _returnTo: string
-  ): Promise<{ handoff_id: string; authorize_url: string }> => {
-    throw new Error('Login has been removed');
-  },
-
-  status: async (): Promise<StatusResponse> => {
-    return { logged_in: false, profile: null, degraded: null };
-  },
-
-  logout: async (): Promise<void> => {
-    // no-op
-  },
-
-  /** Returns the current access token for the remote server (auto-refreshes if needed) */
-  getToken: async (): Promise<TokenResponse | null> => {
-    return null;
-  },
-
-  /** Returns the user ID of the currently authenticated user */
-  getCurrentUser: async (): Promise<CurrentUserResponse> => {
-    throw new Error('Login has been removed');
-  },
-};
-
-/**
- * @deprecated Use `tokenManager.getToken()` from '@/lib/auth/tokenManager' instead.
- * This function does not handle 401 responses or token refresh coordination.
- */
-export async function getCachedToken(): Promise<string | null> {
-  const { tokenManager } = await import('./auth/tokenManager');
-  return tokenManager.getToken();
-}
-
 // Scratch API
 export const scratchApi = {
   create: async (
@@ -1295,17 +1253,6 @@ export const queueApi = {
   getStatus: async (sessionId: string): Promise<QueueStatus> => {
     const response = await makeRequest(`/api/sessions/${sessionId}/queue`);
     return handleApiResponse<QueueStatus>(response);
-  },
-};
-
-// Migration API
-export const migrationApi = {
-  start: async (data: MigrationRequest): Promise<MigrationResponse> => {
-    const response = await makeRequest('/api/migration/start', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    return handleApiResponse<MigrationResponse>(response);
   },
 };
 

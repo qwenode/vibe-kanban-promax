@@ -7,12 +7,10 @@ import type {
   RepoWithTargetBranch,
 } from 'shared/types';
 import { ScratchType } from 'shared/types';
-import { PROJECT_ISSUES_SHAPE } from 'shared/remote-types';
 import { useScratch } from '@/hooks/useScratch';
 import { useDebouncedCallback } from '@/hooks/useDebouncedCallback';
 import { useProjects } from '@/hooks/useProjects';
 import { useUserSystem } from '@/components/ConfigProvider';
-import { useShape } from '@/lib/electric/hooks';
 import { projectsApi, repoApi } from '@/lib/api';
 
 // ============================================================================
@@ -409,33 +407,6 @@ export function useCreateModeState({
     state.linkedIssue,
     debouncedSave,
   ]);
-
-  // ============================================================================
-  // Resolve linked issue details from Electric (when simpleId/title are missing)
-  // ============================================================================
-  const needsIssueResolution =
-    !!state.linkedIssue && !state.linkedIssue.simpleId;
-  const issueProjectId = state.linkedIssue?.remoteProjectId ?? '';
-
-  const { data: issuesForResolution } = useShape(
-    PROJECT_ISSUES_SHAPE,
-    { project_id: issueProjectId },
-    { enabled: needsIssueResolution && !!issueProjectId }
-  );
-
-  useEffect(() => {
-    if (!needsIssueResolution || !state.linkedIssue) return;
-    const issue = issuesForResolution.find(
-      (i) => i.id === state.linkedIssue!.issueId
-    );
-    if (issue) {
-      dispatch({
-        type: 'RESOLVE_LINKED_ISSUE',
-        simpleId: issue.simple_id,
-        title: issue.title,
-      });
-    }
-  }, [needsIssueResolution, issuesForResolution, state.linkedIssue]);
 
   // ============================================================================
   // Derived state

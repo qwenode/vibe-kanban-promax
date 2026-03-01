@@ -1,9 +1,4 @@
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,14 +27,6 @@ import { useOpenProjectInEditor } from '@/hooks/useOpenProjectInEditor';
 import { OpenInIdeButton } from '@/components/ide/OpenInIdeButton';
 import { useProjectRepos } from '@/hooks';
 import { useProjects } from '@/hooks/useProjects';
-import { useTranslation } from 'react-i18next';
-import { Switch } from '@/components/ui/switch';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 const INTERNAL_NAV = [
   { label: 'Projects', icon: FolderOpen, to: '/local-projects' },
@@ -76,7 +63,6 @@ function NavDivider() {
 export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { projectId, project } = useProject();
   const { query, setQuery, active, clear, registerInputRef } = useSearch();
   const handleOpenInEditor = useOpenProjectInEditor(project || null);
@@ -90,27 +76,6 @@ export function Navbar() {
       registerInputRef(node);
     },
     [registerInputRef]
-  );
-  const { t } = useTranslation(['tasks', 'common']);
-  // Navbar is global, but the share tasks toggle only makes sense on the tasks route
-  const isTasksRoute = /^\/local-projects\/[^/]+\/tasks/.test(
-    location.pathname
-  );
-  const showSharedTasks = searchParams.get('shared') !== 'off';
-  const shouldShowSharedToggle =
-    isTasksRoute && active && project?.remote_project_id != null;
-
-  const handleSharedToggle = useCallback(
-    (checked: boolean) => {
-      const params = new URLSearchParams(searchParams);
-      if (checked) {
-        params.delete('shared');
-      } else {
-        params.set('shared', 'off');
-      }
-      setSearchParams(params, { replace: true });
-    },
-    [searchParams, setSearchParams]
   );
 
   const handleCreateTask = () => {
@@ -200,30 +165,6 @@ export function Navbar() {
           </div>
 
           <div className="flex flex-1 items-center justify-end gap-1">
-            {shouldShowSharedToggle ? (
-              <>
-                <div className="flex items-center gap-4">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div>
-                          <Switch
-                            checked={showSharedTasks}
-                            onCheckedChange={handleSharedToggle}
-                            aria-label={t('tasks:filters.sharedToggleAria')}
-                          />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        {t('tasks:filters.sharedToggleTooltip')}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <NavDivider />
-              </>
-            ) : null}
-
             {projectId ? (
               <>
                 <div className="flex items-center gap-1">

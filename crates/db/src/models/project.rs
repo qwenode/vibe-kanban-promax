@@ -138,27 +138,6 @@ impl Project {
         .await
     }
 
-    pub async fn find_by_remote_project_id(
-        pool: &SqlitePool,
-        remote_project_id: Uuid,
-    ) -> Result<Option<Self>, sqlx::Error> {
-        sqlx::query_as!(
-            Project,
-            r#"SELECT id as "id!: Uuid",
-                      name,
-                      default_agent_working_dir,
-                      remote_project_id as "remote_project_id: Uuid",
-                      created_at as "created_at!: DateTime<Utc>",
-                      updated_at as "updated_at!: DateTime<Utc>"
-               FROM projects
-               WHERE remote_project_id = $1
-               LIMIT 1"#,
-            remote_project_id
-        )
-        .fetch_optional(pool)
-        .await
-    }
-
     pub async fn create(
         executor: impl Executor<'_, Database = Sqlite>,
         data: &CreateProject,
@@ -212,46 +191,6 @@ impl Project {
         )
         .fetch_one(pool)
         .await
-    }
-
-    pub async fn set_remote_project_id(
-        pool: &SqlitePool,
-        id: Uuid,
-        remote_project_id: Option<Uuid>,
-    ) -> Result<(), sqlx::Error> {
-        sqlx::query!(
-            r#"UPDATE projects
-               SET remote_project_id = $2
-               WHERE id = $1"#,
-            id,
-            remote_project_id
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(())
-    }
-
-    /// Transaction-compatible version of set_remote_project_id
-    pub async fn set_remote_project_id_tx<'e, E>(
-        executor: E,
-        id: Uuid,
-        remote_project_id: Option<Uuid>,
-    ) -> Result<(), sqlx::Error>
-    where
-        E: Executor<'e, Database = Sqlite>,
-    {
-        sqlx::query!(
-            r#"UPDATE projects
-               SET remote_project_id = $2
-               WHERE id = $1"#,
-            id,
-            remote_project_id
-        )
-        .execute(executor)
-        .await?;
-
-        Ok(())
     }
 
     pub async fn delete(pool: &SqlitePool, id: Uuid) -> Result<u64, sqlx::Error> {

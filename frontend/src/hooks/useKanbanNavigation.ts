@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import type { IssuePriority } from 'shared/remote-types';
+import type { IssuePriority } from '@/stores/useUiPreferencesStore';
 import {
   buildIssueCreatePath,
   buildIssuePath,

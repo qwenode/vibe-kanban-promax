@@ -192,27 +192,11 @@ export type ProviderProfile = { provider: string, username: string | null, displ
 
 export type StatusResponse = { logged_in: boolean, profile: ProfileResponse | null, degraded: boolean | null, };
 
-export type MigrationRequest = { 
-/**
- * List of local project IDs to migrate.
- */
-project_ids: Array<string>, };
-
-export type MigrationResponse = { report: MigrationReport, };
-
-export type MigrationReport = { projects: EntityReport, tasks: EntityReport, pr_merges: EntityReport, workspaces: EntityReport, warnings: Array<string>, };
-
-export type EntityReport = { total: number, migrated: number, failed: number, skipped: number, errors: Array<EntityError>, };
-
-export type EntityError = { local_id: string, error: string, };
-
 export type RegisterRepoRequest = { path: string, display_name: string | null, };
 
 export type InitRepoRequest = { parent_path: string, folder_name: string, };
 
 export type TagSearchParams = { search: string | null, };
-
-export type TokenResponse = { access_token: string, expires_at: string | null, };
 
 export type UserSystemInfo = { config: Config, login_status: LoginStatus, environment: Environment, 
 /**
@@ -233,8 +217,6 @@ export type CheckEditorAvailabilityQuery = { editor_type: EditorType, };
 export type CheckEditorAvailabilityResponse = { available: boolean, };
 
 export type CheckAgentAvailabilityQuery = { executor: BaseCodingAgent, };
-
-export type CurrentUserResponse = { user_id: string, };
 
 export type CreateFollowUpAttempt = { prompt: string, executor_profile_id: ExecutorProfileId, retry_process_id: string | null, force_when_dirty: boolean | null, perform_git_reset: boolean | null, };
 

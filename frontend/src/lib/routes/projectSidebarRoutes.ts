@@ -1,5 +1,5 @@
 import { matchPath } from 'react-router-dom';
-import type { IssuePriority } from 'shared/remote-types';
+import type { IssuePriority } from '@/stores/useUiPreferencesStore';
 
 export type ProjectSidebarRouteState =
   | {

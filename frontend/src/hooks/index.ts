@@ -22,6 +22,5 @@ export { useHasDevServerScript } from './useHasDevServerScript';
 export { useRepoBranchSelection } from './useRepoBranchSelection';
 export type { RepoBranchConfig } from './useRepoBranchSelection';
 export { useTaskAttempts } from './useTaskAttempts';
-export { useCurrentUser } from './auth/useCurrentUser';
 export { useVariant } from './useVariant';
 export { useRetryProcess } from './useRetryProcess';
