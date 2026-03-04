@@ -19,7 +19,6 @@ async function main() {
     FRONTEND_PORT: String(ports.frontend),
     BACKEND_PORT: String(ports.backend),
     VK_ALLOWED_ORIGINS: `http://localhost:${ports.frontend}`,
-    VITE_VK_SHARED_API_BASE: process.env.VK_SHARED_API_BASE || "",
   };
 
   const concurrentlyBin = path.join(

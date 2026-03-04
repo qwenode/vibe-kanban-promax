@@ -148,8 +148,6 @@ jobs:
   build-frontend:
     needs: bump-version
     runs-on: ubuntu-latest-x64-l
-    env:
-      VITE_VK_SHARED_API_BASE: ${{ secrets.VK_SHARED_API_BASE }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -301,8 +299,6 @@ jobs:
         if: runner.os == 'Linux' && !contains(matrix.target, 'windows')
         run: |
           cargo zigbuild --release --target ${{ matrix.target }} -p server -p review --bin server --bin mcp_task_server --bin review
-        env:
-          VK_SHARED_API_BASE: ${{ secrets.VK_SHARED_API_BASE }}
 
       - name: Build backend (macOS)
         if: runner.os == 'macOS'
@@ -313,8 +309,6 @@ jobs:
             export MACOSX_DEPLOYMENT_TARGET=11.0
           fi
           cargo build --release --target ${{ matrix.target }} -p server -p review --bin server --bin mcp_task_server --bin review
-        env:
-          VK_SHARED_API_BASE: ${{ secrets.VK_SHARED_API_BASE }}
 
       - name: Build backend (Windows)
         if: runner.os == 'Linux' && contains(matrix.target, 'windows')
@@ -329,7 +323,6 @@ jobs:
           fi
           cargo xwin build --cross-compiler clang-cl --release --target ${{ matrix.target }} -p server -p review --bin server --bin mcp_task_server --bin review
         env:
-          VK_SHARED_API_BASE: ${{ secrets.VK_SHARED_API_BASE }}
           # Avoid aws-lc-sys CMake failures when Rust's `release` profile includes debug info.
           # Without this, cmake-rs selects RelWithDebInfo and CMake fails when ASM is enabled.
           CARGO_PROFILE_RELEASE_DEBUG: 0

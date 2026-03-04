@@ -3,10 +3,6 @@ use std::{fs, path::Path};
 fn main() {
     dotenv::dotenv().ok();
 
-    if let Ok(vk_shared_api_base) = std::env::var("VK_SHARED_API_BASE") {
-        println!("cargo:rustc-env=VK_SHARED_API_BASE={}", vk_shared_api_base);
-    }
-
     // Create frontend/dist directory if it doesn't exist
     let dist_path = Path::new("../../frontend/dist");
     if !dist_path.exists() {
