@@ -18,7 +18,7 @@ export function ReviewCommentRenderer({
   const reviewCommentContainerClass =
     'w-full border-y border-border/70 bg-muted/30 px-4 py-3';
   const reviewCommentCardClass =
-    'rounded-md border border-primary/20 bg-primary/5 px-3 py-2';
+    'rounded-md border border-warning/40 bg-warning/10 px-3 py-2 shadow-sm';
 
   const handleDelete = () => {
     deleteComment(comment.id);

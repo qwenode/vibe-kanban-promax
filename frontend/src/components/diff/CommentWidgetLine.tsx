@@ -23,6 +23,10 @@ export function CommentWidgetLine({
   const { setDraft, addComment } = useReview();
   const [value, setValue] = useState(draft.text);
   const { enableScope, disableScope } = useHotkeysContext();
+  const reviewDraftContainerClass =
+    'w-full border-y border-border/70 bg-muted/30 px-4 py-3';
+  const reviewDraftCardClass =
+    'rounded-md border border-warning/40 bg-warning/10 px-3 py-3 shadow-sm';
 
   useEffect(() => {
     enableScope(Scope.EDIT_COMMENT);
@@ -75,28 +79,30 @@ export function CommentWidgetLine({
   });
 
   return (
-    <div className="p-4 border-y bg-primary">
-      <WYSIWYGEditor
-        value={value}
-        onChange={setValue}
-        placeholder="Add a comment... (type @ to search files)"
-        className="w-full bg-primary text-primary-foreground text-sm font-mono min-h-[60px]"
-        projectId={projectId}
-        onCmdEnter={handleSave}
-        autoFocus
-      />
-      <div className="mt-2 flex gap-2">
-        <Button size="xs" onClick={handleSave} disabled={!value.trim()}>
-          Add review comment
-        </Button>
-        <Button
-          size="xs"
-          variant="ghost"
-          onClick={handleCancel}
-          className="text-secondary-foreground"
-        >
-          Cancel
-        </Button>
+    <div className={reviewDraftContainerClass}>
+      <div className={reviewDraftCardClass}>
+        <WYSIWYGEditor
+          value={value}
+          onChange={setValue}
+          placeholder="Add a comment... (type @ to search files)"
+          className="w-full bg-background text-foreground text-sm font-mono min-h-[60px]"
+          projectId={projectId}
+          onCmdEnter={handleSave}
+          autoFocus
+        />
+        <div className="mt-2 flex gap-2">
+          <Button size="xs" onClick={handleSave} disabled={!value.trim()}>
+            Add review comment
+          </Button>
+          <Button
+            size="xs"
+            variant="ghost"
+            onClick={handleCancel}
+            className="text-secondary-foreground"
+          >
+            Cancel
+          </Button>
+        </div>
       </div>
     </div>
   );
