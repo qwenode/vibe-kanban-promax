@@ -15,6 +15,8 @@ export function ReviewCommentRenderer({
   const { deleteComment, updateComment } = useReview();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text);
+  const reviewCommentContainerClass =
+    'border-y border-primary/20 bg-primary/10 p-4';
 
   const handleDelete = () => {
     deleteComment(comment.id);
@@ -39,12 +41,12 @@ export function ReviewCommentRenderer({
 
   if (isEditing) {
     return (
-      <div className="border-y bg-background p-4">
+      <div className={reviewCommentContainerClass}>
         <WYSIWYGEditor
           value={editText}
           onChange={setEditText}
           placeholder="Edit comment... (type @ to search files)"
-          className="w-full bg-background text-foreground text-sm font-mono min-h-[60px]"
+          className="w-full bg-background/80 text-foreground text-sm font-mono min-h-[60px]"
           projectId={projectId}
           onCmdEnter={handleSave}
           autoFocus
@@ -67,7 +69,7 @@ export function ReviewCommentRenderer({
   }
 
   return (
-    <div className="border-y bg-background p-4">
+    <div className={reviewCommentContainerClass}>
       <WYSIWYGEditor
         value={comment.text}
         disabled={true}
