@@ -23,11 +23,21 @@ export function CommentWidgetLine({
   const { setDraft, addComment } = useReview();
   const [value, setValue] = useState(draft.text);
   const editorRef = useRef<WYSIWYGEditorRef>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
   const { enableScope, disableScope } = useHotkeysContext();
   const reviewDraftContainerClass =
     'w-full border-y border-border/70 bg-muted/30 px-4 py-3';
   const reviewDraftCardClass =
     'rounded-md border border-warning/40 bg-warning/10 px-3 py-3 shadow-sm';
+
+  const focusEditor = useCallback(() => {
+    editorRef.current?.focus();
+    const editableElement =
+      editorContainerRef.current?.querySelector<HTMLElement>(
+        '[contenteditable="true"]'
+      ) ?? null;
+    editableElement?.focus();
+  }, []);
 
   useEffect(() => {
     enableScope(Scope.EDIT_COMMENT);
@@ -37,14 +47,46 @@ export function CommentWidgetLine({
   }, [enableScope, disableScope]);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      editorRef.current?.focus();
+    let isCancelled = false;
+    const timeoutIds: number[] = [];
+
+    const tryFocus = (remainingAttempts: number) => {
+      if (isCancelled) {
+        return;
+      }
+
+      focusEditor();
+
+      const editableElement =
+        editorContainerRef.current?.querySelector<HTMLElement>(
+          '[contenteditable="true"]'
+        ) ?? null;
+      if (editableElement && document.activeElement === editableElement) {
+        return;
+      }
+
+      if (remainingAttempts <= 0) {
+        return;
+      }
+
+      const timeoutId = window.setTimeout(() => {
+        tryFocus(remainingAttempts - 1);
+      }, 24);
+      timeoutIds.push(timeoutId);
+    };
+
+    const frameId = window.requestAnimationFrame(() => {
+      tryFocus(5);
     });
 
     return () => {
-      window.cancelAnimationFrame(frame);
+      isCancelled = true;
+      window.cancelAnimationFrame(frameId);
+      timeoutIds.forEach((timeoutId) => {
+        window.clearTimeout(timeoutId);
+      });
     };
-  }, [widgetKey]);
+  }, [widgetKey, focusEditor]);
 
   const handleCancel = useCallback(() => {
     setDraft(widgetKey, null);
@@ -92,16 +134,18 @@ export function CommentWidgetLine({
   return (
     <div className={reviewDraftContainerClass}>
       <div className={reviewDraftCardClass}>
-        <WYSIWYGEditor
-          ref={editorRef}
-          value={value}
-          onChange={setValue}
-          placeholder="Add a comment... (type @ to search files)"
-          className="w-full bg-background text-foreground text-sm font-mono min-h-[60px]"
-          projectId={projectId}
-          onCmdEnter={handleSave}
-          autoFocus
-        />
+        <div ref={editorContainerRef}>
+          <WYSIWYGEditor
+            ref={editorRef}
+            value={value}
+            onChange={setValue}
+            placeholder="Add a comment... (type @ to search files)"
+            className="w-full bg-background text-foreground text-sm font-mono min-h-[60px]"
+            projectId={projectId}
+            onCmdEnter={handleSave}
+            autoFocus
+          />
+        </div>
         <div className="mt-2 flex gap-2">
           <Button size="xs" onClick={handleSave} disabled={!value.trim()}>
             Add review comment
