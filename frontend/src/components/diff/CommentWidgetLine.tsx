@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import WYSIWYGEditor from '@/components/ui/wysiwyg';
+import WYSIWYGEditor, { type WYSIWYGEditorRef } from '@/components/ui/wysiwyg';
 import { useReview, type ReviewDraft } from '@/contexts/ReviewProvider';
 import { Scope, useKeyExit, useKeySubmitComment } from '@/keyboard';
 import { useHotkeysContext } from 'react-hotkeys-hook';
@@ -22,6 +22,7 @@ export function CommentWidgetLine({
 }: CommentWidgetLineProps) {
   const { setDraft, addComment } = useReview();
   const [value, setValue] = useState(draft.text);
+  const editorRef = useRef<WYSIWYGEditorRef>(null);
   const { enableScope, disableScope } = useHotkeysContext();
   const reviewDraftContainerClass =
     'w-full border-y border-border/70 bg-muted/30 px-4 py-3';
@@ -34,6 +35,16 @@ export function CommentWidgetLine({
       disableScope(Scope.EDIT_COMMENT);
     };
   }, [enableScope, disableScope]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      editorRef.current?.focus();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [widgetKey]);
 
   const handleCancel = useCallback(() => {
     setDraft(widgetKey, null);
@@ -82,6 +93,7 @@ export function CommentWidgetLine({
     <div className={reviewDraftContainerClass}>
       <div className={reviewDraftCardClass}>
         <WYSIWYGEditor
+          ref={editorRef}
           value={value}
           onChange={setValue}
           placeholder="Add a comment... (type @ to search files)"

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import WYSIWYGEditor from '@/components/ui/wysiwyg';
 import { useReview, type ReviewComment } from '@/contexts/ReviewProvider';
@@ -41,6 +41,15 @@ export function ReviewCommentRenderer({
     setIsEditing(false);
   };
 
+  const handleReadOnlyClick = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest('button')) {
+      return;
+    }
+
+    handleEdit();
+  };
+
   if (isEditing) {
     return (
       <div className={reviewCommentContainerClass}>
@@ -75,13 +84,15 @@ export function ReviewCommentRenderer({
   return (
     <div className={reviewCommentContainerClass}>
       <div className={reviewCommentCardClass}>
-        <WYSIWYGEditor
-          value={comment.text}
-          disabled={true}
-          className="text-sm"
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <div onClick={handleReadOnlyClick} className="cursor-text">
+          <WYSIWYGEditor
+            value={comment.text}
+            disabled={true}
+            className="text-sm"
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </div>
       </div>
     </div>
   );
