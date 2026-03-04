@@ -165,6 +165,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
 
     // Copy button state
     const [copied, setCopied] = useState(false);
+    const [isEditorFocused, setIsEditorFocused] = useState(false);
     const handleCopy = useCallback(async () => {
       if (!value) return;
       try {
@@ -269,19 +270,28 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       [onPasteFiles, disabled]
     );
 
+    const handleFocus = useCallback(() => {
+      setIsEditorFocused(true);
+    }, []);
+
+    const handleBlur = useCallback(() => {
+      setIsEditorFocused(false);
+    }, []);
+
     // Memoized placeholder element
     const placeholderElement = useMemo(
       () => (
         <div
           className={cn(
-            'absolute top-0 left-0 text-base text-secondary-foreground text-low pointer-events-none truncate',
+            'absolute top-0 left-0 text-base text-secondary-foreground text-low pointer-events-none truncate transition-opacity',
+            isEditorFocused && 'opacity-0',
             className
           )}
         >
           {placeholder}
         </div>
       ),
-      [placeholder, className]
+      [placeholder, className, isEditorFocused]
     );
 
     const editorContent = (
@@ -308,6 +318,8 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                           disabled ? 'Markdown content' : 'Markdown editor'
                         }
                         onPaste={handlePaste}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
                       />
                     }
                     placeholder={placeholderElement}
