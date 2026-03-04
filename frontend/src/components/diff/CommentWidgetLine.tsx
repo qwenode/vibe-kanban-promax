@@ -144,7 +144,7 @@ export function CommentWidgetLine({
             value={value}
             onChange={setValue}
             placeholder="Add a comment... (type @ to search files)"
-            className="w-full bg-background text-foreground text-sm font-mono min-h-[60px]"
+            className="w-full bg-background text-foreground text-sm font-mono min-h-[60px] px-2 py-1"
             projectId={projectId}
             onCmdEnter={handleSave}
             autoFocus
