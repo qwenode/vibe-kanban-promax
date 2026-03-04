@@ -31,12 +31,16 @@ export function CommentWidgetLine({
     'rounded-md border border-warning/40 bg-warning/10 px-3 py-3 shadow-sm';
 
   const focusEditor = useCallback(() => {
-    editorRef.current?.focus();
     const editableElement =
       editorContainerRef.current?.querySelector<HTMLElement>(
         '[contenteditable="true"]'
       ) ?? null;
-    editableElement?.focus();
+
+    if (editableElement && document.activeElement !== editableElement) {
+      editableElement.focus();
+    }
+
+    editorRef.current?.focus();
   }, []);
 
   useEffect(() => {
