@@ -3,6 +3,9 @@ import type { PatchType } from 'shared/types';
 
 type LogEntry = Extract<PatchType, { type: 'STDOUT' } | { type: 'STDERR' }>;
 
+const MAX_LOG_ENTRIES = 10000;
+const FLUSH_INTERVAL_MS = 50;
+
 interface UseLogStreamResult {
   logs: LogEntry[];
   error: string | null;
@@ -14,6 +17,8 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
   const wsRef = useRef<WebSocket | null>(null);
   const retryCountRef = useRef<number>(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const logsBufferRef = useRef<LogEntry[]>([]);
   const isIntentionallyClosed = useRef<boolean>(false);
   // Track current processId to prevent stale WebSocket messages from contaminating logs
   const currentProcessIdRef = useRef<string>(processId);
@@ -27,8 +32,19 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
     currentProcessIdRef.current = processId;
 
     // Clear logs when process changes
+    logsBufferRef.current = [];
     setLogs([]);
     setError(null);
+
+    const flushLogs = () => {
+      flushTimerRef.current = null;
+      setLogs([...logsBufferRef.current]);
+    };
+
+    const scheduleFlush = () => {
+      if (flushTimerRef.current) return;
+      flushTimerRef.current = setTimeout(flushLogs, FLUSH_INTERVAL_MS);
+    };
 
     const open = () => {
       // Capture processId at the time of opening the WebSocket
@@ -49,16 +65,27 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
         }
         setError(null);
         // Reset logs on new connection since server replays history
+        logsBufferRef.current = [];
         setLogs([]);
         retryCountRef.current = 0;
       };
 
-      const addLogEntry = (entry: LogEntry) => {
-        // Only add log entry if this WebSocket is still for the current process
+      const appendLogEntries = (newEntries: LogEntry[]) => {
+        if (newEntries.length === 0) return;
+
+        // Only add log entries if this WebSocket is still for the current process
         if (currentProcessIdRef.current !== capturedProcessId) {
           return;
         }
-        setLogs((prev) => [...prev, entry]);
+
+        const buffer = logsBufferRef.current;
+        buffer.push(...newEntries);
+
+        if (buffer.length > MAX_LOG_ENTRIES) {
+          buffer.splice(0, buffer.length - MAX_LOG_ENTRIES);
+        }
+
+        scheduleFlush();
       };
 
       // Handle WebSocket messages
@@ -69,6 +96,7 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
           // Handle different message types based on LogMsg enum
           if ('JsonPatch' in data) {
             const patches = data.JsonPatch as Array<{ value?: PatchType }>;
+            const parsedEntries: LogEntry[] = [];
             patches.forEach((patch) => {
               const value = patch?.value;
               if (!value || !value.type) return;
@@ -76,13 +104,17 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
               switch (value.type) {
                 case 'STDOUT':
                 case 'STDERR':
-                  addLogEntry({ type: value.type, content: value.content });
+                  parsedEntries.push({
+                    type: value.type,
+                    content: value.content,
+                  });
                   break;
                 // Ignore other patch types (NORMALIZED_ENTRY, DIFF, etc.)
                 default:
                   break;
               }
             });
+            appendLogEntries(parsedEntries);
           } else if (data.finished === true) {
             isIntentionallyClosed.current = true;
             ws.close();
@@ -128,6 +160,10 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
       if (retryTimerRef.current) {
         clearTimeout(retryTimerRef.current);
         retryTimerRef.current = null;
+      }
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
       }
     };
   }, [processId]);

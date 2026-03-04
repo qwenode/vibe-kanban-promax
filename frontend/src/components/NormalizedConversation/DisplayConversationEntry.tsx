@@ -172,6 +172,39 @@ const shouldRenderMarkdown = (entryType: NormalizedEntryType) =>
   entryType.type === 'thinking' ||
   entryType.type === 'tool_use';
 
+const MAX_MARKDOWN_EDITOR_CHARS = 120_000;
+const LARGE_MARKDOWN_PREVIEW_CHARS = 20_000;
+
+const SafeMarkdownContent: React.FC<{
+  value: string;
+  className?: string;
+  taskAttemptId?: string;
+}> = ({ value, className, taskAttemptId }) => {
+  if (value.length > MAX_MARKDOWN_EDITOR_CHARS) {
+    const preview = value.slice(0, LARGE_MARKDOWN_PREVIEW_CHARS);
+    return (
+      <div className={cn('space-y-2', className)}>
+        <pre className="whitespace-pre-wrap break-words font-mono text-xs">
+          {preview}
+        </pre>
+        <p className="text-xs text-muted-foreground">
+          Large output preview shown ({LARGE_MARKDOWN_PREVIEW_CHARS.toLocaleString()}
+          /{value.length.toLocaleString()} chars) to avoid OOM.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <WYSIWYGEditor
+      value={value}
+      disabled
+      className={className}
+      taskAttemptId={taskAttemptId}
+    />
+  );
+};
+
 const getContentClassName = (entryType: NormalizedEntryType) => {
   const base = ' whitespace-pre-wrap break-words';
   if (
@@ -291,9 +324,8 @@ const CollapsibleEntry: React.FC<{
   const Inner = (
     <div className={contentClassName}>
       {markdown ? (
-        <WYSIWYGEditor
+        <SafeMarkdownContent
           value={content}
-          disabled
           className="whitespace-pre-wrap break-words"
           taskAttemptId={taskAttemptId}
         />
@@ -303,13 +335,16 @@ const CollapsibleEntry: React.FC<{
     </div>
   );
 
-  const firstLine = content.split('\n')[0];
+  const firstLineBreakIndex = content.indexOf('\n');
+  const firstLine =
+    firstLineBreakIndex === -1
+      ? content
+      : content.slice(0, firstLineBreakIndex);
   const PreviewInner = (
     <div className={contentClassName}>
       {markdown ? (
-        <WYSIWYGEditor
+        <SafeMarkdownContent
           value={firstLine}
-          disabled
           className="whitespace-pre-wrap break-words"
           taskAttemptId={taskAttemptId}
         />
@@ -426,9 +461,8 @@ const PlanPresentationCard: React.FC<{
         {expanded && (
           <div className={cn('px-3 py-2', tone.contentBg)}>
             <div className={cn('text-sm', tone.contentText)}>
-              <WYSIWYGEditor
+              <SafeMarkdownContent
                 value={plan}
-                disabled
                 className="whitespace-pre-wrap break-words"
                 taskAttemptId={taskAttemptId}
               />
@@ -571,9 +605,8 @@ const ToolCallCard: React.FC<{
                   <div className="px-2 py-1">
                     {actionType.result?.type.type === 'markdown' &&
                       actionType.result.value && (
-                        <WYSIWYGEditor
+                        <SafeMarkdownContent
                           value={actionType.result.value?.toString()}
-                          disabled
                           taskAttemptId={taskAttemptId}
                         />
                       )}
@@ -769,9 +802,8 @@ function DisplayConversationEntry({
               toolName: feedbackEntry.denied_tool,
             })}
           </div>
-          <WYSIWYGEditor
+          <SafeMarkdownContent
             value={entry.content}
-            disabled
             className="whitespace-pre-wrap break-words flex flex-col gap-1 font-light py-3"
             taskAttemptId={taskAttempt?.id}
           />
@@ -929,9 +961,8 @@ function DisplayConversationEntry({
     <div className="px-4 py-2 text-sm">
       <div className={getContentClassName(entryType)}>
         {shouldRenderMarkdown(entryType) ? (
-          <WYSIWYGEditor
+          <SafeMarkdownContent
             value={isNormalizedEntry(entry) ? entry.content : ''}
-            disabled
             className="whitespace-pre-wrap break-words flex flex-col gap-1 font-light"
             taskAttemptId={taskAttempt?.id}
           />

@@ -8,7 +8,10 @@ import {
 } from 'shared/types';
 import { useExecutionProcessesContext } from '@/contexts/ExecutionProcessesContext';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { streamJsonPatchEntries } from '@/utils/streamJsonPatchEntries';
+import {
+  streamJsonPatchEntries,
+  type StreamSnapshotMeta,
+} from '@/utils/streamJsonPatchEntries';
 import type {
   AddEntryType,
   ExecutionProcessStateStore,
@@ -18,6 +21,7 @@ import type {
   UseConversationHistoryResult,
 } from './types';
 import {
+  MAX_ENTRIES_PER_PROCESS,
   makeLoadingPatch,
   MIN_INITIAL_ENTRIES,
   nextActionPatch,
@@ -35,6 +39,13 @@ export const useConversationHistoryOld = ({
   const loadedInitialEntries = useRef(false);
   const streamingProcessIdsRef = useRef<Set<string>>(new Set());
   const onEntriesUpdatedRef = useRef<OnEntriesUpdated | null>(null);
+  const activeStreamControllersRef = useRef<Set<{ close: () => void }>>(
+    new Set()
+  );
+  const isDisposedRef = useRef(false);
+  const scriptOutputCacheRef = useRef<
+    Record<string, { lineCount: number; firstPatchKey: string; output: string }>
+  >({});
 
   const mergeIntoDisplayed = (
     mutator: (state: ExecutionProcessStateStore) => void
@@ -45,6 +56,31 @@ export const useConversationHistoryOld = ({
   useEffect(() => {
     onEntriesUpdatedRef.current = onEntriesUpdated;
   }, [onEntriesUpdated]);
+
+  const registerStreamController = useCallback(
+    (controller: { close: () => void }) => {
+      activeStreamControllersRef.current.add(controller);
+      return () => {
+        activeStreamControllersRef.current.delete(controller);
+      };
+    },
+    []
+  );
+
+  const closeAllStreamControllers = useCallback(() => {
+    for (const controller of activeStreamControllersRef.current) {
+      controller.close();
+    }
+    activeStreamControllersRef.current.clear();
+  }, []);
+
+  useEffect(() => {
+    isDisposedRef.current = false;
+    return () => {
+      isDisposedRef.current = true;
+      closeAllStreamControllers();
+    };
+  }, [closeAllStreamControllers]);
 
   // Keep executionProcesses up to date
   useEffect(() => {
@@ -57,33 +93,62 @@ export const useConversationHistoryOld = ({
     );
   }, [executionProcessesRaw]);
 
-  const loadEntriesForHistoricExecutionProcess = (
-    executionProcess: ExecutionProcess
-  ) => {
-    let url = '';
-    if (executionProcess.executor_action.typ.type === 'ScriptRequest') {
-      url = `/api/execution-processes/${executionProcess.id}/raw-logs/ws`;
-    } else {
-      url = `/api/execution-processes/${executionProcess.id}/normalized-logs/ws`;
-    }
+  const loadEntriesForHistoricExecutionProcess = useCallback(
+    (executionProcess: ExecutionProcess) => {
+      if (isDisposedRef.current) {
+        return Promise.resolve({ entries: [], entriesOffset: 0 });
+      }
 
-    return new Promise<PatchType[]>((resolve) => {
-      const controller = streamJsonPatchEntries<PatchType>(url, {
-        onFinished: (allEntries) => {
-          controller.close();
-          resolve(allEntries);
-        },
-        onError: (err) => {
-          console.warn(
-            `Error loading entries for historic execution process ${executionProcess.id}`,
-            err
-          );
-          controller.close();
-          resolve([]);
-        },
-      });
-    });
-  };
+      let url = '';
+      if (executionProcess.executor_action.typ.type === 'ScriptRequest') {
+        url = `/api/execution-processes/${executionProcess.id}/raw-logs/ws`;
+      } else {
+        url = `/api/execution-processes/${executionProcess.id}/normalized-logs/ws`;
+      }
+
+      return new Promise<{ entries: PatchType[]; entriesOffset: number }>(
+        (resolve) => {
+          let settled = false;
+          let unregisterController = () => {};
+
+          const resolveOnce = (result: {
+            entries: PatchType[];
+            entriesOffset: number;
+          }) => {
+            if (settled) return;
+            settled = true;
+            unregisterController();
+            resolve(result);
+          };
+
+          const controller = streamJsonPatchEntries<PatchType>(url, {
+            maxEntries: MAX_ENTRIES_PER_PROCESS,
+            onFinished: (allEntries, meta) => {
+              resolveOnce({
+                entries: allEntries,
+                entriesOffset: meta.entriesOffset,
+              });
+            },
+            onError: (err) => {
+              if (!isDisposedRef.current) {
+                console.warn(
+                  `Error loading entries for historic execution process ${executionProcess.id}`,
+                  err
+                );
+              }
+              resolveOnce({ entries: [], entriesOffset: 0 });
+            },
+            onClose: () => {
+              resolveOnce({ entries: [], entriesOffset: 0 });
+            },
+          });
+
+          unregisterController = registerStreamController(controller);
+        }
+      );
+    },
+    [registerStreamController]
+  );
 
   const getLiveExecutionProcess = (
     executionProcessId: string
@@ -93,16 +158,73 @@ export const useConversationHistoryOld = ({
     );
   };
 
-  const patchWithKey = (
-    patch: PatchType,
+  const patchWithKey = useCallback(
+    (
+      patch: PatchType,
+      executionProcessId: string,
+      index: number | 'user'
+    ) => {
+      return {
+        ...patch,
+        patchKey: `${executionProcessId}:${index}`,
+        executionProcessId,
+      };
+    },
+    []
+  );
+
+  const mapEntriesWithKey = useCallback(
+    (entries: PatchType[], executionProcessId: string, entriesOffset = 0) => {
+      return entries.map((entry, index) =>
+        patchWithKey(entry, executionProcessId, entriesOffset + index)
+      );
+    },
+    [patchWithKey]
+  );
+
+  const getScriptOutput = (
     executionProcessId: string,
-    index: number | 'user'
-  ) => {
-    return {
-      ...patch,
-      patchKey: `${executionProcessId}:${index}`,
-      executionProcessId,
+    entries: PatchTypeWithKey[]
+  ): string => {
+    const firstPatchKey = entries[0]?.patchKey ?? '';
+    const cache = scriptOutputCacheRef.current[executionProcessId];
+
+    if (
+      !cache ||
+      entries.length < cache.lineCount ||
+      cache.firstPatchKey !== firstPatchKey
+    ) {
+      const output = entries.map((line) => line.content).join('\n');
+      scriptOutputCacheRef.current[executionProcessId] = {
+        lineCount: entries.length,
+        firstPatchKey,
+        output,
+      };
+      return output;
+    }
+
+    if (entries.length === cache.lineCount) {
+      return cache.output;
+    }
+
+    const appended = entries
+      .slice(cache.lineCount)
+      .map((line) => line.content)
+      .join('\n');
+
+    const output = appended
+      ? cache.output
+        ? `${cache.output}\n${appended}`
+        : appended
+      : cache.output;
+
+    scriptOutputCacheRef.current[executionProcessId] = {
+      lineCount: entries.length,
+      firstPatchKey,
+      output,
     };
+
+    return output;
   };
 
   const flattenEntries = (
@@ -303,7 +425,7 @@ export const useConversationHistoryOld = ({
                   ? { status: 'success' }
                   : { status: 'failed' };
 
-            const output = p.entries.map((line) => line.content).join('\n');
+            const output = getScriptOutput(p.executionProcess.id, p.entries);
 
             const toolNormalizedEntry: NormalizedEntry = {
               entry_type: {
@@ -352,7 +474,7 @@ export const useConversationHistoryOld = ({
 
       return allEntries;
     },
-    []
+    [patchWithKey]
   );
 
   const emitEntries = useCallback(
@@ -384,6 +506,10 @@ export const useConversationHistoryOld = ({
   // This emits its own events as they are streamed
   const loadRunningAndEmit = useCallback(
     (executionProcess: ExecutionProcess): Promise<void> => {
+      if (isDisposedRef.current) {
+        return Promise.resolve();
+      }
+
       return new Promise((resolve, reject) => {
         let url = '';
         if (executionProcess.executor_action.typ.type === 'ScriptRequest') {
@@ -391,11 +517,38 @@ export const useConversationHistoryOld = ({
         } else {
           url = `/api/execution-processes/${executionProcess.id}/normalized-logs/ws`;
         }
+
+        let settled = false;
+        let finished = false;
+        let unregisterController = () => {};
+
+        const resolveOnce = () => {
+          if (settled) return;
+          settled = true;
+          unregisterController();
+          resolve();
+        };
+
+        const rejectOnce = () => {
+          if (settled) return;
+          settled = true;
+          unregisterController();
+          reject();
+        };
+
+        const buildEntriesWithKey = (
+          entries: PatchType[],
+          meta?: StreamSnapshotMeta
+        ) => {
+          const entriesOffset = meta?.entriesOffset ?? 0;
+          return mapEntriesWithKey(entries, executionProcess.id, entriesOffset);
+        };
+
         const controller = streamJsonPatchEntries<PatchType>(url, {
-          onEntries(entries) {
-            const patchesWithKey = entries.map((entry, index) =>
-              patchWithKey(entry, executionProcess.id, index)
-            );
+          maxEntries: MAX_ENTRIES_PER_PROCESS,
+          onEntries(entries, meta) {
+            if (isDisposedRef.current) return;
+            const patchesWithKey = buildEntriesWithKey(entries, meta);
             mergeIntoDisplayed((state) => {
               state[executionProcess.id] = {
                 executionProcess,
@@ -404,29 +557,55 @@ export const useConversationHistoryOld = ({
             });
             emitEntries(displayedExecutionProcesses.current, 'running', false);
           },
-          onFinished: () => {
+          onFinished: (entries, meta) => {
+            finished = true;
+            if (isDisposedRef.current) {
+              resolveOnce();
+              return;
+            }
+            const patchesWithKey = buildEntriesWithKey(entries, meta);
+            mergeIntoDisplayed((state) => {
+              state[executionProcess.id] = {
+                executionProcess,
+                entries: patchesWithKey,
+              };
+            });
             emitEntries(displayedExecutionProcesses.current, 'running', false);
-            controller.close();
-            resolve();
+            resolveOnce();
           },
           onError: () => {
-            controller.close();
-            reject();
+            if (isDisposedRef.current) {
+              resolveOnce();
+              return;
+            }
+            rejectOnce();
+          },
+          onClose: () => {
+            if (finished || isDisposedRef.current) {
+              resolveOnce();
+              return;
+            }
+            rejectOnce();
           },
         });
+
+        unregisterController = registerStreamController(controller);
       });
     },
-    [emitEntries]
+    [emitEntries, mapEntriesWithKey, registerStreamController]
   );
 
   // Sometimes it can take a few seconds for the stream to start, wrap the loadRunningAndEmit method
   const loadRunningAndEmitWithBackoff = useCallback(
     async (executionProcess: ExecutionProcess) => {
       for (let i = 0; i < 20; i++) {
+        if (isDisposedRef.current) return;
+
         try {
           await loadRunningAndEmit(executionProcess);
           break;
         } catch (_) {
+          if (isDisposedRef.current) return;
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
       }
@@ -446,10 +625,12 @@ export const useConversationHistoryOld = ({
         if (executionProcess.status === ExecutionProcessStatus.running)
           continue;
 
-        const entries =
+        const { entries, entriesOffset } =
           await loadEntriesForHistoricExecutionProcess(executionProcess);
-        const entriesWithKey = entries.map((e, idx) =>
-          patchWithKey(e, executionProcess.id, idx)
+        const entriesWithKey = mapEntriesWithKey(
+          entries,
+          executionProcess.id,
+          entriesOffset
         );
 
         localDisplayedExecutionProcesses[executionProcess.id] = {
@@ -466,7 +647,11 @@ export const useConversationHistoryOld = ({
       }
 
       return localDisplayedExecutionProcesses;
-    }, [executionProcesses]);
+    }, [
+      executionProcesses,
+      loadEntriesForHistoricExecutionProcess,
+      mapEntriesWithKey,
+    ]);
 
   const loadRemainingEntriesInBatches = useCallback(
     async (batchSize: number): Promise<boolean> => {
@@ -483,10 +668,12 @@ export const useConversationHistoryOld = ({
         )
           continue;
 
-        const entries =
+        const { entries, entriesOffset } =
           await loadEntriesForHistoricExecutionProcess(executionProcess);
-        const entriesWithKey = entries.map((e, idx) =>
-          patchWithKey(e, executionProcess.id, idx)
+        const entriesWithKey = mapEntriesWithKey(
+          entries,
+          executionProcess.id,
+          entriesOffset
         );
 
         mergeIntoDisplayed((state) => {
@@ -506,7 +693,11 @@ export const useConversationHistoryOld = ({
       }
       return anyUpdated;
     },
-    [executionProcesses]
+    [
+      executionProcesses,
+      loadEntriesForHistoricExecutionProcess,
+      mapEntriesWithKey,
+    ]
   );
 
   const ensureProcessVisible = useCallback((p: ExecutionProcess) => {
@@ -623,6 +814,7 @@ export const useConversationHistoryOld = ({
     if (removedProcessIds.length > 0) {
       mergeIntoDisplayed((state) => {
         removedProcessIds.forEach((id) => {
+          delete scriptOutputCacheRef.current[id];
           delete state[id];
         });
       });
@@ -631,11 +823,13 @@ export const useConversationHistoryOld = ({
 
   // Reset state when attempt changes
   useEffect(() => {
+    closeAllStreamControllers();
     displayedExecutionProcesses.current = {};
     loadedInitialEntries.current = false;
     streamingProcessIdsRef.current.clear();
+    scriptOutputCacheRef.current = {};
     emitEntries(displayedExecutionProcesses.current, 'initial', true);
-  }, [attempt.id, emitEntries]);
+  }, [attempt.id, closeAllStreamControllers, emitEntries]);
 
   return {};
 };

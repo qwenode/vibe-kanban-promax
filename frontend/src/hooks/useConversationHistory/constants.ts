@@ -2,6 +2,7 @@ import type { PatchTypeWithKey } from './types';
 
 export const MIN_INITIAL_ENTRIES = 10;
 export const REMAINING_BATCH_SIZE = 50;
+export const MAX_ENTRIES_PER_PROCESS = 5000;
 
 export const makeLoadingPatch = (
   executionProcessId: string

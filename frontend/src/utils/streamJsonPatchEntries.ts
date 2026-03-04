@@ -4,14 +4,25 @@ import { applyUpsertPatch } from '@/utils/jsonPatch';
 
 type PatchContainer<E = unknown> = { entries: E[] };
 
+export interface StreamSnapshotMeta {
+  /** Absolute index of the first item retained in `entries` */
+  entriesOffset: number;
+  /** Total number of entries seen so far (offset + retained length) */
+  totalEntries: number;
+}
+
 export interface StreamOptions<E = unknown> {
   initial?: PatchContainer<E>;
   /** called after each successful patch application */
-  onEntries?: (entries: E[]) => void;
+  onEntries?: (entries: E[], meta: StreamSnapshotMeta) => void;
   onConnect?: () => void;
   onError?: (err: unknown) => void;
+  /** called when websocket closes (manual close, finished, or disconnect) */
+  onClose?: () => void;
+  /** Keep only the latest N entries in-memory to prevent OOM */
+  maxEntries?: number;
   /** called once when a "finished" event is received */
-  onFinished?: (entries: E[]) => void;
+  onFinished?: (entries: E[], meta: StreamSnapshotMeta) => void;
 }
 
 interface StreamController<E = unknown> {
@@ -22,7 +33,7 @@ interface StreamController<E = unknown> {
   /** Best-effort connection state */
   isConnected(): boolean;
   /** Subscribe to updates; returns an unsubscribe function */
-  onChange(cb: (entries: E[]) => void): () => void;
+  onChange(cb: (entries: E[], meta: StreamSnapshotMeta) => void): () => void;
   /** Close the stream */
   close(): void;
 }
@@ -39,21 +50,41 @@ export function streamJsonPatchEntries<E = unknown>(
   opts: StreamOptions<E> = {}
 ): StreamController<E> {
   let connected = false;
-  let snapshot: PatchContainer<E> = structuredClone(
+  const snapshot: PatchContainer<E> = structuredClone(
     opts.initial ?? ({ entries: [] } as PatchContainer<E>)
   );
+  let entriesOffset = 0;
 
-  const subscribers = new Set<(entries: E[]) => void>();
+  const getMeta = (): StreamSnapshotMeta => ({
+    entriesOffset,
+    totalEntries: entriesOffset + snapshot.entries.length,
+  });
+
+  const subscribers = new Set<
+    (entries: E[], meta: StreamSnapshotMeta) => void
+  >();
   if (opts.onEntries) subscribers.add(opts.onEntries);
+
+  const enforceMaxEntries = () => {
+    if (!opts.maxEntries || opts.maxEntries <= 0) return;
+    if (snapshot.entries.length <= opts.maxEntries) return;
+
+    const trimCount = snapshot.entries.length - opts.maxEntries;
+    snapshot.entries.splice(0, trimCount);
+    entriesOffset += trimCount;
+  };
+
+  enforceMaxEntries();
 
   // Convert HTTP endpoint to WebSocket endpoint
   const wsUrl = url.replace(/^http/, 'ws');
   const ws = new WebSocket(wsUrl);
 
   const notify = () => {
+    const meta = getMeta();
     for (const cb of subscribers) {
       try {
-        cb(snapshot.entries);
+        cb(snapshot.entries, meta);
       } catch {
         /* swallow subscriber errors */
       }
@@ -67,19 +98,19 @@ export function streamJsonPatchEntries<E = unknown>(
       // Handle JsonPatch messages (from LogMsg::to_ws_message)
       if (msg.JsonPatch) {
         const raw = msg.JsonPatch as Operation[];
-        const ops = dedupeOps(raw);
+        const ops = remapOperationsToOffset(dedupeOps(raw), entriesOffset);
 
-        // Apply to a working copy (applyPatch mutates)
-        const next = structuredClone(snapshot);
-        applyUpsertPatch(next, ops);
+        if (ops.length > 0) {
+          applyUpsertPatch(snapshot, ops);
+          enforceMaxEntries();
+        }
 
-        snapshot = next;
         notify();
       }
 
       // Handle Finished messages
       if (msg.finished !== undefined) {
-        opts.onFinished?.(snapshot.entries);
+        opts.onFinished?.(snapshot.entries, getMeta());
         ws.close();
       }
     } catch (err) {
@@ -101,6 +132,7 @@ export function streamJsonPatchEntries<E = unknown>(
 
   ws.addEventListener('close', () => {
     connected = false;
+    opts.onClose?.();
   });
 
   return {
@@ -113,10 +145,10 @@ export function streamJsonPatchEntries<E = unknown>(
     isConnected(): boolean {
       return connected;
     },
-    onChange(cb: (entries: E[]) => void): () => void {
+    onChange(cb: (entries: E[], meta: StreamSnapshotMeta) => void): () => void {
       subscribers.add(cb);
       // push current state immediately
-      cb(snapshot.entries);
+      cb(snapshot.entries, getMeta());
       return () => subscribers.delete(cb);
     },
     close(): void {
@@ -125,6 +157,67 @@ export function streamJsonPatchEntries<E = unknown>(
       connected = false;
     },
   };
+}
+
+function remapEntryPath(
+  path: string,
+  entriesOffset: number
+): { path: string; drop: boolean } {
+  const match = path.match(/^\/entries\/([^/]+)(.*)$/);
+  if (!match) {
+    return { path, drop: false };
+  }
+
+  const [, rawIndex, suffix] = match;
+  if (rawIndex === '-') {
+    return { path, drop: false };
+  }
+
+  const absoluteIndex = Number(rawIndex);
+  if (!Number.isInteger(absoluteIndex)) {
+    return { path, drop: false };
+  }
+
+  const remappedIndex = absoluteIndex - entriesOffset;
+  if (remappedIndex < 0) {
+    return { path: '', drop: true };
+  }
+
+  return {
+    path: `/entries/${remappedIndex}${suffix}`,
+    drop: false,
+  };
+}
+
+function remapOperationsToOffset(
+  ops: Operation[],
+  entriesOffset: number
+): Operation[] {
+  const remapped: Operation[] = [];
+
+  for (const op of ops) {
+    const pathResult = remapEntryPath(op.path, entriesOffset);
+    if (pathResult.drop) {
+      continue;
+    }
+
+    const nextOp = {
+      ...op,
+      path: pathResult.path,
+    } as Operation & { from?: string };
+
+    if (typeof nextOp.from === 'string') {
+      const fromResult = remapEntryPath(nextOp.from, entriesOffset);
+      if (fromResult.drop) {
+        continue;
+      }
+      nextOp.from = fromResult.path;
+    }
+
+    remapped.push(nextOp as Operation);
+  }
+
+  return remapped;
 }
 
 /**
