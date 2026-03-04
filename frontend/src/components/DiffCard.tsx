@@ -215,6 +215,13 @@ export default function DiffCard({
     );
   };
 
+  const effectiveDiffMode =
+    globalMode === 'split' && (diff.change === 'added' || diff.change === 'deleted')
+      ? DiffModeEnum.Unified
+      : globalMode === 'split'
+        ? DiffModeEnum.Split
+        : DiffModeEnum.Unified;
+
   // Title row
   const title = (
     <p
@@ -309,9 +316,7 @@ export default function DiffCard({
             diffViewWrap={wrapText}
             diffViewTheme={theme}
             diffViewHighlight
-            diffViewMode={
-              globalMode === 'split' ? DiffModeEnum.Split : DiffModeEnum.Unified
-            }
+            diffViewMode={effectiveDiffMode}
             diffViewFontSize={12}
             diffViewAddWidget
             onAddWidgetClick={handleAddWidgetClick}

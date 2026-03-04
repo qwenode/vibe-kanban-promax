@@ -16,7 +16,9 @@ export function ReviewCommentRenderer({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text);
   const reviewCommentContainerClass =
-    'border-y border-primary/20 bg-primary/10 p-4';
+    'w-full border-y border-border/70 bg-muted/30 px-4 py-3';
+  const reviewCommentCardClass =
+    'rounded-md border border-primary/20 bg-primary/5 px-3 py-2';
 
   const handleDelete = () => {
     deleteComment(comment.id);
@@ -42,27 +44,29 @@ export function ReviewCommentRenderer({
   if (isEditing) {
     return (
       <div className={reviewCommentContainerClass}>
-        <WYSIWYGEditor
-          value={editText}
-          onChange={setEditText}
-          placeholder="Edit comment... (type @ to search files)"
-          className="w-full bg-background/80 text-foreground text-sm font-mono min-h-[60px]"
-          projectId={projectId}
-          onCmdEnter={handleSave}
-          autoFocus
-        />
-        <div className="mt-2 flex gap-2">
-          <Button size="xs" onClick={handleSave} disabled={!editText.trim()}>
-            Save changes
-          </Button>
-          <Button
-            size="xs"
-            variant="ghost"
-            onClick={handleCancel}
-            className="text-secondary-foreground"
-          >
-            Cancel
-          </Button>
+        <div className={reviewCommentCardClass}>
+          <WYSIWYGEditor
+            value={editText}
+            onChange={setEditText}
+            placeholder="Edit comment... (type @ to search files)"
+            className="w-full bg-background text-foreground text-sm font-mono min-h-[60px]"
+            projectId={projectId}
+            onCmdEnter={handleSave}
+            autoFocus
+          />
+          <div className="mt-2 flex gap-2">
+            <Button size="xs" onClick={handleSave} disabled={!editText.trim()}>
+              Save changes
+            </Button>
+            <Button
+              size="xs"
+              variant="ghost"
+              onClick={handleCancel}
+              className="text-secondary-foreground"
+            >
+              Cancel
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -70,13 +74,15 @@ export function ReviewCommentRenderer({
 
   return (
     <div className={reviewCommentContainerClass}>
-      <WYSIWYGEditor
-        value={comment.text}
-        disabled={true}
-        className="text-sm"
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <div className={reviewCommentCardClass}>
+        <WYSIWYGEditor
+          value={comment.text}
+          disabled={true}
+          className="text-sm"
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      </div>
     </div>
   );
 }
