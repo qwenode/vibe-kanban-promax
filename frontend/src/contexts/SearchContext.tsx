@@ -7,7 +7,7 @@ import {
   useCallback,
   ReactNode,
 } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useRouterState } from '@tanstack/react-router';
 
 interface SearchState {
   query: string;
@@ -26,14 +26,20 @@ interface SearchProviderProps {
 
 export function SearchProvider({ children }: SearchProviderProps) {
   const [query, setQuery] = useState('');
-  const location = useLocation();
-  const { projectId } = useParams<{ projectId: string }>();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const projectId = useRouterState({
+    select: (s) => {
+      for (const match of s.matches as Array<{ params?: Record<string, unknown> }>) {
+        const value = match.params?.projectId;
+        if (typeof value === 'string' && value.length > 0) return value;
+      }
+      return undefined;
+    },
+  });
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Check if we're on a tasks route
-  const isTasksRoute = /^\/local-projects\/[^/]+\/tasks/.test(
-    location.pathname
-  );
+  const isTasksRoute = /^\/local-projects\/[^/]+\/tasks/.test(pathname);
 
   // Clear search when leaving tasks pages
   useEffect(() => {

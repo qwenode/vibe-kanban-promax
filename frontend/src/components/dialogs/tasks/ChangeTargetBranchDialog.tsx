@@ -1,14 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Button, Modal, Typography } from '@douyinfe/semi-ui';
 import BranchSelector from '@/components/tasks/BranchSelector';
 import type { GitBranch } from 'shared/types';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
@@ -46,29 +38,22 @@ const ChangeTargetBranchDialogImpl =
         modal.hide();
       };
 
-      const handleOpenChange = (open: boolean) => {
-        if (!open) {
-          handleCancel();
-        }
-      };
-
       return (
-        <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>
+        <Modal visible={modal.visible} onCancel={handleCancel} footer={null} width={448}>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Typography.Title heading={5}>
                 {t('branches.changeTarget.dialog.title')}
-              </DialogTitle>
-              <DialogDescription>
+              </Typography.Title>
+              <Typography.Text type="tertiary">
                 {t('branches.changeTarget.dialog.description')}
-              </DialogDescription>
-            </DialogHeader>
-
+              </Typography.Text>
+            </div>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="base-branch" className="text-sm font-medium">
+                <Typography.Text strong>
                   {t('rebase.dialog.targetLabel')}
-                </label>
+                </Typography.Text>
                 <BranchSelector
                   branches={branches}
                   selectedBranch={selectedBranch}
@@ -79,15 +64,16 @@ const ChangeTargetBranchDialogImpl =
               </div>
             </div>
 
-            <DialogFooter>
+            <div className="flex items-center justify-end gap-2">
               <Button
-                variant="outline"
+                theme="outline"
                 onClick={handleCancel}
                 disabled={isChangingTargetBranch}
               >
                 {t('common:buttons.cancel')}
               </Button>
               <Button
+                type="primary"
                 onClick={handleConfirm}
                 disabled={isChangingTargetBranch || !selectedBranch}
               >
@@ -95,9 +81,9 @@ const ChangeTargetBranchDialogImpl =
                   ? t('branches.changeTarget.dialog.inProgress')
                   : t('branches.changeTarget.dialog.action')}
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </div>
+          </div>
+        </Modal>
       );
     }
   );

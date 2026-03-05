@@ -1,5 +1,4 @@
 import { type ClassValue, clsx } from 'clsx';
-// import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   // TODO: Re-enable twMerge after migration to tailwind v4

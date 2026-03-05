@@ -53,7 +53,7 @@ import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 import { EditorState, type LexicalEditor } from 'lexical';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import { Check, Clipboard, Pencil, Trash2 } from 'lucide-react';
 import { writeClipboardViaBridge } from '@/vscode/bridge';
 import type { SendMessageShortcut } from 'shared/types';
@@ -387,11 +387,11 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
               {/* Copy button */}
               <Button
-                type="button"
+                htmlType="button"
                 aria-label={copied ? 'Copied!' : 'Copy as Markdown'}
                 title={copied ? 'Copied!' : 'Copy as Markdown'}
-                variant="icon"
-                size="icon"
+                theme="borderless"
+                size="small"
                 onClick={handleCopy}
                 className="pointer-events-auto p-2 bg-muted h-8 w-8"
               >
@@ -404,11 +404,11 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
               {/* Edit button - only if onEdit provided */}
               {onEdit && (
                 <Button
-                  type="button"
+                  htmlType="button"
                   aria-label="Edit"
                   title="Edit"
-                  variant="icon"
-                  size="icon"
+                  theme="borderless"
+                  size="small"
                   onClick={onEdit}
                   className="pointer-events-auto p-2 bg-muted h-8 w-8"
                 >
@@ -418,11 +418,11 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
               {/* Delete button - only if onDelete provided */}
               {onDelete && (
                 <Button
-                  type="button"
+                  htmlType="button"
                   aria-label="Delete"
                   title="Delete"
-                  variant="icon"
-                  size="icon"
+                  theme="borderless"
+                  size="small"
                   onClick={onDelete}
                   className="pointer-events-auto p-2 bg-muted h-8 w-8"
                 >

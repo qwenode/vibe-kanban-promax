@@ -1,5 +1,5 @@
 import { useState, type MouseEvent } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import WYSIWYGEditor from '@/components/ui/wysiwyg';
 import { useReview, type ReviewComment } from '@/contexts/ReviewProvider';
 
@@ -64,12 +64,12 @@ export function ReviewCommentRenderer({
             autoFocus
           />
           <div className="mt-2 flex gap-2">
-            <Button size="xs" onClick={handleSave} disabled={!editText.trim()}>
+            <Button size="small" onClick={handleSave} disabled={!editText.trim()}>
               Save changes
             </Button>
             <Button
-              size="xs"
-              variant="ghost"
+              size="small"
+              theme="borderless"
               onClick={handleCancel}
               className="text-secondary-foreground"
             >

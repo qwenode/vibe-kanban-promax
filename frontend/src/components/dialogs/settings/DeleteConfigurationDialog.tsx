@@ -1,16 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
+import { Banner, Button, Modal, Typography } from '@douyinfe/semi-ui';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
 
@@ -49,54 +39,44 @@ const DeleteConfigurationDialogImpl =
         modal.hide();
       };
 
-      const handleOpenChange = (open: boolean) => {
-        if (!open) {
-          handleCancel();
-        }
-      };
-
       return (
-        <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>
+        <Modal visible={modal.visible} onCancel={handleCancel} footer={null} width={448}>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Typography.Title heading={5}>
                 {t('settings:settings.agents.deleteConfigDialog.title')}
-              </DialogTitle>
-              <DialogDescription>
+              </Typography.Title>
+              <Typography.Text type="tertiary">
                 {t('settings:settings.agents.deleteConfigDialog.description', {
                   configName,
                   executorType,
                 })}
-              </DialogDescription>
-            </DialogHeader>
+              </Typography.Text>
+            </div>
 
             {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+              <Banner type="danger" fullMode={false} description={error} />
             )}
 
-            <DialogFooter>
+            <div className="flex items-center justify-end gap-2">
               <Button
-                variant="outline"
+                theme="outline"
                 onClick={handleCancel}
                 disabled={isDeleting}
               >
                 {t('common:buttons.cancel')}
               </Button>
               <Button
-                variant="destructive"
+                type="danger"
                 onClick={handleDelete}
                 disabled={isDeleting}
+                loading={isDeleting}
               >
-                {isDeleting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
                 {t('common:buttons.delete')}
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </div>
+          </div>
+        </Modal>
       );
     }
   );

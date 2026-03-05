@@ -1,15 +1,8 @@
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
-import { Loader2 } from 'lucide-react';
 import { defineModal } from '@/lib/modals';
 import { formatFileSize } from '@/lib/utils';
+import { Modal, Spin, Typography } from '@douyinfe/semi-ui';
 
 export interface ImagePreviewDialogProps {
   imageUrl: string;
@@ -41,17 +34,25 @@ const ImagePreviewDialogImpl = NiceModal.create<ImagePreviewDialogProps>(
     const metadataLine = metadataParts.join(' · ');
 
     return (
-      <Dialog open={modal.visible} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+      <Modal
+        visible={modal.visible}
+        onCancel={handleClose}
+        footer={null}
+        width={896}
+        bodyStyle={{ padding: 0 }}
+      >
+        <div className="overflow-hidden">
           {fileName && (
-            <DialogHeader className="px-4 pt-4 pb-0">
-              <DialogTitle className="truncate">{fileName}</DialogTitle>
-            </DialogHeader>
+            <div className="px-4 pt-4 pb-0">
+              <Typography.Title heading={5} className="truncate">
+                {fileName}
+              </Typography.Title>
+            </div>
           )}
           <div className="relative flex items-center justify-center min-h-[200px]">
             {!imageLoaded && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+                <Spin size="large" />
               </div>
             )}
             <img
@@ -64,12 +65,12 @@ const ImagePreviewDialogImpl = NiceModal.create<ImagePreviewDialogProps>(
             />
           </div>
           {metadataLine && (
-            <DialogFooter className="px-4 py-3 border-t sm:justify-start">
+            <div className="px-4 py-3 border-t">
               <p className="text-xs text-muted-foreground">{metadataLine}</p>
-            </DialogFooter>
+            </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </Modal>
     );
   }
 );

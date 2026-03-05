@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import WYSIWYGEditor, { type WYSIWYGEditorRef } from '@/components/ui/wysiwyg';
 import { useReview, type ReviewDraft } from '@/contexts/ReviewProvider';
 import { Scope, useKeyExit, useKeySubmitComment } from '@/keyboard';
@@ -151,12 +151,12 @@ export function CommentWidgetLine({
           />
         </div>
         <div className="mt-2 flex gap-2">
-          <Button size="xs" onClick={handleSave} disabled={!value.trim()}>
+          <Button size="small" onClick={handleSave} disabled={!value.trim()}>
             Add review comment
           </Button>
           <Button
-            size="xs"
-            variant="ghost"
+            size="small"
+            theme="borderless"
             onClick={handleCancel}
             className="text-secondary-foreground"
           >

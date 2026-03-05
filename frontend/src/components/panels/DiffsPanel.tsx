@@ -1,19 +1,12 @@
 import { useDiffStream } from '@/hooks/useDiffStream';
 import { useMemo, useCallback, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader } from '@/components/ui/loader';
-import { Button } from '@/components/ui/button';
+import { Button, Spin, Tooltip } from '@douyinfe/semi-ui';
 import DiffViewSwitch from '@/components/DiffViewSwitch';
 import DiffCard from '@/components/DiffCard';
 import { useDiffSummary } from '@/hooks/useDiffSummary';
 import { NewCardHeader } from '@/components/ui/new-card';
 import { ChevronsUp, ChevronsDown } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import type { Diff, DiffChangeKind } from 'shared/types';
 import type { Workspace } from 'shared/types';
 import GitOperations, {
@@ -181,31 +174,24 @@ function DiffsPanelContent({
             <>
               <DiffViewSwitch />
               <div className="h-4 w-px bg-border" />
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="icon"
-                      onClick={handleCollapseAll}
-                      aria-pressed={allCollapsed}
-                      aria-label={
-                        allCollapsed
-                          ? t('diff.expandAll')
-                          : t('diff.collapseAll')
-                      }
-                    >
-                      {allCollapsed ? (
-                        <ChevronsDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronsUp className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {allCollapsed ? t('diff.expandAll') : t('diff.collapseAll')}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip content={allCollapsed ? t('diff.expandAll') : t('diff.collapseAll')}>
+                <Button
+                  theme="borderless"
+                  onClick={handleCollapseAll}
+                  aria-pressed={allCollapsed}
+                  aria-label={
+                    allCollapsed
+                      ? t('diff.expandAll')
+                      : t('diff.collapseAll')
+                  }
+                >
+                  {allCollapsed ? (
+                    <ChevronsDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronsUp className="h-4 w-4" />
+                  )}
+                </Button>
+              </Tooltip>
             </>
           }
         >
@@ -231,7 +217,7 @@ function DiffsPanelContent({
       <div className="flex-1 overflow-y-auto px-3">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader />
+            <Spin />
           </div>
         ) : diffs.length === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-muted-foreground">

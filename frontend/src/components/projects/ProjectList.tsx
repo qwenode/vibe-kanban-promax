@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Banner, Button, Card, Spin } from '@douyinfe/semi-ui';
 import { Project } from 'shared/types';
 import { ProjectFormDialog } from '@/components/dialogs/projects/ProjectFormDialog';
-import { AlertCircle, Loader2, Plus } from 'lucide-react';
+import { AlertCircle, Plus } from 'lucide-react';
 import ProjectCard from '@/components/projects/ProjectCard.tsx';
 import { useKeyCreate, Scope } from '@/keyboard';
 import { useProjects } from '@/hooks/useProjects';
@@ -32,7 +30,10 @@ export function ProjectList() {
   useKeyCreate(handleCreateProject, { scope: Scope.PROJECTS });
 
   const handleEditProject = (project: Project) => {
-    navigate(`/settings/projects?projectId=${project.id}`);
+    navigate({
+      to: '/settings/projects' as never,
+      search: { projectId: project.id } as never,
+    });
   };
 
   // Set initial focus when projects are loaded
@@ -61,22 +62,21 @@ export function ProjectList() {
       </div>
 
       {(error || projectsError) && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {error || projectsError?.message || t('errors.fetchFailed')}
-          </AlertDescription>
-        </Alert>
+        <Banner
+          type="danger"
+          fullMode={false}
+          icon={<AlertCircle className="h-4 w-4" />}
+          description={error || projectsError?.message || t('errors.fetchFailed')}
+        />
       )}
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          {t('loading')}
+        <div className="py-12 flex items-center justify-center">
+          <Spin />
         </div>
       ) : projects.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
+          <div className="py-12 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
               <Plus className="h-6 w-6" />
             </div>
@@ -88,7 +88,7 @@ export function ProjectList() {
               <Plus className="mr-2 h-4 w-4" />
               {t('empty.createFirst')}
             </Button>
-          </CardContent>
+          </div>
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

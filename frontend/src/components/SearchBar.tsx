@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Project } from 'shared/types';
+import { Input as SemiInput } from '@douyinfe/semi-ui';
 
 interface SearchBarProps {
   className?: string;
@@ -20,15 +20,15 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
     }
 
     return (
-      <div className={cn('relative w-64 sm:w-72', className)}>
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          ref={ref}
+      <div className={cn('w-64 sm:w-72', className)}>
+        <SemiInput
+          ref={ref as never}
           value={value}
-          onChange={(e) => onChange?.(e.target.value)}
+          onChange={(next) => onChange?.(next)}
           disabled={disabled}
           placeholder={project ? `Search ${project.name}...` : 'Search...'}
-          className="pl-8 pr-14 h-8 bg-muted"
+          prefix={<Search size={14} />}
+          showClear
         />
       </div>
     );

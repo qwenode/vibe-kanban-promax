@@ -1,12 +1,5 @@
 import { Settings2, ArrowDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Label } from '@/components/ui/label';
+import { Select, Typography } from '@douyinfe/semi-ui';
 import type { ExecutorProfileId } from 'shared/types';
 
 interface ConfigSelectorProps {
@@ -42,48 +35,28 @@ export function ConfigSelector({
   return (
     <div className="flex-1">
       {showLabel && (
-        <Label htmlFor="executor-variant" className="text-sm font-medium">
+        <Typography.Text className="text-sm font-medium">
           Configuration
-        </Label>
+        </Typography.Text>
       )}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className={`w-full justify-between text-xs ${showLabel ? 'mt-1.5' : ''} ${className}`}
-            disabled={disabled}
-            aria-label="Select configuration"
-          >
-            <div className="flex items-center gap-1.5 w-full">
-              <Settings2 className="h-3 w-3" />
-              <span className="truncate">{selectedVariant}</span>
-            </div>
-            <ArrowDown className="h-3 w-3" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-60">
-          {configOptions.map((variant) => (
-            <DropdownMenuItem
-              key={variant}
-              onClick={() => {
-                onChange({
-                  executor: selectedAgent,
-                  variant: variant === 'DEFAULT' ? null : variant,
-                });
-              }}
-              className={
-                (variant === 'DEFAULT' ? null : variant) ===
-                selectedExecutorProfile?.variant
-                  ? 'bg-accent'
-                  : ''
-              }
-            >
-              {variant}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Select
+        value={selectedVariant}
+        disabled={disabled}
+        className={`w-full text-xs ${showLabel ? 'mt-1.5' : ''} ${className}`}
+        suffix={<ArrowDown className="h-3 w-3" />}
+        prefix={<Settings2 className="h-3 w-3" />}
+        optionList={configOptions.map((variant) => ({
+          value: variant,
+          label: variant,
+        }))}
+        onChange={(value) => {
+          const picked = String(value);
+          onChange({
+            executor: selectedAgent,
+            variant: picked === 'DEFAULT' ? null : picked,
+          });
+        }}
+      />
     </div>
   );
 }

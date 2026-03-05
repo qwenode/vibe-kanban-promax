@@ -1,5 +1,5 @@
 import { AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import type { ConflictOp } from 'shared/types';
 import { displayConflictOpLabel } from '@/lib/conflicts';
 
@@ -97,7 +97,7 @@ export function ConflictBanner({
       <div className="flex flex-wrap gap-2">
         {onResolve && (
           <Button
-            size="sm"
+            size="small"
             onClick={onResolve}
             disabled={!enableResolve}
             className="bg-warning text-warning-foreground hover:bg-warning/90"
@@ -106,8 +106,8 @@ export function ConflictBanner({
           </Button>
         )}
         <Button
-          size="sm"
-          variant="outline"
+          size="small"
+          theme="outline"
           className="border-warning/40 text-warning-foreground hover:bg-warning/10 dark:text-warning/90"
           onClick={onOpenEditor}
         >
@@ -115,8 +115,8 @@ export function ConflictBanner({
         </Button>
 
         <Button
-          size="sm"
-          variant="outline"
+          size="small"
+          theme="outline"
           className="border-destructive/40 text-destructive hover:bg-destructive/10"
           onClick={onAbort}
           disabled={!enableAbort}

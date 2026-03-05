@@ -2,23 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Button, Modal, Select, Spin, Typography } from '@douyinfe/semi-ui';
 import { AutoExpandingTextarea } from '@/components/ui/auto-expanding-textarea';
 import { defineModal } from '@/lib/modals';
 import { repoApi, attemptsApi } from '@/lib/api';
@@ -159,12 +143,6 @@ const ScriptFixerDialogImpl = NiceModal.create<ScriptFixerDialogProps>(
       modal.hide();
     }, [modal]);
 
-    const handleOpenChange = (open: boolean) => {
-      if (!open) {
-        handleClose();
-      }
-    };
-
     const handleSave = useCallback(async () => {
       if (!selectedRepoId) return;
 
@@ -270,48 +248,41 @@ const ScriptFixerDialogImpl = NiceModal.create<ScriptFixerDialogProps>(
             : t('scriptFixer.devServerTitle');
 
     return (
-      <Dialog
-        open={modal.visible}
-        onOpenChange={handleOpenChange}
-        className="max-w-4xl w-[90vw]"
+      <Modal
+        visible={modal.visible}
+        onCancel={handleClose}
+        footer={null}
+        width={1000}
       >
-        <DialogContent className="max-h-[80vh] flex flex-col overflow-hidden">
-          <DialogHeader>
-            <DialogTitle>{dialogTitle}</DialogTitle>
-          </DialogHeader>
+        <div className="max-h-[80vh] flex flex-col overflow-hidden">
+          <Typography.Title heading={5}>{dialogTitle}</Typography.Title>
 
           <div className="flex-1 flex flex-col gap-4 min-h-0 min-w-0 overflow-hidden">
             {/* Repo selector (only show if multiple repos) */}
             {repos.length > 1 && (
               <div className="flex items-center gap-2">
-                <Label htmlFor="repo-select" className="shrink-0">
+                <Typography.Text className="shrink-0">
                   {t('scriptFixer.selectRepo')}
-                </Label>
+                </Typography.Text>
                 <Select
                   value={selectedRepoId}
-                  onValueChange={setSelectedRepoId}
-                >
-                  <SelectTrigger id="repo-select" className="flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {repos.map((repo) => (
-                      <SelectItem key={repo.id} value={repo.id}>
-                        {repo.display_name || repo.path}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(value) => setSelectedRepoId(String(value))}
+                  className="flex-1"
+                  optionList={repos.map((repo) => ({
+                    value: repo.id,
+                    label: repo.display_name || repo.path,
+                  }))}
+                />
               </div>
             )}
 
             {/* Script editor */}
             <div className="flex flex-col gap-2 flex-1 min-h-0 min-w-0">
-              <Label>{t('scriptFixer.scriptLabel')}</Label>
+              <Typography.Text>{t('scriptFixer.scriptLabel')}</Typography.Text>
               <div className="bg-panel flex-1 min-h-[150px] max-h-[300px] overflow-auto border rounded-md min-w-0">
                 {isLoadingRepo ? (
                   <div className="h-full flex items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <Spin />
                   </div>
                 ) : (
                   <AutoExpandingTextarea
@@ -337,13 +308,13 @@ const ScriptFixerDialogImpl = NiceModal.create<ScriptFixerDialogProps>(
               style={{ height: '200px' }}
             >
               <div className="flex items-center justify-between gap-2">
-                <Label>{t('scriptFixer.logsLabel')}</Label>
+                <Typography.Text>{t('scriptFixer.logsLabel')}</Typography.Text>
                 {/* Status indicator */}
                 {latestProcess && (
                   <div className="flex items-center gap-2 text-sm">
                     {isProcessRunning ? (
                       <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Spin />
                         <span className="text-muted-foreground">
                           {t('scriptFixer.statusRunning')}
                         </span>
@@ -402,28 +373,28 @@ const ScriptFixerDialogImpl = NiceModal.create<ScriptFixerDialogProps>(
             {error && <div className="text-destructive text-sm">{error}</div>}
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={handleClose}>
+          <div className="gap-2 flex items-center justify-end">
+            <Button theme="outline" onClick={handleClose}>
               {t('common:buttons.close')}
             </Button>
             <Button
-              variant="outline"
+              theme="outline"
               onClick={handleSave}
               disabled={!hasChanges || isSaving || isTesting}
+              loading={isSaving}
             >
-              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('scriptFixer.saveButton')}
             </Button>
             <Button
               onClick={handleSaveAndTest}
               disabled={isSaving || isTesting}
+              loading={isTesting}
             >
-              {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('scriptFixer.saveAndTestButton')}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </Modal>
     );
   }
 );

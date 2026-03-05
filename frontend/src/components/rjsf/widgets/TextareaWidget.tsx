@@ -1,5 +1,5 @@
 import { WidgetProps } from '@rjsf/utils';
-import { Textarea } from '@/components/ui/textarea';
+import TextArea from '@douyinfe/semi-ui/lib/es/input/textarea';
 
 export const TextareaWidget = (props: WidgetProps) => {
   const {
@@ -15,8 +15,7 @@ export const TextareaWidget = (props: WidgetProps) => {
     schema,
   } = props;
 
-  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = event.target.value;
+  const handleChange = (newValue: string) => {
     onChange(newValue === '' ? options.emptyValue : newValue);
   };
 
@@ -38,12 +37,12 @@ export const TextareaWidget = (props: WidgetProps) => {
     ((schema.title || '').toLowerCase().includes('prompt') ? 4 : 3);
 
   return (
-    <Textarea
+    <TextArea
       id={id}
       value={value ?? ''}
       placeholder={placeholder || ''}
       disabled={disabled || readonly}
-      onChange={handleChange}
+      onChange={(value) => handleChange(String(value))}
       onBlur={handleBlur}
       onFocus={handleFocus}
       rows={rows}

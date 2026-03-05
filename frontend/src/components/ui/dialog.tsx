@@ -1,9 +1,85 @@
 import * as React from 'react';
-import { X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { useKeyExit, useKeySubmit, Scope } from '@/keyboard';
+import { Modal, Typography } from '@douyinfe/semi-ui';
+
+const WIDTH_MAP: Record<string, number> = {
+  'max-w-md': 448,
+  'max-w-lg': 512,
+  'max-w-xl': 576,
+  'max-w-2xl': 672,
+  'max-w-3xl': 768,
+  'max-w-4xl': 896,
+  'max-w-5xl': 1024,
+  'max-w-6xl': 1152,
+  'max-w-7xl': 1280,
+};
+
+function extractModalWidth(className: string | undefined): number | undefined {
+  if (!className) return undefined;
+
+  const px = className.match(/(?:^|\s)(?:sm:)?max-w-\[(\d+)px\](?:\s|$)/);
+  if (px?.[1]) return Number(px[1]);
+
+  for (const [k, v] of Object.entries(WIDTH_MAP)) {
+    const re = new RegExp(`(?:^|\\s)(?:sm:)?${k}(?:\\s|$)`);
+    if (re.test(className)) return v;
+  }
+
+  return undefined;
+}
+
+const DialogHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn('flex flex-col gap-1', className)} {...props} />
+);
+DialogHeader.displayName = 'DialogHeader';
+
+const DialogTitle = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <Typography.Title
+    ref={ref as never}
+    heading={4}
+    className={cn(className)}
+    {...props}
+  />
+));
+DialogTitle.displayName = 'DialogTitle';
+
+const DialogDescription = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <Typography.Text
+    ref={ref as never}
+    type="tertiary"
+    className={cn(className)}
+    {...props}
+  />
+));
+DialogDescription.displayName = 'DialogDescription';
+
+const DialogContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn('flex flex-col gap-4', className)} {...props} />
+));
+DialogContent.displayName = 'DialogContent';
+
+const DialogFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn('flex items-center justify-end gap-2', className)} {...props} />
+);
+DialogFooter.displayName = 'DialogFooter';
 
 const Dialog = React.forwardRef<
   HTMLDivElement,
@@ -11,8 +87,23 @@ const Dialog = React.forwardRef<
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     uncloseable?: boolean;
+    width?: number | string;
+    bodyStyle?: React.CSSProperties;
   }
->(({ className, open, onOpenChange, children, uncloseable, ...props }, ref) => {
+>(
+  (
+    {
+      className,
+      open,
+      onOpenChange,
+      children,
+      uncloseable,
+      width,
+      bodyStyle,
+      ...props
+    },
+    ref
+  ) => {
   const { enableScope, disableScope } = useHotkeysContext();
 
   // Manage dialog scope when open/closed
@@ -107,98 +198,40 @@ const Dialog = React.forwardRef<
 
   if (!open) return null;
 
+  const contentChild = React.Children.toArray(children).find(
+    (c): c is React.ReactElement =>
+      React.isValidElement(c) && c.type === DialogContent
+  );
+  const contentClassName = (
+    contentChild?.props as unknown as { className?: string }
+  )?.className;
+  const inferredWidth = extractModalWidth(contentClassName);
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-start justify-center p-4 overflow-y-auto">
-      <div
-        className="fixed inset-0 bg-black/50"
-        onClick={() => (uncloseable ? {} : onOpenChange?.(false))}
-      />
+    <Modal
+      visible={open}
+      width={width ?? inferredWidth}
+      // Let dialog content fully control header/footer layout
+      header={null}
+      footer={null}
+      bodyStyle={bodyStyle}
+      closable={!uncloseable}
+      closeOnEsc={!uncloseable}
+      maskClosable={!uncloseable}
+      onCancel={() => onOpenChange?.(false)}
+    >
       <div
         ref={ref}
-        className={cn(
-          'relative z-[9999] flex flex-col w-full max-w-xl gap-4 bg-primary p-6 shadow-lg duration-200 sm:rounded-lg my-8',
-          className
-        )}
-        {...props}
+        className={cn(className)}
+        {...(props as unknown as Record<string, unknown>)}
       >
-        {!uncloseable && (
-          <button
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
-            onClick={() => onOpenChange?.(false)}
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </button>
-        )}
         {children}
       </div>
-    </div>
+    </Modal>
   );
-});
+  }
+);
 Dialog.displayName = 'Dialog';
-
-const DialogHeader = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      'flex flex-col space-y-1.5 text-center sm:text-left',
-      className
-    )}
-    {...props}
-  />
-);
-DialogHeader.displayName = 'DialogHeader';
-
-const DialogTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h3
-    ref={ref}
-    className={cn(
-      'text-lg font-semibold leading-none tracking-tight',
-      className
-    )}
-    {...props}
-  />
-));
-DialogTitle.displayName = 'DialogTitle';
-
-const DialogDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
-    {...props}
-  />
-));
-DialogDescription.displayName = 'DialogDescription';
-
-const DialogContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('flex flex-col gap-4', className)} {...props} />
-));
-DialogContent.displayName = 'DialogContent';
-
-const DialogFooter = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2',
-      className
-    )}
-    {...props}
-  />
-);
-DialogFooter.displayName = 'DialogFooter';
 
 export {
   Dialog,

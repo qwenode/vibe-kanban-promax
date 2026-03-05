@@ -1,15 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Chivo+Mono:ital,wght@0,100..900;1,100..900&family=Noto+Emoji:wght@300..700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config '../../../tailwind.legacy.config.js';
+
+@layer tailwind-base, semi, tailwind-components, tailwind-utils;
+@layer tailwind-base {
+  @tailwind base;
+}
+@layer tailwind-components {
+  @tailwind components;
+}
+@layer tailwind-utils {
+  @tailwind utilities;
+}
 
 /* 1) THEME TOKENS scoped to .legacy-design */
 @layer base {
   /* Light defaults */
   .legacy-design {
     color-scheme: light;
-    --_background: 48 33% 97%;
+    --_background: 0 0% 100%;
     --_foreground: 222.2 84% 4.9%;
     --_primary: var(--_muted);
     --_primary-foreground: var(--_muted-foreground);
@@ -301,4 +310,3 @@
   }
 }
 
-@config '../../../tailwind.legacy.config.js';

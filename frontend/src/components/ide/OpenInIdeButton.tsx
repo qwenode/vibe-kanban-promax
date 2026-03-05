@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import { useUserSystem } from '@/components/ConfigProvider';
 import { IdeIcon, getIdeName } from './IdeIcon';
 
@@ -24,8 +24,8 @@ export function OpenInIdeButton({
 
   return (
     <Button
-      variant="ghost"
-      size="sm"
+      theme="borderless"
+      size="small"
       className={`h-10 w-10 p-0 hover:opacity-70 transition-opacity ${className ?? ''}`}
       onClick={onClick}
       disabled={disabled}

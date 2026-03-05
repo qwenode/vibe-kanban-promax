@@ -32,20 +32,42 @@ export function ThemeProvider({
 
   useEffect(() => {
     const root = window.document.documentElement;
+    const body = window.document.body;
 
-    root.classList.remove('light', 'dark');
+    const applyTheme = (next: 'light' | 'dark') => {
+      root.classList.remove('light', 'dark');
+      root.classList.add(next);
+
+      // Semi Design dark mode hook
+      if (next === 'dark') {
+        body.setAttribute('theme-mode', 'dark');
+      } else {
+        body.removeAttribute('theme-mode');
+      }
+    };
 
     if (theme === ThemeMode.SYSTEM) {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light';
+      const mql: MediaQueryList = window.matchMedia(
+        '(prefers-color-scheme: dark)'
+      );
+      const getSystemTheme = () => (mql.matches ? 'dark' : 'light');
 
-      root.classList.add(systemTheme);
-      return;
+      applyTheme(getSystemTheme());
+
+      const handler = () => applyTheme(getSystemTheme());
+      if (typeof mql.addEventListener === 'function') {
+        mql.addEventListener('change', handler);
+        return () => mql.removeEventListener('change', handler);
+      }
+      const legacy = mql as unknown as {
+        addListener?: (listener: () => void) => void;
+        removeListener?: (listener: () => void) => void;
+      };
+      legacy.addListener?.(handler);
+      return () => legacy.removeListener?.(handler);
     }
 
-    root.classList.add(theme.toLowerCase());
+    applyTheme(theme.toLowerCase() as 'light' | 'dark');
   }, [theme]);
 
   const setTheme = (newTheme: ThemeMode) => {

@@ -1,4 +1,3 @@
-import { matchPath } from 'react-router-dom';
 import type { IssuePriority } from '@/stores/useUiPreferencesStore';
 
 export type ProjectSidebarRouteState =
@@ -85,84 +84,64 @@ export function buildIssueCreatePath(
 export function parseProjectSidebarRoute(
   pathname: string
 ): ProjectSidebarRouteState | null {
-  const issueWorkspaceCreateMatch = matchPath(
-    '/projects/:projectId/issues/:issueId/workspaces/create/:draftId',
-    pathname
+  const issueWorkspaceCreateMatch = pathname.match(
+    /^\/projects\/([^/]+)\/issues\/([^/]+)\/workspaces\/create\/([^/]+)$/
   );
-  if (
-    issueWorkspaceCreateMatch?.params.projectId &&
-    issueWorkspaceCreateMatch.params.issueId &&
-    issueWorkspaceCreateMatch.params.draftId
-  ) {
+  if (issueWorkspaceCreateMatch) {
     return {
       type: 'workspace-create',
-      projectId: issueWorkspaceCreateMatch.params.projectId,
-      issueId: issueWorkspaceCreateMatch.params.issueId,
-      draftId: issueWorkspaceCreateMatch.params.draftId,
+      projectId: issueWorkspaceCreateMatch[1],
+      issueId: issueWorkspaceCreateMatch[2],
+      draftId: issueWorkspaceCreateMatch[3],
     };
   }
 
-  const workspaceCreateMatch = matchPath(
-    '/projects/:projectId/workspaces/create/:draftId',
-    pathname
+  const workspaceCreateMatch = pathname.match(
+    /^\/projects\/([^/]+)\/workspaces\/create\/([^/]+)$/
   );
-  if (
-    workspaceCreateMatch?.params.projectId &&
-    workspaceCreateMatch.params.draftId
-  ) {
+  if (workspaceCreateMatch) {
     return {
       type: 'workspace-create',
-      projectId: workspaceCreateMatch.params.projectId,
+      projectId: workspaceCreateMatch[1],
       issueId: null,
-      draftId: workspaceCreateMatch.params.draftId,
+      draftId: workspaceCreateMatch[2],
     };
   }
 
-  const issueWorkspaceMatch = matchPath(
-    '/projects/:projectId/issues/:issueId/workspaces/:workspaceId',
-    pathname
+  const issueWorkspaceMatch = pathname.match(
+    /^\/projects\/([^/]+)\/issues\/([^/]+)\/workspaces\/([^/]+)$/
   );
-  if (
-    issueWorkspaceMatch?.params.projectId &&
-    issueWorkspaceMatch.params.issueId &&
-    issueWorkspaceMatch.params.workspaceId
-  ) {
+  if (issueWorkspaceMatch) {
     return {
       type: 'issue-workspace',
-      projectId: issueWorkspaceMatch.params.projectId,
-      issueId: issueWorkspaceMatch.params.issueId,
-      workspaceId: issueWorkspaceMatch.params.workspaceId,
+      projectId: issueWorkspaceMatch[1],
+      issueId: issueWorkspaceMatch[2],
+      workspaceId: issueWorkspaceMatch[3],
     };
   }
 
-  const issueCreateMatch = matchPath(
-    '/projects/:projectId/issues/new',
-    pathname
-  );
-  if (issueCreateMatch?.params.projectId) {
+  const issueCreateMatch = pathname.match(/^\/projects\/([^/]+)\/issues\/new$/);
+  if (issueCreateMatch) {
     return {
       type: 'issue-create',
-      projectId: issueCreateMatch.params.projectId,
+      projectId: issueCreateMatch[1],
     };
   }
 
-  const issueMatch = matchPath(
-    '/projects/:projectId/issues/:issueId',
-    pathname
-  );
-  if (issueMatch?.params.projectId && issueMatch.params.issueId) {
+  const issueMatch = pathname.match(/^\/projects\/([^/]+)\/issues\/([^/]+)$/);
+  if (issueMatch) {
     return {
       type: 'issue',
-      projectId: issueMatch.params.projectId,
-      issueId: issueMatch.params.issueId,
+      projectId: issueMatch[1],
+      issueId: issueMatch[2],
     };
   }
 
-  const projectMatch = matchPath('/projects/:projectId', pathname);
-  if (projectMatch?.params.projectId) {
+  const projectMatch = pathname.match(/^\/projects\/([^/]+)$/);
+  if (projectMatch) {
     return {
       type: 'closed',
-      projectId: projectMatch.params.projectId,
+      projectId: projectMatch[1],
     };
   }
 

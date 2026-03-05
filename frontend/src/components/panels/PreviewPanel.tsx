@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useRouterState } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Loader2, X, Wrench } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Banner, Button } from '@douyinfe/semi-ui';
 import { useDevserverPreview } from '@/hooks/useDevserverPreview';
 import { useDevServer } from '@/hooks/useDevServer';
 import { useHasDevServerScript } from '@/hooks/useHasDevServerScript';
@@ -10,7 +10,6 @@ import { useLogStream } from '@/hooks/useLogStream';
 import { useDevserverUrlFromLogs } from '@/hooks/useDevserverUrl';
 import { ClickToComponentListener } from '@/utils/previewBridge';
 import { useClickedElements } from '@/contexts/ClickedElementsProvider';
-import { Alert } from '@/components/ui/alert';
 import { useProject } from '@/contexts/ProjectContext';
 import { DevServerLogsView } from '@/components/tasks/TaskDetails/preview/DevServerLogsView';
 import { PreviewToolbar } from '@/components/tasks/TaskDetails/preview/PreviewToolbar';
@@ -31,7 +30,15 @@ export function PreviewPanel() {
 
   const { t } = useTranslation('tasks');
   const { project, projectId } = useProject();
-  const { attemptId: rawAttemptId } = useParams<{ attemptId?: string }>();
+  const rawAttemptId = useRouterState({
+    select: (s) => {
+      for (const match of s.matches as Array<{ params?: Record<string, unknown> }>) {
+        const value = match.params?.attemptId;
+        if (typeof value === 'string' && value.length > 0) return value;
+      }
+      return undefined;
+    },
+  });
 
   const attemptId =
     rawAttemptId && rawAttemptId !== 'latest' ? rawAttemptId : undefined;
@@ -235,7 +242,7 @@ export function PreviewPanel() {
         )}
 
         {showHelp && (
-          <Alert variant="destructive" className="space-y-2">
+          <Banner type="danger" fullMode={false} className="space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 space-y-2">
                 <p className="font-bold">{t('preview.troubleAlert.title')}</p>
@@ -260,7 +267,7 @@ export function PreviewPanel() {
                 </ol>
                 <div className="flex gap-2">
                   <Button
-                    variant="destructive"
+                    type="danger"
                     onClick={handleStopAndEdit}
                     disabled={isStoppingDevServer}
                   >
@@ -271,7 +278,7 @@ export function PreviewPanel() {
                   </Button>
                   {canFixDevScript && (
                     <Button
-                      variant="outline"
+                      theme="outline"
                       onClick={handleFixDevScript}
                       className="gap-1"
                     >
@@ -282,15 +289,15 @@ export function PreviewPanel() {
                 </div>
               </div>
               <Button
-                variant="ghost"
-                size="sm"
+                theme="borderless"
+                size="small"
                 onClick={() => setShowHelp(false)}
                 className="h-6 w-6 p-0"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
-          </Alert>
+          </Banner>
         )}
         <DevServerLogsView
           devServerProcesses={devServerProcesses}

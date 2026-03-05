@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Banner, Button, Card, Spin, Typography } from '@douyinfe/semi-ui';
 import {
   AlertTriangle,
   Plus,
 } from 'lucide-react';
-import { Loader } from '@/components/ui/loader';
 import { tasksApi } from '@/lib/api';
 import type { RepoBranchStatus, Workspace } from 'shared/types';
 import { openTaskForm } from '@/lib/openTaskForm';
@@ -48,7 +46,6 @@ import TaskKanbanBoard, {
 } from '@/components/tasks/TaskKanbanBoard';
 import type { DragEndEvent } from '@/components/ui/shadcn-io/kanban';
 import { useProjectTasks } from '@/hooks/useProjectTasks';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { TasksLayout, type LayoutMode } from '@/components/layout/TasksLayout';
 import { PreviewPanel } from '@/components/panels/PreviewPanel';
@@ -57,19 +54,12 @@ import TaskAttemptPanel from '@/components/panels/TaskAttemptPanel';
 import TaskPanel from '@/components/panels/TaskPanel';
 import TodoPanel from '@/components/tasks/TodoPanel';
 import { NewCard, NewCardHeader } from '@/components/ui/new-card';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { AttemptHeaderActions } from '@/components/panels/AttemptHeaderActions';
 import { TaskPanelHeaderActions } from '@/components/panels/TaskPanelHeaderActions';
 import { ClearDoneTasksConfirmationDialog } from '@/components/dialogs/tasks/ClearDoneTasksConfirmationDialog';
 
 import type { TaskWithAttemptStatus, TaskStatus } from 'shared/types';
+import { useNavigateWithSearch } from '@/hooks/useNavigateWithSearch';
 
 type Task = TaskWithAttemptStatus;
 
@@ -130,14 +120,29 @@ function DiffsPanelContainer({
 
 export function ProjectTasks() {
   const { t } = useTranslation(['tasks', 'common']);
-  const { taskId, attemptId } = useParams<{
-    projectId: string;
-    taskId?: string;
-    attemptId?: string;
-  }>();
-  const navigate = useNavigate();
+  const navigate = useNavigateWithSearch();
+  const routerNavigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({
+    select: (s) => (s.location.search as Record<string, unknown>) ?? {},
+  });
+  const { taskId, attemptId } = useMemo(() => {
+    const match = pathname.match(
+      /^\/local-projects\/[^/]+\/tasks(?:\/([^/]+)(?:\/attempts\/([^/]+))?)?$/
+    );
+    return {
+      taskId: match?.[1] ?? undefined,
+      attemptId: match?.[2] ?? undefined,
+    };
+  }, [pathname]);
   const { enableScope, disableScope, activeScopes } = useHotkeysContext();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const searchParams = useMemo(() => {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(search)) {
+      if (typeof v === 'string') params.set(k, v);
+    }
+    return params;
+  }, [search]);
   const isXL = useMediaQuery('(min-width: 1280px)');
   const isMobile = !isXL;
 
@@ -276,6 +281,17 @@ export function ProjectTasks() {
   const mode: LayoutMode =
     rawMode === 'preview' || rawMode === 'diffs' ? rawMode : null;
 
+  const replaceSearchParams = useCallback(
+    (params: URLSearchParams) => {
+      routerNavigate({
+        to: pathname as never,
+        search: Object.fromEntries(params.entries()) as never,
+        replace: true,
+      } as never);
+    },
+    [routerNavigate, pathname]
+  );
+
   // TODO: Remove this redirect after v0.1.0 (legacy URL support for bookmarked links)
   // Migrates old `view=logs` to `view=diffs`
   useEffect(() => {
@@ -283,9 +299,9 @@ export function ProjectTasks() {
     if (view === 'logs') {
       const params = new URLSearchParams(searchParams);
       params.set('view', 'diffs');
-      setSearchParams(params, { replace: true });
+      replaceSearchParams(params);
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, replaceSearchParams]);
 
   const setMode = useCallback(
     (newMode: LayoutMode) => {
@@ -295,9 +311,9 @@ export function ProjectTasks() {
       } else {
         params.set('view', newMode);
       }
-      setSearchParams(params, { replace: true });
+      replaceSearchParams(params);
     },
-    [searchParams, setSearchParams]
+    [searchParams, replaceSearchParams]
   );
 
   const handleCreateNewTask = useCallback(
@@ -657,21 +673,28 @@ export function ProjectTasks() {
   if (projectError) {
     return (
       <div className="p-4">
-        <Alert>
-          <AlertTitle className="flex items-center gap-2">
-            <AlertTriangle size="16" />
-            {t('common:states.error')}
-          </AlertTitle>
-          <AlertDescription>
-            {projectError.message || 'Failed to load project'}
-          </AlertDescription>
-        </Alert>
+        <Banner
+          type="danger"
+          fullMode={false}
+          title={
+            <span className="flex items-center gap-2">
+              <AlertTriangle size={16} />
+              {t('common:states.error')}
+            </span>
+          }
+          description={projectError.message || 'Failed to load project'}
+        />
       </div>
     );
   }
 
   if (projectLoading && isInitialTasksLoad) {
-    return <Loader message={t('loading')} size={32} className="py-8" />;
+    return (
+      <div className="py-8 flex items-center justify-center gap-2">
+        <Spin />
+        <Typography.Text type="tertiary">{t('loading')}</Typography.Text>
+      </div>
+    );
   }
 
   const truncateTitle = (title: string | undefined, maxLength = 20) => {
@@ -690,23 +713,23 @@ export function ProjectTasks() {
     tasks.length === 0 ? (
       <div className="max-w-7xl mx-auto mt-8">
         <Card>
-          <CardContent className="text-center py-8">
+          <div className="text-center py-8">
             <p className="text-muted-foreground">{t('empty.noTasks')}</p>
             <Button className="mt-4" onClick={() => handleCreateNewTask()}>
               <Plus className="h-4 w-4 mr-2" />
               {t('empty.createFirst')}
             </Button>
-          </CardContent>
+          </div>
         </Card>
       </div>
     ) : !hasVisibleTasks ? (
       <div className="max-w-7xl mx-auto mt-8">
         <Card>
-          <CardContent className="text-center py-8">
+          <div className="text-center py-8">
             <p className="text-muted-foreground">
               {t('empty.noSearchResults')}
             </p>
-          </CardContent>
+          </div>
         </Card>
       </div>
     ) : (
@@ -749,36 +772,22 @@ export function ProjectTasks() {
       }
     >
       <div className="mx-auto w-full">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              {isTaskView ? (
-                <BreadcrumbPage>
-                  {truncateTitle(selectedTask?.title)}
-                </BreadcrumbPage>
-              ) : (
-                <BreadcrumbLink
-                  className="cursor-pointer hover:underline"
-                  onClick={() =>
-                    navigateWithSearch(paths.task(projectId!, taskId!))
-                  }
-                >
-                  {truncateTitle(selectedTask?.title)}
-                </BreadcrumbLink>
-              )}
-            </BreadcrumbItem>
-            {!isTaskView && (
-              <>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>
-                    {attempt?.branch || 'Task Attempt'}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </>
-            )}
-          </BreadcrumbList>
-        </Breadcrumb>
+        <div className="text-sm">
+          {isTaskView ? (
+            <Typography.Text>{truncateTitle(selectedTask?.title)}</Typography.Text>
+          ) : (
+            <span className="flex items-center gap-2">
+              <Button
+                theme="borderless"
+                onClick={() => navigateWithSearch(paths.task(projectId!, taskId!))}
+              >
+                {truncateTitle(selectedTask?.title)}
+              </Button>
+              <Typography.Text type="tertiary">/</Typography.Text>
+              <Typography.Text>{attempt?.branch || 'Task Attempt'}</Typography.Text>
+            </span>
+          )}
+        </div>
       </div>
     </NewCardHeader>
   ) : null;
@@ -857,13 +866,18 @@ export function ProjectTasks() {
   return (
     <div className="h-full flex flex-col">
       {streamError && (
-        <Alert className="w-full z-30 xl:sticky xl:top-0">
-          <AlertTitle className="flex items-center gap-2">
-            <AlertTriangle size="16" />
-            {t('common:states.reconnecting')}
-          </AlertTitle>
-          <AlertDescription>{streamError}</AlertDescription>
-        </Alert>
+        <Banner
+          className="w-full z-30 xl:sticky xl:top-0"
+          type="warning"
+          fullMode={false}
+          title={
+            <span className="flex items-center gap-2">
+              <AlertTriangle size={16} />
+              {t('common:states.reconnecting')}
+            </span>
+          }
+          description={streamError}
+        />
       )}
 
       <div className="flex-1 min-h-0">{attemptArea}</div>

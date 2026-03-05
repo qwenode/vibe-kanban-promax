@@ -1,18 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+  Banner,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Spin,
+  Typography,
+} from '@douyinfe/semi-ui';
 import {
-  AlertCircle,
   ChevronUp,
   File,
   Folder,
@@ -111,8 +108,8 @@ const FolderPickerDialogImpl = NiceModal.create<FolderPickerDialogProps>(
       // Don't set manual path here since home directory path varies by system
     };
 
-    const handleManualPathChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setManualPath(e.target.value);
+    const handleManualPathChange = (value: string) => {
+      setManualPath(value);
     };
 
     const handleManualPathSubmit = () => {
@@ -135,44 +132,40 @@ const FolderPickerDialogImpl = NiceModal.create<FolderPickerDialogProps>(
       modal.hide();
     };
 
-    const handleOpenChange = (open: boolean) => {
-      if (!open) {
-        handleCancel();
-      }
-    };
-
     return (
       <div className="fixed inset-0 z-[10000] pointer-events-none [&>*]:pointer-events-auto">
-        <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
-          <DialogContent className="max-w-[600px] w-full h-[700px] flex flex-col overflow-hidden">
-            <DialogHeader>
-              <DialogTitle>{title}</DialogTitle>
-              <DialogDescription>{description}</DialogDescription>
-            </DialogHeader>
+        <Modal
+          visible={modal.visible}
+          onCancel={handleCancel}
+          footer={null}
+          width={600}
+          bodyStyle={{ height: 700, display: 'flex', flexDirection: 'column' }}
+        >
+          <div className="space-y-1 pb-2">
+            <Typography.Title heading={5}>{title}</Typography.Title>
+            <Typography.Text type="tertiary">{description}</Typography.Text>
+          </div>
 
             <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
               {/* Legend */}
-              <div className="text-xs text-muted-foreground border-b pb-2">
+              <Typography.Text type="tertiary">
                 {t('folderPicker.legend')}
-              </div>
+              </Typography.Text>
 
               {/* Manual path input */}
               <div className="space-y-2">
-                <div className="text-sm font-medium">
+                <Typography.Text strong>
                   {t('folderPicker.manualPathLabel')}
-                </div>
+                </Typography.Text>
                 <div className="flex space-x-2 min-w-0">
                   <Input
                     value={manualPath}
                     onChange={handleManualPathChange}
                     placeholder="/path/to/your/project"
-                    className="flex-1 min-w-0"
                   />
                   <Button
                     onClick={handleManualPathSubmit}
-                    variant="outline"
-                    size="sm"
-                    className="flex-shrink-0"
+                    theme="outline"
                   >
                     {t('folderPicker.go')}
                   </Button>
@@ -181,14 +174,14 @@ const FolderPickerDialogImpl = NiceModal.create<FolderPickerDialogProps>(
 
               {/* Search input */}
               <div className="space-y-2">
-                <div className="text-sm font-medium">
+                <Typography.Text strong>
                   {t('folderPicker.searchLabel')}
-                </div>
+                </Typography.Text>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(value) => setSearchTerm(value)}
                     placeholder="Filter folders and files..."
                     className="pl-10"
                   />
@@ -199,51 +192,45 @@ const FolderPickerDialogImpl = NiceModal.create<FolderPickerDialogProps>(
               <div className="flex items-center space-x-2 min-w-0">
                 <Button
                   onClick={handleHomeDirectory}
-                  variant="outline"
-                  size="sm"
-                  className="flex-shrink-0"
+                  theme="outline"
+                  icon={<Home className="h-4 w-4" />}
                 >
-                  <Home className="h-4 w-4" />
                 </Button>
                 <Button
                   onClick={handleParentDirectory}
-                  variant="outline"
-                  size="sm"
+                  theme="outline"
                   disabled={!currentPath || currentPath === '/'}
-                  className="flex-shrink-0"
+                  icon={<ChevronUp className="h-4 w-4" />}
                 >
-                  <ChevronUp className="h-4 w-4" />
                 </Button>
-                <div className="text-sm text-muted-foreground flex-1 truncate min-w-0">
+                <Typography.Text type="tertiary" ellipsis style={{ flex: 1 }}>
                   {currentPath || 'Home'}
-                </div>
+                </Typography.Text>
                 <Button
                   onClick={handleSelectCurrent}
-                  variant="outline"
-                  size="sm"
+                  theme="outline"
                   disabled={!currentPath}
-                  className="flex-shrink-0"
                 >
                   {t('folderPicker.selectCurrent')}
                 </Button>
               </div>
 
               {/* Directory listing */}
-              <div className="flex-1 border rounded-md overflow-auto">
+              <Card bordered className="flex-1 overflow-auto">
                 {loading ? (
-                  <div className="p-4 text-center text-muted-foreground">
-                    Loading...
+                  <div className="p-4 flex items-center justify-center gap-2">
+                    <Spin />
+                    <Typography.Text type="tertiary">Loading...</Typography.Text>
                   </div>
                 ) : error ? (
-                  <Alert variant="destructive" className="m-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
+                  <Banner type="danger" fullMode={false} description={error} />
                 ) : filteredEntries.length === 0 ? (
-                  <div className="p-4 text-center text-muted-foreground">
+                  <div className="p-4 text-center">
+                    <Typography.Text type="tertiary">
                     {searchTerm.trim()
                       ? 'No matches found'
                       : 'No folders found'}
+                    </Typography.Text>
                   </div>
                 ) : (
                   <div className="p-2">
@@ -269,34 +256,34 @@ const FolderPickerDialogImpl = NiceModal.create<FolderPickerDialogProps>(
                         ) : (
                           <File className="h-4 w-4 text-gray-400 flex-shrink-0" />
                         )}
-                        <span className="text-sm flex-1 truncate min-w-0">
+                        <Typography.Text style={{ flex: 1 }} ellipsis>
                           {entry.name}
-                        </span>
+                        </Typography.Text>
                         {entry.is_git_repo && (
-                          <span className="text-xs text-success bg-green-100 px-2 py-1 rounded flex-shrink-0">
+                          <Typography.Text type="success">
                             {t('folderPicker.gitRepo')}
-                          </span>
+                          </Typography.Text>
                         )}
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
+              </Card>
             </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCancel}>
+            <div className="flex items-center justify-end gap-2 pt-3">
+              <Button htmlType="button" theme="outline" onClick={handleCancel}>
                 {t('buttons.cancel')}
               </Button>
               <Button
+                type="primary"
                 onClick={handleSelectManual}
                 disabled={!manualPath.trim()}
               >
                 {t('folderPicker.selectPath')}
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </div>
+        </Modal>
       </div>
     );
   }

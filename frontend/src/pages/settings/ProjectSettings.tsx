@@ -1,33 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { isEqual } from 'lodash';
 import {
+  Banner,
+  Button,
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import {
+  Input,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+  Spin,
+  Table,
+  Toast,
+  Typography,
+} from '@douyinfe/semi-ui';
+import { Plus, Trash2 } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectMutations } from '@/hooks/useProjectMutations';
 import { RepoPickerDialog } from '@/components/dialogs/shared/RepoPickerDialog';
 import { projectsApi } from '@/lib/api';
 import { repoBranchKeys } from '@/hooks/useRepoBranches';
 import type { Project, Repo, UpdateProject } from 'shared/types';
+import { Modal } from '@douyinfe/semi-ui';
 
 interface ProjectFormState {
   name: string;
@@ -40,10 +34,11 @@ function projectToFormState(project: Project): ProjectFormState {
 }
 
 export function ProjectSettings() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const projectIdParam = searchParams.get('projectId') ?? '';
-  const { t } = useTranslation('settings');
+  const projectIdParam = useRouterState({
+    select: (s) => ((s.location.search as { projectId?: string } | undefined)?.projectId ?? ''),
+  });
+  const { t } = useTranslation(['settings', 'common']);
   const queryClient = useQueryClient();
 
   // Fetch all projects
@@ -55,7 +50,7 @@ export function ProjectSettings() {
 
   // Selected project state
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
-    searchParams.get('projectId') || ''
+    projectIdParam || ''
   );
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
@@ -63,7 +58,6 @@ export function ProjectSettings() {
   const [draft, setDraft] = useState<ProjectFormState | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   // Repositories state
   const [repositories, setRepositories] = useState<Repo[]>([]);
@@ -78,70 +72,112 @@ export function ProjectSettings() {
     return !isEqual(draft, projectToFormState(selectedProject));
   }, [draft, selectedProject]);
 
+  const setProjectIdSearchParam = useCallback(
+    (id: string) => {
+      navigate({
+        search: ((prev: unknown) => {
+          const next = { ...(prev as Record<string, unknown>) } as Record<
+            string,
+            unknown
+          >;
+          if (id) {
+            next.projectId = id;
+          } else {
+            delete next.projectId;
+          }
+          return next;
+        }) as never,
+        replace: true,
+      } as never);
+    },
+    [navigate]
+  );
+
+  const confirmSwitchIfDirty = useCallback(async () => {
+    if (!hasUnsavedChanges) return true;
+    return await new Promise<boolean>((resolve) => {
+      Modal.confirm({
+        title: t('common:labels.unsavedChanges', {
+          defaultValue: 'Unsaved changes',
+        }),
+        content: t('settings.projects.save.confirmSwitch'),
+        hasCancel: true,
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+  }, [hasUnsavedChanges, t]);
+
   // Handle project selection from dropdown
   const handleProjectSelect = useCallback(
-    (id: string) => {
+    async (id: string) => {
       // No-op if same project
       if (id === selectedProjectId) return;
 
       // Confirm if there are unsaved changes
-      if (hasUnsavedChanges) {
-        const confirmed = window.confirm(
-          t('settings.projects.save.confirmSwitch')
-        );
-        if (!confirmed) return;
+      const confirmed = await confirmSwitchIfDirty();
+      if (!confirmed) return;
 
-        // Clear local state before switching
+      // Clear local state before switching
+      if (hasUnsavedChanges) {
         setDraft(null);
         setSelectedProject(null);
-        setSuccess(false);
         setError(null);
       }
 
       // Update state and URL
       setSelectedProjectId(id);
       if (id) {
-        setSearchParams({ projectId: id });
+        setProjectIdSearchParam(id);
       } else {
-        setSearchParams({});
+        setProjectIdSearchParam('');
       }
     },
-    [hasUnsavedChanges, selectedProjectId, setSearchParams, t]
+    [
+      confirmSwitchIfDirty,
+      hasUnsavedChanges,
+      selectedProjectId,
+      setProjectIdSearchParam,
+    ]
   );
 
   // Sync selectedProjectId when URL changes (with unsaved changes prompt)
   useEffect(() => {
     if (projectIdParam === selectedProjectId) return;
 
-    // Confirm if there are unsaved changes
-    if (hasUnsavedChanges) {
-      const confirmed = window.confirm(
-        t('settings.projects.save.confirmSwitch')
-      );
+    let cancelled = false;
+    (async () => {
+      if (cancelled) return;
+
+      const confirmed = await confirmSwitchIfDirty();
       if (!confirmed) {
         // Revert URL to previous value
         if (selectedProjectId) {
-          setSearchParams({ projectId: selectedProjectId });
+          setProjectIdSearchParam(selectedProjectId);
         } else {
-          setSearchParams({});
+          setProjectIdSearchParam('');
         }
         return;
       }
 
-      // Clear local state before switching
-      setDraft(null);
-      setSelectedProject(null);
-      setSuccess(false);
-      setError(null);
-    }
+      if (hasUnsavedChanges) {
+        setDraft(null);
+        setSelectedProject(null);
+        setError(null);
+      }
 
-    setSelectedProjectId(projectIdParam);
+      setSelectedProjectId(projectIdParam);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     projectIdParam,
-    hasUnsavedChanges,
     selectedProjectId,
-    setSearchParams,
-    t,
+    confirmSwitchIfDirty,
+    setProjectIdSearchParam,
+    hasUnsavedChanges,
   ]);
 
   // Populate draft from server data
@@ -221,6 +257,7 @@ export function ProjectSettings() {
         git_repo_path: repo.path,
       });
       setRepositories((prev) => [...prev, newRepo]);
+      Toast.success(t('settings.projects.repos.added', { defaultValue: 'Repository added' }));
       queryClient.invalidateQueries({
         queryKey: ['projectRepositories', selectedProjectId],
       });
@@ -232,6 +269,9 @@ export function ProjectSettings() {
       });
     } catch (err) {
       setRepoError(
+        err instanceof Error ? err.message : 'Failed to add repository'
+      );
+      Toast.error(
         err instanceof Error ? err.message : 'Failed to add repository'
       );
     } finally {
@@ -247,6 +287,9 @@ export function ProjectSettings() {
     try {
       await projectsApi.deleteRepository(selectedProjectId, repoId);
       setRepositories((prev) => prev.filter((r) => r.id !== repoId));
+      Toast.success(
+        t('settings.projects.repos.deleted', { defaultValue: 'Repository removed' })
+      );
       queryClient.invalidateQueries({
         queryKey: ['projectRepositories', selectedProjectId],
       });
@@ -260,6 +303,9 @@ export function ProjectSettings() {
       setRepoError(
         err instanceof Error ? err.message : 'Failed to delete repository'
       );
+      Toast.error(
+        err instanceof Error ? err.message : 'Failed to delete repository'
+      );
     } finally {
       setDeletingRepoId(null);
     }
@@ -270,8 +316,7 @@ export function ProjectSettings() {
       // Update local state with fresh data from server
       setSelectedProject(updatedProject);
       setDraft(projectToFormState(updatedProject));
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      Toast.success(t('settings.projects.save.success'));
       setSaving(false);
     },
     onUpdateError: (err) => {
@@ -279,6 +324,9 @@ export function ProjectSettings() {
         err instanceof Error ? err.message : 'Failed to save project settings'
       );
       setSaving(false);
+      Toast.error(
+        err instanceof Error ? err.message : 'Failed to save project settings'
+      );
     },
   });
 
@@ -287,7 +335,6 @@ export function ProjectSettings() {
 
     setSaving(true);
     setError(null);
-    setSuccess(false);
 
     try {
       const updateData: UpdateProject = {
@@ -319,9 +366,11 @@ export function ProjectSettings() {
 
   if (projectsLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">{t('settings.projects.loading')}</span>
+      <div className="py-8 flex items-center gap-2">
+        <Spin />
+        <Typography.Text type="tertiary">
+          {t('settings.projects.loading')}
+        </Typography.Text>
       </div>
     );
   }
@@ -329,238 +378,239 @@ export function ProjectSettings() {
   if (projectsError) {
     return (
       <div className="py-8">
-        <Alert variant="destructive">
-          <AlertDescription>
-            {projectsError instanceof Error
+        <Banner
+          type="danger"
+          fullMode={false}
+          description={
+            projectsError instanceof Error
               ? projectsError.message
-              : t('settings.projects.loadError')}
-          </AlertDescription>
-        </Alert>
+              : t('settings.projects.loadError')
+          }
+        />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      {!!error && <Banner type="danger" fullMode={false} description={error} />}
 
-      {success && (
-        <Alert variant="success">
-          <AlertDescription className="font-medium">
-            {t('settings.projects.save.success')}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('settings.projects.title')}</CardTitle>
-          <CardDescription>
+      <Card
+        title={t('settings.projects.title')}
+        headerExtraContent={
+          <Typography.Text type="tertiary">
             {t('settings.projects.description')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="project-selector">
-              {t('settings.projects.selector.label')}
-            </Label>
-            <Select
-              value={selectedProjectId}
-              onValueChange={handleProjectSelect}
-            >
-              <SelectTrigger id="project-selector">
-                <SelectValue
-                  placeholder={t('settings.projects.selector.placeholder')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {projects && projects.length > 0 ? (
-                  projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-projects" disabled>
-                    {t('settings.projects.selector.noProjects')}
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              {t('settings.projects.selector.helper')}
-            </p>
-          </div>
-        </CardContent>
+          </Typography.Text>
+        }
+      >
+        <div className="space-y-2">
+          <Typography.Text strong>
+            {t('settings.projects.selector.label')}
+          </Typography.Text>
+          <Select
+            value={selectedProjectId}
+            placeholder={t('settings.projects.selector.placeholder')}
+            optionList={
+              projects && projects.length > 0
+                ? projects.map((p) => ({ value: p.id, label: p.name }))
+                : [
+                    {
+                      value: 'no-projects',
+                      label: t('settings.projects.selector.noProjects'),
+                      disabled: true,
+                    },
+                  ]
+            }
+            onChange={(value) => handleProjectSelect(String(value))}
+          />
+          <Typography.Text type="tertiary">
+            {t('settings.projects.selector.helper')}
+          </Typography.Text>
+        </div>
       </Card>
 
       {selectedProject && draft && (
         <>
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('settings.projects.general.title')}</CardTitle>
-              <CardDescription>
+          <Card
+            title={t('settings.projects.general.title')}
+            headerExtraContent={
+              <Typography.Text type="tertiary">
                 {t('settings.projects.general.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </Typography.Text>
+            }
+          >
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="project-name">
+                <Typography.Text strong>
                   {t('settings.projects.general.name.label')}
-                </Label>
+                </Typography.Text>
                 <Input
-                  id="project-name"
-                  type="text"
                   value={draft.name}
-                  onChange={(e) => updateDraft({ name: e.target.value })}
                   placeholder={t('settings.projects.general.name.placeholder')}
-                  required
+                  onChange={(value) => updateDraft({ name: String(value) })}
                 />
-                <p className="text-sm text-muted-foreground">
+                <Typography.Text type="tertiary">
                   {t('settings.projects.general.name.helper')}
-                </p>
+                </Typography.Text>
               </div>
 
-              {/* Save Button */}
               <div className="flex items-center justify-between pt-4 border-t">
                 {hasUnsavedChanges ? (
-                  <span className="text-sm text-muted-foreground">
+                  <Typography.Text type="tertiary">
                     {t('settings.projects.save.unsavedChanges')}
-                  </span>
+                  </Typography.Text>
                 ) : (
                   <span />
                 )}
                 <div className="flex gap-2">
                   <Button
-                    variant="outline"
+                    theme="outline"
                     onClick={handleDiscard}
                     disabled={saving || !hasUnsavedChanges}
                   >
                     {t('settings.projects.save.discard')}
                   </Button>
                   <Button
+                    type="primary"
                     onClick={handleSave}
                     disabled={saving || !hasUnsavedChanges}
+                    loading={saving}
                   >
-                    {saving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        {t('settings.projects.save.saving')}
-                      </>
-                    ) : (
-                      t('settings.projects.save.button')
-                    )}
+                    {saving
+                      ? t('settings.projects.save.saving')
+                      : t('settings.projects.save.button')}
                   </Button>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
 
           {/* Repositories Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Repositories</CardTitle>
-              <CardDescription>
-                Manage the git repositories in this project
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {repoError && (
-                <Alert variant="destructive">
-                  <AlertDescription>{repoError}</AlertDescription>
-                </Alert>
+          <Card
+            title={t('settings.projects.repos.title', { defaultValue: 'Repositories' })}
+            headerExtraContent={
+              <Typography.Text type="tertiary">
+                {t('settings.projects.repos.description', {
+                  defaultValue: 'Manage the git repositories in this project',
+                })}
+              </Typography.Text>
+            }
+          >
+            <div className="space-y-4">
+              {!!repoError && (
+                <Banner type="danger" fullMode={false} description={repoError} />
               )}
 
               {loadingRepos ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span className="ml-2 text-sm text-muted-foreground">
-                    Loading repositories...
-                  </span>
+                <div className="flex items-center gap-2 py-2">
+                  <Spin />
+                  <Typography.Text type="tertiary">
+                    {t('settings.projects.repos.loading', {
+                      defaultValue: 'Loading repositories...',
+                    })}
+                  </Typography.Text>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {repositories.map((repo) => (
-                    <div
-                      key={repo.id}
-                      className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() =>
-                        navigate(`/settings/repos?repoId=${repo.id}`)
-                      }
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium">{repo.display_name}</div>
-                        <div className="text-sm text-muted-foreground truncate">
-                          {repo.path}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteRepository(repo.id);
-                        }}
-                        disabled={deletingRepoId === repo.id}
-                        title="Delete repository"
-                      >
-                        {deletingRepoId === repo.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  ))}
-
-                  {repositories.length === 0 && !loadingRepos && (
-                    <div className="text-center py-4 text-sm text-muted-foreground">
-                      No repositories configured
-                    </div>
-                  )}
+                <>
+                  <Table
+                    size="middle"
+                    rowKey="id"
+                    dataSource={repositories}
+                    columns={[
+                      {
+                        title: t('settings.projects.repos.columns.name', {
+                          defaultValue: 'Name',
+                        }),
+                        dataIndex: 'display_name',
+                        render: (text: unknown) => (
+                          <Typography.Text strong>{String(text ?? '')}</Typography.Text>
+                        ),
+                      },
+                      {
+                        title: t('settings.projects.repos.columns.path', {
+                          defaultValue: 'Path',
+                        }),
+                        dataIndex: 'path',
+                        render: (text: unknown) => (
+                          <Typography.Text type="tertiary">
+                            {String(text ?? '')}
+                          </Typography.Text>
+                        ),
+                      },
+                      {
+                        title: t('settings.projects.repos.columns.actions', {
+                          defaultValue: 'Actions',
+                        }),
+                        dataIndex: 'id',
+                        width: 90,
+                        align: 'center',
+                        render: (id: unknown) => (
+                          <Button
+                            theme="borderless"
+                            type="danger"
+                            icon={<Trash2 size={16} />}
+                            loading={deletingRepoId === String(id)}
+                            disabled={deletingRepoId != null && deletingRepoId !== String(id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteRepository(String(id));
+                            }}
+                          />
+                        ),
+                      },
+                    ]}
+                    onRow={(record) => ({
+                      onClick: () =>
+                        record
+                          ? navigate({
+                              to: '/settings/repos' as never,
+                              search: ({ repoId: record.id } as unknown) as never,
+                            } as never)
+                          : undefined,
+                    })}
+                    empty={
+                      <Typography.Text type="tertiary">
+                        {t('settings.projects.repos.empty', {
+                          defaultValue: 'No repositories configured',
+                        })}
+                      </Typography.Text>
+                    }
+                  />
 
                   <Button
-                    variant="outline"
-                    size="sm"
+                    theme="outline"
+                    icon={<Plus size={16} />}
                     onClick={handleAddRepository}
-                    disabled={addingRepo}
-                    className="w-full"
+                    loading={addingRepo}
                   >
-                    {addingRepo ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Plus className="h-4 w-4 mr-2" />
-                    )}
-                    Add Repository
+                    {t('settings.projects.repos.add', { defaultValue: 'Add Repository' })}
                   </Button>
-                </div>
+                </>
               )}
-            </CardContent>
+            </div>
           </Card>
 
           {/* Sticky Save Button for Project Name */}
           {hasUnsavedChanges && (
-            <div className="sticky bottom-0 z-10 bg-background/80 backdrop-blur-sm border-t py-4">
+            <div className="sticky bottom-0 z-10 py-4 backdrop-blur-sm bg-[var(--semi-color-bg-1)] border-t border-[var(--semi-color-border)]">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
+                <Typography.Text type="tertiary">
                   {t('settings.projects.save.unsavedChanges')}
-                </span>
+                </Typography.Text>
                 <div className="flex gap-2">
                   <Button
-                    variant="outline"
+                    theme="outline"
                     onClick={handleDiscard}
                     disabled={saving}
                   >
                     {t('settings.projects.save.discard')}
                   </Button>
-                  <Button onClick={handleSave} disabled={saving}>
-                    {saving && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
+                  <Button
+                    type="primary"
+                    onClick={handleSave}
+                    disabled={saving}
+                    loading={saving}
+                  >
                     {t('settings.projects.save.button')}
                   </Button>
                 </div>

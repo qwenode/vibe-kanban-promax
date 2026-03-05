@@ -1,36 +1,52 @@
 import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-
+import Tag from '@douyinfe/semi-ui/lib/es/tag';
+import type { TagProps } from '@douyinfe/semi-ui/lib/es/tag';
 import { cn } from '@/lib/utils';
 
-const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-  {
-    variants: {
-      variant: {
-        default:
-          'border-foreground/50 bg-primary text-primary-foreground hover:bg-primary/80',
-        secondary:
-          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive:
-          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
-        outline: 'text-foreground',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
+export type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline';
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'color'> {
+  variant?: BadgeVariant;
+  size?: TagProps['size'];
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function mapVariant(variant: BadgeVariant | undefined): Pick<TagProps, 'color' | 'type'> {
+  switch (variant) {
+    case 'secondary':
+      return { color: 'grey', type: 'light' };
+    case 'destructive':
+      return { color: 'red', type: 'light' };
+    case 'outline':
+      return { color: 'grey', type: 'ghost' };
+    case 'default':
+    default:
+      return { color: 'blue', type: 'solid' };
+  }
+}
+
+function Badge({
+  className,
+  variant = 'default',
+  size = 'default',
+  children,
+  ...props
+}: BadgeProps) {
+  const mapped = mapVariant(variant);
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <Tag
+      {...(props as unknown as Record<string, unknown>)}
+      size={size}
+      color={mapped.color}
+      type={mapped.type}
+      className={cn(className)}
+    >
+      {children}
+    </Tag>
   );
 }
 
-export { Badge, badgeVariants };
+// Backwards-compat export
+export const badgeVariants = () => '';
+
+export { Badge };

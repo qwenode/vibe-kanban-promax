@@ -1,15 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Banner, Button, Input, Modal, Typography } from '@douyinfe/semi-ui';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal, getErrorMessage } from '@/lib/modals';
 import { useRenameBranch } from '@/hooks/useRenameBranch';
@@ -78,33 +69,33 @@ const EditBranchNameDialogImpl = NiceModal.create<EditBranchNameDialogProps>(
       modal.hide();
     };
 
-    const handleOpenChange = (open: boolean) => {
-      if (!open) {
-        handleCancel();
-      }
-    };
-
     return (
-      <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('editBranchName.dialog.title')}</DialogTitle>
-            <DialogDescription>
+      <Modal
+        visible={modal.visible}
+        onCancel={handleCancel}
+        footer={null}
+        width={448}
+      >
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Typography.Title heading={5}>
+              {t('editBranchName.dialog.title')}
+            </Typography.Title>
+            <Typography.Text type="tertiary">
               {t('editBranchName.dialog.description')}
-            </DialogDescription>
-          </DialogHeader>
-
+            </Typography.Text>
+          </div>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="branch-name" className="text-sm font-medium">
+              <Typography.Text strong>
                 {t('editBranchName.dialog.branchNameLabel')}
-              </label>
+              </Typography.Text>
               <Input
                 id="branch-name"
                 type="text"
                 value={branchName}
-                onChange={(e) => {
-                  setBranchName(e.target.value);
+                onChange={(value) => {
+                  setBranchName(String(value));
                   setError(null);
                 }}
                 onKeyDown={(e) => {
@@ -116,19 +107,20 @@ const EditBranchNameDialogImpl = NiceModal.create<EditBranchNameDialogProps>(
                 disabled={renameMutation.isPending}
                 autoFocus
               />
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <Banner type="danger" fullMode={false} description={error} />}
             </div>
           </div>
 
-          <DialogFooter>
+          <div className="flex items-center justify-end gap-2">
             <Button
-              variant="outline"
+              theme="outline"
               onClick={handleCancel}
               disabled={renameMutation.isPending}
             >
               {t('common:buttons.cancel')}
             </Button>
             <Button
+              type="primary"
               onClick={handleConfirm}
               disabled={renameMutation.isPending || !branchName.trim()}
             >
@@ -136,9 +128,9 @@ const EditBranchNameDialogImpl = NiceModal.create<EditBranchNameDialogProps>(
                 ? t('editBranchName.dialog.renaming')
                 : t('editBranchName.dialog.action')}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </Modal>
     );
   }
 );

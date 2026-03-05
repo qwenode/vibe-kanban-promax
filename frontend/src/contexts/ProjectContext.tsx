@@ -5,7 +5,7 @@ import {
   useMemo,
   useEffect,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useRouterState } from '@tanstack/react-router';
 import type { Project } from 'shared/types';
 import { useProjects } from '@/hooks/useProjects';
 
@@ -24,13 +24,15 @@ interface ProjectProviderProps {
 }
 
 export function ProjectProvider({ children }: ProjectProviderProps) {
-  const location = useLocation();
-
-  // Extract projectId from current route path
-  const projectId = useMemo(() => {
-    const match = location.pathname.match(/^\/local-projects\/([^/]+)/);
-    return match ? match[1] : undefined;
-  }, [location.pathname]);
+  const projectId = useRouterState({
+    select: (s) => {
+      for (const match of s.matches as Array<{ params?: Record<string, unknown> }>) {
+        const value = match.params?.projectId;
+        if (typeof value === 'string' && value.length > 0) return value;
+      }
+      return undefined;
+    },
+  });
 
   const { projectsById, isLoading, error } = useProjects();
   const project = projectId ? projectsById[projectId] : undefined;

@@ -1,12 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { ExternalLink, GitPullRequest } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Loader } from '@/components/ui/loader';
+import { Banner, Modal, Spin, Typography } from '@douyinfe/semi-ui';
 import GitOperations from '@/components/tasks/Toolbar/GitOperations';
 import { useTaskAttemptWithSession } from '@/hooks/useTaskAttempt';
 import { useBranchStatus, useAttemptExecution } from '@/hooks';
@@ -55,12 +49,12 @@ function GitActionsDialogContent({
   return (
     <div className="space-y-4">
       {mergedPR && mergedPR.type === 'pr' && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>
+        <div className="flex items-center gap-2">
+          <Typography.Text type="tertiary">
             {t('git.actions.prMerged', {
               number: mergedPR.pr_info.number || '',
             })}
-          </span>
+          </Typography.Text>
           {mergedPR.pr_info.url && (
             <a
               href={mergedPR.pr_info.url}
@@ -78,9 +72,7 @@ function GitActionsDialogContent({
         </div>
       )}
       {gitError && (
-        <div className="p-3 border border-destructive rounded text-destructive text-sm">
-          {gitError}
-        </div>
+        <Banner type="danger" fullMode={false} description={gitError} />
       )}
       <GitOperations
         selectedAttempt={attempt}
@@ -102,38 +94,33 @@ const GitActionsDialogImpl = NiceModal.create<GitActionsDialogProps>(
 
     const { data: attempt } = useTaskAttemptWithSession(attemptId);
 
-    const handleOpenChange = (open: boolean) => {
-      if (!open) {
-        modal.hide();
-      }
-    };
-
     const isLoading = !attempt || !task;
 
     return (
-      <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{t('git.actions.title')}</DialogTitle>
-          </DialogHeader>
+      <Modal
+        visible={modal.visible}
+        onCancel={() => modal.hide()}
+        footer={null}
+        width={672}
+      >
+        <Typography.Title heading={5}>{t('git.actions.title')}</Typography.Title>
 
-          {isLoading ? (
-            <div className="py-8">
-              <Loader size={24} />
-            </div>
-          ) : (
-            <GitOperationsProvider attemptId={attempt.id}>
-              <ExecutionProcessesProvider
-                key={attempt.id}
-                attemptId={attempt.id}
-                sessionId={attempt.session?.id}
-              >
-                <GitActionsDialogContent attempt={attempt} task={task} />
-              </ExecutionProcessesProvider>
-            </GitOperationsProvider>
-          )}
-        </DialogContent>
-      </Dialog>
+        {isLoading ? (
+          <div className="py-8 flex justify-center">
+            <Spin />
+          </div>
+        ) : (
+          <GitOperationsProvider attemptId={attempt.id}>
+            <ExecutionProcessesProvider
+              key={attempt.id}
+              attemptId={attempt.id}
+              sessionId={attempt.session?.id}
+            >
+              <GitActionsDialogContent attempt={attempt} task={task} />
+            </ExecutionProcessesProvider>
+          </GitOperationsProvider>
+        )}
+      </Modal>
     );
   }
 );

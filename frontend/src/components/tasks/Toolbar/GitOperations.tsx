@@ -8,13 +8,7 @@ import {
   CheckCircle,
   ExternalLink,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button.tsx';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip.tsx';
+import { Button, Tooltip } from '@douyinfe/semi-ui';
 import { useCallback, useMemo, useState } from 'react';
 import type {
   RepoBranchStatus,
@@ -365,61 +359,40 @@ function GitOperations({
   const branchChips = (
     <>
       {/* Task branch chip */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="hidden sm:inline-flex items-center gap-1.5 max-w-[280px] px-2 py-0.5 rounded-full bg-muted text-xs font-medium min-w-0">
-              <GitBranchIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="truncate">{selectedAttempt.branch}</span>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {t('git.labels.taskBranch')}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip content={t('git.labels.taskBranch')}>
+        <span className="hidden sm:inline-flex items-center gap-1.5 max-w-[280px] px-2 py-0.5 rounded-full bg-muted text-xs font-medium min-w-0">
+          <GitBranchIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="truncate">{selectedAttempt.branch}</span>
+        </span>
+      </Tooltip>
 
       <ArrowRight className="hidden sm:inline h-4 w-4 text-muted-foreground" />
 
       {/* Target branch chip + change button */}
       <div className="flex items-center gap-1 min-w-0">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex items-center gap-1.5 max-w-[280px] px-2 py-0.5 rounded-full bg-muted text-xs font-medium min-w-0">
-                <GitBranchIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <span className="truncate">
-                  {getSelectedRepoStatus()?.target_branch_name ||
-                    selectedBranch ||
-                    t('git.branch.current')}
-                </span>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t('rebase.dialog.targetLabel')}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip content={t('rebase.dialog.targetLabel')}>
+          <span className="inline-flex items-center gap-1.5 max-w-[280px] px-2 py-0.5 rounded-full bg-muted text-xs font-medium min-w-0">
+            <GitBranchIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="truncate">
+              {getSelectedRepoStatus()?.target_branch_name ||
+                selectedBranch ||
+                t('git.branch.current')}
+            </span>
+          </span>
+        </Tooltip>
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="xs"
-                onClick={handleChangeTargetBranchDialogOpen}
-                disabled={isAttemptRunning || hasConflictsCalculated}
-                className={settingsBtnClasses}
-                aria-label={t('branches.changeTarget.dialog.title')}
-              >
-                <Settings className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t('branches.changeTarget.dialog.title')}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip content={t('branches.changeTarget.dialog.title')}>
+          <Button
+            theme="borderless"
+            size="small"
+            onClick={handleChangeTargetBranchDialogOpen}
+            disabled={isAttemptRunning || hasConflictsCalculated}
+            className={settingsBtnClasses}
+            aria-label={t('branches.changeTarget.dialog.title')}
+          >
+            <Settings className="h-3.5 w-3.5" />
+          </Button>
+        </Tooltip>
       </div>
     </>
   );
@@ -485,8 +458,8 @@ function GitOperations({
                   !pushSuccess &&
                   !mergeSuccess)
               }
-              variant="outline"
-              size="xs"
+              size="small"
+              theme="outline"
               className="border-success text-success hover:bg-success gap-1 shrink-0"
               aria-label={mergeButtonLabel}
             >
@@ -508,8 +481,8 @@ function GitOperations({
                   !pushSuccess &&
                   !mergeSuccess)
               }
-              variant="outline"
-              size="xs"
+              theme="outline"
+              size="small"
               className="border-info text-info hover:bg-info gap-1 shrink-0"
               aria-label={prButtonLabel}
             >
@@ -520,8 +493,8 @@ function GitOperations({
             <Button
               onClick={handleRebaseDialogOpen}
               disabled={rebasing || isAttemptRunning || hasConflictsCalculated}
-              variant="outline"
-              size="xs"
+              theme="outline"
+              size="small"
               className="border-warning text-warning hover:bg-warning gap-1 shrink-0"
               aria-label={rebaseButtonLabel}
             >

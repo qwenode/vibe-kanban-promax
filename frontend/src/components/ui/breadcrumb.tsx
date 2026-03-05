@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Slot } from '@radix-ui/react-slot';
 import { MoreHorizontal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -46,10 +45,15 @@ const BreadcrumbLink = React.forwardRef<
     asChild?: boolean;
   }
 >(({ asChild, className, ...props }, ref) => {
-  const Comp = asChild ? Slot : 'a';
+  if (asChild && React.isValidElement(props.children)) {
+    const child = props.children as React.ReactElement<{ className?: string }>;
+    return React.cloneElement(child, {
+      className: cn('transition-colors hover:text-foreground', className, child.props?.className),
+    });
+  }
 
   return (
-    <Comp
+    <a
       ref={ref}
       className={cn('transition-colors hover:text-foreground', className)}
       {...props}

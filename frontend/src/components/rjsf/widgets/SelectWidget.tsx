@@ -1,11 +1,5 @@
 import { WidgetProps } from '@rjsf/utils';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select } from '@douyinfe/semi-ui';
 
 export const SelectWidget = (props: WidgetProps) => {
   const {
@@ -53,21 +47,16 @@ export const SelectWidget = (props: WidgetProps) => {
 
   return (
     <Select
+      id={id}
       value={value === null ? '__null__' : (value ?? '')}
-      onValueChange={handleChange}
-      onOpenChange={handleOpenChange}
+      onChange={(newValue) => handleChange(String(newValue))}
+      onDropdownVisibleChange={handleOpenChange}
       disabled={disabled || readonly}
-    >
-      <SelectTrigger id={id}>
-        <SelectValue placeholder={placeholder || 'Select an option...'} />
-      </SelectTrigger>
-      <SelectContent>
-        {allOptions.map((option) => (
-          <SelectItem key={option.value} value={String(option.value)}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      placeholder={placeholder || 'Select an option...'}
+      optionList={allOptions.map((option) => ({
+        value: String(option.value),
+        label: option.label,
+      }))}
+    />
   );
 };

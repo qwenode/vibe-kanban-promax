@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import {
   Play,
   Square,
@@ -8,7 +7,7 @@ import {
   ExternalLink,
   Wrench,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import { Project } from 'shared/types';
 import { useUserSystem } from '@/components/ConfigProvider';
 import { useTaskMutations } from '@/hooks/useTaskMutations';
@@ -17,6 +16,7 @@ import {
   COMPANION_INSTALL_TASK_TITLE,
   COMPANION_INSTALL_TASK_DESCRIPTION,
 } from '@/utils/companionInstallTask';
+import { useNavigateWithSearch } from '@/hooks/useNavigateWithSearch';
 
 interface NoServerContentProps {
   projectHasDevScript: boolean;
@@ -40,7 +40,7 @@ export function NoServerContent({
   onFixDevScript,
 }: NoServerContentProps) {
   const { t } = useTranslation('tasks');
-  const navigate = useNavigate();
+  const navigate = useNavigateWithSearch();
   const { config } = useUserSystem();
 
   const { createAndStart } = useTaskMutations(project?.id);
@@ -97,8 +97,8 @@ export function NoServerContent({
 
           <div className="flex items-center justify-center gap-2">
             <Button
-              variant={runningDevServer ? 'destructive' : 'default'}
-              size="sm"
+              type={runningDevServer ? 'danger' : 'primary'}
+              size="small"
               onClick={() => {
                 if (runningDevServer) {
                   stopDevServer();
@@ -124,8 +124,8 @@ export function NoServerContent({
 
             {!runningDevServer && (
               <Button
-                size="sm"
-                variant="outline"
+                size="small"
+                theme="outline"
                 onClick={handleConfigureDevScript}
                 className="gap-1"
               >
@@ -136,8 +136,8 @@ export function NoServerContent({
 
             {hasFailedDevServer && onFixDevScript && (
               <Button
-                size="sm"
-                variant="outline"
+                size="small"
+                theme="outline"
                 onClick={onFixDevScript}
                 className="gap-1"
               >
@@ -153,11 +153,11 @@ export function NoServerContent({
             </p>
             <div className="space-y-2">
               <Button
-                size="sm"
+                size="small"
                 onClick={handleInstallCompanion}
                 disabled={!project || !config || createAndStart.isPending}
                 className="gap-1"
-                variant="outline"
+                theme="outline"
               >
                 {createAndStart.isPending
                   ? 'Creating task…'

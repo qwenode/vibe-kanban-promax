@@ -1,19 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, GitCommit, Loader2 } from 'lucide-react';
+import { AlertTriangle, GitCommit } from 'lucide-react';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
 import { useKeySubmitTask } from '@/keyboard/hooks';
 import { Scope } from '@/keyboard/registry';
 import { executionProcessesApi } from '@/lib/api';
+import { Spin } from '@douyinfe/semi-ui';
+import Switch from '@douyinfe/semi-ui/lib/es/switch';
+import { Button, Modal, Typography } from '@douyinfe/semi-ui';
 import {
   isCodingAgent,
   PROCESS_RUN_REASONS,
@@ -165,12 +160,6 @@ const RestoreLogsDialogImpl = NiceModal.create<RestoreLogsDialogProps>(
       modal.hide();
     };
 
-    const handleOpenChange = (open: boolean) => {
-      if (!open) {
-        handleCancel();
-      }
-    };
-
     // CMD+Enter to confirm
     useKeySubmitTask(handleConfirm, {
       scope: Scope.DIALOG,
@@ -178,8 +167,13 @@ const RestoreLogsDialogImpl = NiceModal.create<RestoreLogsDialogProps>(
     });
 
     return (
-      <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
-        <DialogContent
+      <Modal
+        visible={modal.visible}
+        onCancel={handleCancel}
+        footer={null}
+        width={640}
+      >
+        <div
           className="max-h-[92vh] sm:max-h-[88vh] overflow-y-auto overflow-x-hidden"
           onKeyDownCapture={(e) => {
             if (e.key === 'Escape') {
@@ -188,17 +182,17 @@ const RestoreLogsDialogImpl = NiceModal.create<RestoreLogsDialogProps>(
             }
           }}
         >
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 mb-3 md:mb-4">
+          <div>
+            <Typography.Title heading={5} className="flex items-center gap-2 mb-3 md:mb-4">
               <AlertTriangle className="h-4 w-4 text-destructive" />{' '}
               {mode === 'reset'
                 ? t('restoreLogsDialog.titleReset')
                 : t('restoreLogsDialog.title')}
-            </DialogTitle>
+            </Typography.Title>
             <div className="mt-6 break-words text-sm text-muted-foreground">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Spin />
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -299,35 +293,18 @@ const RestoreLogsDialogImpl = NiceModal.create<RestoreLogsDialogProps>(
                             )}
                           .
                         </p>
-                        <div
-                          className="mt-2 w-full flex items-center cursor-pointer select-none"
-                          role="switch"
-                          aria-checked={acknowledgeUncommitted}
-                          onClick={() => setAcknowledgeUncommitted((v) => !v)}
-                        >
-                          <div className="text-xs text-muted-foreground flex-1 min-w-0 break-words">
+                        <div className="mt-2 w-full flex items-center gap-3">
+                          <Typography.Text type="tertiary" style={{ fontSize: 12, flex: 1 }}>
                             {t(
                               'restoreLogsDialog.uncommittedChanges.acknowledgeLabel'
                             )}
-                          </div>
-                          <div className="ml-auto relative inline-flex h-5 w-9 items-center rounded-full">
-                            <span
-                              className={
-                                (acknowledgeUncommitted
-                                  ? 'bg-amber-500'
-                                  : 'bg-panel') +
-                                ' absolute inset-0 rounded-full transition-colors'
-                              }
-                            />
-                            <span
-                              className={
-                                (acknowledgeUncommitted
-                                  ? 'translate-x-5'
-                                  : 'translate-x-1') +
-                                ' pointer-events-none relative inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform'
-                              }
-                            />
-                          </div>
+                          </Typography.Text>
+                          <Switch
+                            checked={acknowledgeUncommitted}
+                            onChange={(checked) =>
+                              setAcknowledgeUncommitted(checked)
+                            }
+                          />
                         </div>
                       </div>
                     </div>
@@ -357,35 +334,16 @@ const RestoreLogsDialogImpl = NiceModal.create<RestoreLogsDialogProps>(
                           {t('restoreLogsDialog.resetWorktree.title')}
                           {repoCount > 1 && ` (${repoCount} repos)`}
                         </p>
-                        <div
-                          className="mt-2 w-full flex items-center cursor-pointer select-none"
-                          role="switch"
-                          aria-checked={worktreeResetOn}
-                          onClick={() => setWorktreeResetOn((v) => !v)}
-                        >
-                          <div className="text-xs text-muted-foreground flex-1 min-w-0 break-words">
+                        <div className="mt-2 w-full flex items-center gap-3">
+                          <Typography.Text type="tertiary" style={{ fontSize: 12, flex: 1 }}>
                             {worktreeResetOn
                               ? t('restoreLogsDialog.resetWorktree.enabled')
                               : t('restoreLogsDialog.resetWorktree.disabled')}
-                          </div>
-                          <div className="ml-auto relative inline-flex h-5 w-9 items-center rounded-full">
-                            <span
-                              className={
-                                (worktreeResetOn
-                                  ? 'bg-emerald-500'
-                                  : 'bg-panel') +
-                                ' absolute inset-0 rounded-full transition-colors'
-                              }
-                            />
-                            <span
-                              className={
-                                (worktreeResetOn
-                                  ? 'translate-x-5'
-                                  : 'translate-x-1') +
-                                ' pointer-events-none relative inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform'
-                              }
-                            />
-                          </div>
+                          </Typography.Text>
+                          <Switch
+                            checked={worktreeResetOn}
+                            onChange={(checked) => setWorktreeResetOn(checked)}
+                          />
                         </div>
                         {worktreeResetOn && (
                           <>
@@ -454,18 +412,8 @@ const RestoreLogsDialogImpl = NiceModal.create<RestoreLogsDialogProps>(
                           {t('restoreLogsDialog.resetWorktree.title')}
                           {repoCount > 1 && ` (${repoCount} repos)`}
                         </p>
-                        <div
-                          className={`mt-2 w-full flex items-center select-none cursor-pointer`}
-                          role="switch"
-                          onClick={() => {
-                            setWorktreeResetOn((on) => {
-                              if (forceReset) return !on; // free toggle when forced
-                              // Without force, only allow explicitly disabling reset
-                              return false;
-                            });
-                          }}
-                        >
-                          <div className="text-xs text-muted-foreground flex-1 min-w-0 break-words">
+                        <div className="mt-2 w-full flex items-center gap-3">
+                          <Typography.Text type="tertiary" style={{ fontSize: 12, flex: 1 }}>
                             {forceReset
                               ? worktreeResetOn
                                 ? t('restoreLogsDialog.resetWorktree.enabled')
@@ -473,56 +421,26 @@ const RestoreLogsDialogImpl = NiceModal.create<RestoreLogsDialogProps>(
                               : t(
                                   'restoreLogsDialog.resetWorktree.disabledUncommitted'
                                 )}
-                          </div>
-                          <div className="ml-auto relative inline-flex h-5 w-9 items-center rounded-full">
-                            <span
-                              className={
-                                (worktreeResetOn && forceReset
-                                  ? 'bg-emerald-500'
-                                  : 'bg-panel') +
-                                ' absolute inset-0 rounded-full transition-colors'
-                              }
-                            />
-                            <span
-                              className={
-                                (worktreeResetOn && forceReset
-                                  ? 'translate-x-5'
-                                  : 'translate-x-1') +
-                                ' pointer-events-none relative inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform'
-                              }
-                            />
-                          </div>
+                          </Typography.Text>
+                          <Switch
+                            checked={worktreeResetOn}
+                            disabled={!forceReset}
+                            onChange={(checked) =>
+                              setWorktreeResetOn(forceReset ? checked : false)
+                            }
+                          />
                         </div>
-                        <div
-                          className="mt-2 w-full flex items-center cursor-pointer select-none"
-                          role="switch"
-                          onClick={() => {
-                            setForceReset((v) => {
-                              const next = !v;
-                              if (next) setWorktreeResetOn(true);
-                              return next;
-                            });
-                          }}
-                        >
-                          <div className="text-xs font-medium text-destructive flex-1 min-w-0 break-words">
+                        <div className="mt-2 w-full flex items-center gap-3">
+                          <Typography.Text type="danger" style={{ fontSize: 12, flex: 1 }}>
                             {t('restoreLogsDialog.resetWorktree.forceReset')}
-                          </div>
-                          <div className="ml-auto relative inline-flex h-5 w-9 items-center rounded-full">
-                            <span
-                              className={
-                                (forceReset ? 'bg-destructive' : 'bg-panel') +
-                                ' absolute inset-0 rounded-full transition-colors'
-                              }
-                            />
-                            <span
-                              className={
-                                (forceReset
-                                  ? 'translate-x-5'
-                                  : 'translate-x-1') +
-                                ' pointer-events-none relative inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform'
-                              }
-                            />
-                          </div>
+                          </Typography.Text>
+                          <Switch
+                            checked={forceReset}
+                            onChange={(checked) => {
+                              setForceReset(checked);
+                              setWorktreeResetOn(checked ? true : false);
+                            }}
+                          />
                         </div>
                         <p className="mt-2 text-xs text-muted-foreground">
                           {forceReset
@@ -568,13 +486,13 @@ const RestoreLogsDialogImpl = NiceModal.create<RestoreLogsDialogProps>(
                 </div>
               )}
             </div>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCancel}>
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-3">
+            <Button theme="outline" onClick={handleCancel}>
               {t('common:buttons.cancel')}
             </Button>
             <Button
-              variant="destructive"
+              type="danger"
               disabled={isConfirmDisabled}
               onClick={handleConfirm}
             >
@@ -582,9 +500,9 @@ const RestoreLogsDialogImpl = NiceModal.create<RestoreLogsDialogProps>(
                 ? t('restoreLogsDialog.buttons.reset')
                 : t('restoreLogsDialog.buttons.retry')}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </Modal>
     );
   }
 );

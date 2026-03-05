@@ -1,6 +1,7 @@
 // vite.config.ts
 import { createLogger, defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import path from "path";
 import fs from "fs";
 import pkg from "./package.json";
@@ -10,7 +11,9 @@ function createFilteredLogger() {
   const originalError = logger.error.bind(logger);
 
   let lastRestartLog = 0;
-  const DEBOUNCE_MS = 2000;
+  // Proxy (especially WS proxy) can be noisy while backend restarts.
+  // Debounce aggressively so it doesn't drown useful logs.
+  const DEBOUNCE_MS = 15000;
 
   logger.error = (msg, options) => {
     const isProxyError =
@@ -21,7 +24,9 @@ function createFilteredLogger() {
     if (isProxyError) {
       const now = Date.now();
       if (now - lastRestartLog > DEBOUNCE_MS) {
-        logger.warn("Proxy connection closed, auto-reconnecting...");
+        // Preserve one-line context (path / error kind) for debugging.
+        const oneLine = String(msg).split('\n')[0];
+        logger.warn(`Proxy connection issue (auto-reconnecting): ${oneLine}`);
         lastRestartLog = now;
       }
       return;
@@ -100,6 +105,11 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
   plugins: [
+    // IMPORTANT: Router plugin must come before the React plugin.
+    tanstackRouter({
+      target: "react",
+      autoCodeSplitting: true,
+    }),
     react({
       babel: {
         plugins: [
@@ -122,6 +132,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       shared: path.resolve(__dirname, '../shared'),
+      'semi-ui-css': path.resolve(
+        __dirname,
+        './node_modules/@douyinfe/semi-ui/dist/css/semi.min.css'
+      ),
     },
   },
   server: {

@@ -1,17 +1,10 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
 import { useTranslation } from 'react-i18next';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Banner, Button, Modal, Table, Typography } from '@douyinfe/semi-ui';
 import { PlusIcon } from 'lucide-react';
 import { openTaskForm } from '@/lib/openTaskForm';
 import { useTaskRelationships } from '@/hooks/useTaskRelationships';
-import { DataTable, type ColumnDef } from '@/components/ui/table/data-table';
 import type { Task } from 'shared/types';
 import type { Workspace } from 'shared/types';
 
@@ -43,22 +36,20 @@ const ViewRelatedTasksDialogImpl =
         relatedTasks.push(...relationships.children);
       }
 
-      const taskColumns: ColumnDef<Task>[] = [
+      const taskColumns = [
         {
-          id: 'title',
-          header: t('viewRelatedTasksDialog.columns.title'),
-          accessor: (task) => (
+          title: t('viewRelatedTasksDialog.columns.title'),
+          dataIndex: 'title',
+          render: (_: unknown, task: Task) => (
             <div className="truncate" title={task.title}>
               {task.title || '—'}
             </div>
           ),
-          className: 'pr-4',
-          headerClassName: 'font-medium py-2 pr-4 w-1/2 bg-card',
         },
         {
-          id: 'description',
-          header: t('viewRelatedTasksDialog.columns.description'),
-          accessor: (task) => (
+          title: t('viewRelatedTasksDialog.columns.description'),
+          dataIndex: 'description',
+          render: (_: unknown, task: Task) => (
             <div
               className="line-clamp-1 text-muted-foreground"
               title={task.description || ''}
@@ -66,8 +57,6 @@ const ViewRelatedTasksDialogImpl =
               {task.description?.trim() ? task.description : '—'}
             </div>
           ),
-          className: 'pr-4',
-          headerClassName: 'font-medium py-2 pr-4 bg-card',
         },
       ];
 
@@ -104,12 +93,16 @@ const ViewRelatedTasksDialogImpl =
       };
 
       return (
-        <Dialog
-          open={modal.visible}
-          onOpenChange={handleOpenChange}
-          className="max-w-3xl w-[92vw] p-0 overflow-x-hidden"
+        <Modal
+          visible={modal.visible}
+          onCancel={() => handleOpenChange(false)}
+          footer={null}
+          width={960}
+          bodyStyle={{ padding: 0 }}
+          closeOnEsc
+          maskClosable
         >
-          <DialogContent
+          <div
             className="p-0 min-w-0"
             onKeyDownCapture={(e) => {
               if (e.key === 'Escape') {
@@ -118,31 +111,40 @@ const ViewRelatedTasksDialogImpl =
               }
             }}
           >
-            <DialogHeader className="px-4 py-3 border-b">
-              <DialogTitle>{t('viewRelatedTasksDialog.title')}</DialogTitle>
-            </DialogHeader>
+            <div className="px-4 py-3 border-b">
+              <Typography.Title heading={5}>
+                {t('viewRelatedTasksDialog.title')}
+              </Typography.Title>
+            </div>
 
             <div className="p-4 max-h-[70vh] overflow-auto">
               {isError && (
                 <div className="py-8 text-center space-y-3">
-                  <div className="text-sm text-destructive">
-                    {t('viewRelatedTasksDialog.error')}
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => refetch()}>
+                  <Banner
+                    type="danger"
+                    fullMode={false}
+                    description={t('viewRelatedTasksDialog.error')}
+                  />
+                  <Button theme="outline" onClick={() => refetch()}>
                     {t('common:buttons.retry')}
                   </Button>
                 </div>
               )}
 
               {!isError && (
-                <DataTable
-                  data={relatedTasks}
+                <Table
+                  dataSource={relatedTasks}
                   columns={taskColumns}
-                  keyExtractor={(task) => task.id}
-                  onRowClick={(task) => handleClickTask(task.id)}
-                  isLoading={isLoading}
-                  emptyState={t('viewRelatedTasksDialog.empty')}
-                  headerContent={
+                  rowKey="id"
+                  pagination={false}
+                  loading={isLoading}
+                  empty={t('viewRelatedTasksDialog.empty')}
+                  onRow={(task) => ({
+                    onClick: () => {
+                      if (task) handleClickTask(task.id);
+                    },
+                  })}
+                  title={() =>
                     <div className="w-full flex text-left">
                       <span className="flex-1">
                         {t('viewRelatedTasksDialog.tasksCount', {
@@ -151,11 +153,11 @@ const ViewRelatedTasksDialogImpl =
                       </span>
                       <span>
                         <Button
-                          variant="icon"
+                          theme="borderless"
                           onClick={handleCreateSubtask}
                           disabled={!projectId || !attempt}
+                          icon={<PlusIcon size={16} />}
                         >
-                          <PlusIcon size={16} />
                         </Button>
                       </span>
                     </div>
@@ -163,8 +165,8 @@ const ViewRelatedTasksDialogImpl =
                 />
               )}
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </Modal>
       );
     }
   );

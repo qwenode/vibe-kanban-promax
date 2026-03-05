@@ -1,12 +1,5 @@
 import { useState, useMemo } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Button, Modal, Space, Typography } from '@douyinfe/semi-ui';
 import { AlertCircle, ExternalLink } from 'lucide-react';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -37,17 +30,19 @@ const ReleaseNotesDialogImpl = NiceModal.create<NoProps>(() => {
   };
 
   return (
-    <Dialog
-      open={modal.visible}
-      onOpenChange={(open) => !open && modal.resolve()}
-      className="h-[calc(100%-4rem)]"
+    <Modal
+      visible={modal.visible}
+      onCancel={() => modal.resolve()}
+      width={1280}
+      footer={null}
+      bodyStyle={{ padding: 0 }}
     >
-      <DialogContent className="flex flex-col w-full h-full max-w-7xl max-h-[calc(100dvh-1rem)] p-0">
-        <DialogHeader className="p-4 border-b flex-shrink-0">
-          <DialogTitle className="text-xl font-semibold">
+      <div className="flex flex-col w-full h-full max-h-[calc(100dvh-1rem)]">
+        <div className="p-4 border-b flex-shrink-0">
+          <Typography.Title heading={4} className="!mb-0">
             We've updated Vibe Kanban! Check out what's new...
-          </DialogTitle>
-        </DialogHeader>
+          </Typography.Title>
+        </div>
 
         {iframeError ? (
           <div className="flex flex-col items-center justify-center flex-1 text-center space-y-4 p-4">
@@ -61,9 +56,11 @@ const ReleaseNotesDialogImpl = NiceModal.create<NoProps>(() => {
                 below to view them in your browser.
               </p>
             </div>
-            <Button onClick={handleOpenInBrowser} className="mt-4">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Open Release Notes in Browser
+            <Button onClick={handleOpenInBrowser}>
+              <Space spacing={8}>
+                <ExternalLink className="h-4 w-4" />
+                Open Release Notes in Browser
+              </Space>
             </Button>
           </div>
         ) : (
@@ -89,14 +86,16 @@ const ReleaseNotesDialogImpl = NiceModal.create<NoProps>(() => {
           />
         )}
 
-        <DialogFooter className="p-4 border-t flex-shrink-0">
-          <Button variant="outline" onClick={handleOpenInBrowser}>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Open in Browser
+        <div className="p-4 border-t flex-shrink-0 flex justify-end">
+          <Button theme="outline" onClick={handleOpenInBrowser}>
+            <Space spacing={8}>
+              <ExternalLink className="h-4 w-4" />
+              Open in Browser
+            </Space>
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </Modal>
   );
 });
 

@@ -1,13 +1,4 @@
-import {
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableHeaderCell,
-  TableCell,
-  TableEmpty,
-  TableLoading,
-} from './table';
+import { Empty, Table } from '@douyinfe/semi-ui';
 
 export type ColumnDef<T> = {
   id: string;
@@ -36,63 +27,53 @@ export function DataTable<T>({
   emptyState,
   headerContent,
 }: DataTableProps<T>) {
-  const colSpan = columns.length;
+  const rows = data.map((row) => ({
+    __key: keyExtractor(row),
+    __row: row,
+  }));
+
+  const tableColumns = columns.map((column) => ({
+    title: column.header,
+    key: column.id,
+    onHeaderCell: () => ({
+      className: column.headerClassName,
+    }),
+    className: column.className,
+    render: (_: unknown, record: { __row: T }) => column.accessor(record.__row),
+  }));
 
   return (
-    <Table>
-      <TableHead>
-        <tr>
-          {headerContent ? (
-            <TableHeaderCell colSpan={colSpan}>{headerContent}</TableHeaderCell>
-          ) : (
-            columns.map((column) => (
-              <TableHeaderCell
-                key={column.id}
-                className={column.headerClassName}
-              >
-                {column.header}
-              </TableHeaderCell>
-            ))
-          )}
-        </tr>
-      </TableHead>
-      <TableBody>
-        {isLoading ? (
-          <TableLoading colSpan={colSpan} />
-        ) : data.length === 0 ? (
-          <TableEmpty colSpan={colSpan}>{emptyState || 'No data'}</TableEmpty>
+    <Table
+      dataSource={rows}
+      columns={tableColumns}
+      rowKey="__key"
+      pagination={false}
+      loading={Boolean(isLoading)}
+      empty={
+        emptyState ? (
+          <>{emptyState}</>
         ) : (
-          data.map((row) => {
-            const key = keyExtractor(row);
-            const handleClick = onRowClick ? () => onRowClick(row) : undefined;
-            const handleKeyDown = onRowClick
-              ? (e: React.KeyboardEvent) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onRowClick(row);
-                  }
+          <Empty image={null} description="No data" />
+        )
+      }
+      title={headerContent ? () => <>{headerContent}</> : undefined}
+      onRow={
+        onRowClick
+          ? (record) => ({
+              role: 'button',
+              tabIndex: 0,
+              onClick: () => {
+                if (record) onRowClick(record.__row);
+              },
+              onKeyDown: (e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  if (record) onRowClick(record.__row);
                 }
-              : undefined;
-
-            return (
-              <TableRow
-                key={key}
-                clickable={!!onRowClick}
-                role={onRowClick ? 'button' : undefined}
-                tabIndex={onRowClick ? 0 : undefined}
-                onClick={handleClick}
-                onKeyDown={handleKeyDown}
-              >
-                {columns.map((column) => (
-                  <TableCell key={column.id} className={column.className}>
-                    {column.accessor(row)}
-                  </TableCell>
-                ))}
-              </TableRow>
-            );
-          })
-        )}
-      </TableBody>
-    </Table>
+              },
+            })
+          : undefined
+      }
+    />
   );
 }

@@ -1,11 +1,14 @@
-import { Outlet, useSearchParams } from 'react-router-dom';
+import { Outlet, useRouterState } from '@tanstack/react-router';
 import { DevBanner } from '@/components/DevBanner';
 import { Navbar } from '@/components/layout/Navbar';
 
 export function NormalLayout() {
-  const [searchParams] = useSearchParams();
-  const view = searchParams.get('view');
-  const shouldHideNavbar = view === 'preview' || view === 'diffs';
+  const view = useRouterState({
+    select: (s) => (s.location.search as { view?: string } | undefined)?.view,
+  });
+  // Only hide the navbar for true fullscreen preview mode.
+  // Diffs should not hide global navigation; only the tasks third column changes.
+  const shouldHideNavbar = view === 'preview';
 
   return (
     <>

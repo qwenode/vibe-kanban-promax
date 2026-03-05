@@ -1,33 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { isEqual } from 'lodash';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
+import { Banner, Button, Card, Select, Spin, Toast, Typography } from '@douyinfe/semi-ui';
+import TextArea from '@douyinfe/semi-ui/lib/es/input/textarea';
+import { Input } from '@douyinfe/semi-ui';
+import Checkbox from '@douyinfe/semi-ui/lib/es/checkbox';
 import { useScriptPlaceholders } from '@/hooks/useScriptPlaceholders';
-import { AutoExpandingTextarea } from '@/components/ui/auto-expanding-textarea';
 import { MultiFileSearchTextarea } from '@/components/ui/multi-file-search-textarea';
 import { repoApi } from '@/lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Repo, UpdateRepo } from 'shared/types';
+import { Modal } from '@douyinfe/semi-ui';
 
 interface RepoScriptsFormState {
   display_name: string;
@@ -50,9 +34,11 @@ function repoToFormState(repo: Repo): RepoScriptsFormState {
 }
 
 export function ReposSettings() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const repoIdParam = searchParams.get('repoId') ?? '';
-  const { t } = useTranslation('settings');
+  const navigate = useNavigate();
+  const repoIdParam = useRouterState({
+    select: (s) => ((s.location.search as { repoId?: string } | undefined)?.repoId ?? ''),
+  });
+  const { t } = useTranslation(['settings', 'common']);
   const queryClient = useQueryClient();
 
   // Fetch all repos
@@ -73,7 +59,6 @@ export function ReposSettings() {
   const [draft, setDraft] = useState<RepoScriptsFormState | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   // Get OS-appropriate script placeholders
   const placeholders = useScriptPlaceholders();
@@ -84,54 +69,102 @@ export function ReposSettings() {
     return !isEqual(draft, repoToFormState(selectedRepo));
   }, [draft, selectedRepo]);
 
+  const setRepoIdSearchParam = useCallback(
+    (id: string) => {
+      navigate({
+        search: ((prev: unknown) => {
+          const next = { ...(prev as Record<string, unknown>) } as Record<
+            string,
+            unknown
+          >;
+          if (id) {
+            next.repoId = id;
+          } else {
+            delete next.repoId;
+          }
+          return next;
+        }) as never,
+        replace: true,
+      } as never);
+    },
+    [navigate]
+  );
+
+  const confirmSwitchIfDirty = useCallback(async () => {
+    if (!hasUnsavedChanges) return true;
+    return await new Promise<boolean>((resolve) => {
+      Modal.confirm({
+        title: t('common:labels.unsavedChanges', {
+          defaultValue: 'Unsaved changes',
+        }),
+        content: t('settings.repos.save.confirmSwitch'),
+        hasCancel: true,
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+  }, [hasUnsavedChanges, t]);
+
   // Handle repo selection from dropdown
   const handleRepoSelect = useCallback(
-    (id: string) => {
+    async (id: string) => {
       if (id === selectedRepoId) return;
 
+      const confirmed = await confirmSwitchIfDirty();
+      if (!confirmed) return;
       if (hasUnsavedChanges) {
-        const confirmed = window.confirm(
-          t('settings.repos.save.confirmSwitch')
-        );
-        if (!confirmed) return;
         setDraft(null);
         setSelectedRepo(null);
-        setSuccess(false);
         setError(null);
       }
 
       setSelectedRepoId(id);
       if (id) {
-        setSearchParams({ repoId: id });
+        setRepoIdSearchParam(id);
       } else {
-        setSearchParams({});
+        setRepoIdSearchParam('');
       }
     },
-    [hasUnsavedChanges, selectedRepoId, setSearchParams, t]
+    [confirmSwitchIfDirty, hasUnsavedChanges, selectedRepoId, setRepoIdSearchParam]
   );
 
   // Sync selectedRepoId when URL changes
   useEffect(() => {
     if (repoIdParam === selectedRepoId) return;
 
-    if (hasUnsavedChanges) {
-      const confirmed = window.confirm(t('settings.repos.save.confirmSwitch'));
+    let cancelled = false;
+    (async () => {
+      if (cancelled) return;
+
+      const confirmed = await confirmSwitchIfDirty();
       if (!confirmed) {
         if (selectedRepoId) {
-          setSearchParams({ repoId: selectedRepoId });
+          setRepoIdSearchParam(selectedRepoId);
         } else {
-          setSearchParams({});
+          setRepoIdSearchParam('');
         }
         return;
       }
-      setDraft(null);
-      setSelectedRepo(null);
-      setSuccess(false);
-      setError(null);
-    }
 
-    setSelectedRepoId(repoIdParam);
-  }, [repoIdParam, hasUnsavedChanges, selectedRepoId, setSearchParams, t]);
+      if (hasUnsavedChanges) {
+        setDraft(null);
+        setSelectedRepo(null);
+        setError(null);
+      }
+
+      setSelectedRepoId(repoIdParam);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    repoIdParam,
+    selectedRepoId,
+    confirmSwitchIfDirty,
+    setRepoIdSearchParam,
+    hasUnsavedChanges,
+  ]);
 
   // Populate draft from server data
   useEffect(() => {
@@ -172,7 +205,6 @@ export function ReposSettings() {
 
     setSaving(true);
     setError(null);
-    setSuccess(false);
 
     try {
       const updateData: UpdateRepo = {
@@ -190,12 +222,12 @@ export function ReposSettings() {
       queryClient.setQueryData(['repos'], (old: Repo[] | undefined) =>
         old?.map((r) => (r.id === updatedRepo.id ? updatedRepo : r))
       );
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      Toast.success(t('settings.repos.save.success'));
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t('settings.repos.save.error')
-      );
+      const message =
+        err instanceof Error ? err.message : t('settings.repos.save.error');
+      setError(message);
+      Toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -215,9 +247,11 @@ export function ReposSettings() {
 
   if (reposLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">{t('settings.repos.loading')}</span>
+      <div className="py-8 flex items-center gap-2">
+        <Spin />
+        <Typography.Text type="tertiary">
+          {t('settings.repos.loading')}
+        </Typography.Text>
       </div>
     );
   }
@@ -225,248 +259,213 @@ export function ReposSettings() {
   if (reposError) {
     return (
       <div className="py-8">
-        <Alert variant="destructive">
-          <AlertDescription>
-            {reposError instanceof Error
+        <Banner
+          type="danger"
+          fullMode={false}
+          description={
+            reposError instanceof Error
               ? reposError.message
-              : t('settings.repos.loadError')}
-          </AlertDescription>
-        </Alert>
+              : t('settings.repos.loadError')
+          }
+        />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+      {!!error && (
+        <Banner type="danger" fullMode={false} description={error} />
       )}
 
-      {success && (
-        <Alert variant="success">
-          <AlertDescription className="font-medium">
-            {t('settings.repos.save.success')}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('settings.repos.title')}</CardTitle>
-          <CardDescription>{t('settings.repos.description')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="repo-selector">
-              {t('settings.repos.selector.label')}
-            </Label>
-            <Select value={selectedRepoId} onValueChange={handleRepoSelect}>
-              <SelectTrigger id="repo-selector">
-                <SelectValue
-                  placeholder={t('settings.repos.selector.placeholder')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {repos && repos.length > 0 ? (
-                  repos.map((repo) => (
-                    <SelectItem key={repo.id} value={repo.id}>
-                      {repo.display_name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-repos" disabled>
-                    {t('settings.repos.selector.noRepos')}
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              {t('settings.repos.selector.helper')}
-            </p>
-          </div>
-        </CardContent>
+      <Card
+        title={t('settings.repos.title')}
+        headerExtraContent={
+          <Typography.Text type="tertiary">
+            {t('settings.repos.description')}
+          </Typography.Text>
+        }
+      >
+        <div className="space-y-2">
+          <Typography.Text strong>
+            {t('settings.repos.selector.label')}
+          </Typography.Text>
+          <Select
+            value={selectedRepoId}
+            placeholder={t('settings.repos.selector.placeholder')}
+            optionList={
+              repos && repos.length > 0
+                ? repos.map((r) => ({ value: r.id, label: r.display_name }))
+                : [
+                    {
+                      value: 'no-repos',
+                      label: t('settings.repos.selector.noRepos'),
+                      disabled: true,
+                    },
+                  ]
+            }
+            onChange={(value) => handleRepoSelect(String(value))}
+          />
+          <Typography.Text type="tertiary">
+            {t('settings.repos.selector.helper')}
+          </Typography.Text>
+        </div>
       </Card>
 
       {selectedRepo && draft && (
         <>
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('settings.repos.general.title')}</CardTitle>
-              <CardDescription>
+          <Card
+            title={t('settings.repos.general.title')}
+            headerExtraContent={
+              <Typography.Text type="tertiary">
                 {t('settings.repos.general.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </Typography.Text>
+            }
+          >
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="display-name">
+                <Typography.Text strong>
                   {t('settings.repos.general.displayName.label')}
-                </Label>
+                </Typography.Text>
                 <Input
-                  id="display-name"
-                  type="text"
                   value={draft.display_name}
-                  onChange={(e) =>
-                    updateDraft({ display_name: e.target.value })
-                  }
-                  placeholder={t(
-                    'settings.repos.general.displayName.placeholder'
-                  )}
+                  placeholder={t('settings.repos.general.displayName.placeholder')}
+                  onChange={(value) => updateDraft({ display_name: String(value) })}
                 />
-                <p className="text-sm text-muted-foreground">
+                <Typography.Text type="tertiary">
                   {t('settings.repos.general.displayName.helper')}
-                </p>
+                </Typography.Text>
               </div>
 
               <div className="space-y-2">
-                <Label>{t('settings.repos.general.path.label')}</Label>
-                <div className="text-sm text-muted-foreground font-mono bg-muted px-3 py-2 rounded-md">
+                <Typography.Text strong>
+                  {t('settings.repos.general.path.label')}
+                </Typography.Text>
+                <Typography.Text code type="tertiary">
                   {selectedRepo.path}
-                </div>
+                </Typography.Text>
               </div>
-            </CardContent>
+            </div>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('settings.repos.scripts.title')}</CardTitle>
-              <CardDescription>
+          <Card
+            title={t('settings.repos.scripts.title')}
+            headerExtraContent={
+              <Typography.Text type="tertiary">
                 {t('settings.repos.scripts.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </Typography.Text>
+            }
+          >
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="dev-server-script">
+                <Typography.Text strong>
                   {t('settings.repos.scripts.devServer.label')}
-                </Label>
-                <AutoExpandingTextarea
-                  id="dev-server-script"
+                </Typography.Text>
+                <TextArea
                   value={draft.dev_server_script}
-                  onChange={(e) =>
-                    updateDraft({
-                      dev_server_script: e.target.value,
-                    })
-                  }
+                  autosize={{ maxRows: 12 }}
                   placeholder={placeholders.dev}
-                  maxRows={12}
-                  className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring font-mono"
-                />
-                <p className="text-sm text-muted-foreground">
-                  {t('settings.repos.scripts.devServer.helper')}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="setup-script">
-                  {t('settings.repos.scripts.setup.label')}
-                </Label>
-                <AutoExpandingTextarea
-                  id="setup-script"
-                  value={draft.setup_script}
-                  onChange={(e) =>
-                    updateDraft({ setup_script: e.target.value })
+                  onChange={(value) =>
+                    updateDraft({ dev_server_script: String(value) })
                   }
-                  placeholder={placeholders.setup}
-                  maxRows={12}
-                  className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring font-mono"
                 />
-                <p className="text-sm text-muted-foreground">
-                  {t('settings.repos.scripts.setup.helper')}
-                </p>
-
-                <div className="flex items-center space-x-2 pt-2">
-                  <Checkbox
-                    id="parallel-setup-script"
-                    checked={draft.parallel_setup_script}
-                    onCheckedChange={(checked) =>
-                      updateDraft({
-                        parallel_setup_script: checked === true,
-                      })
-                    }
-                    disabled={!draft.setup_script.trim()}
-                  />
-                  <Label
-                    htmlFor="parallel-setup-script"
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    {t('settings.repos.scripts.setup.parallelLabel')}
-                  </Label>
-                </div>
-                <p className="text-sm text-muted-foreground pl-6">
-                  {t('settings.repos.scripts.setup.parallelHelper')}
-                </p>
+                <Typography.Text type="tertiary">
+                  {t('settings.repos.scripts.devServer.helper')}
+                </Typography.Text>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cleanup-script">
-                  {t('settings.repos.scripts.cleanup.label')}
-                </Label>
-                <AutoExpandingTextarea
-                  id="cleanup-script"
-                  value={draft.cleanup_script}
+                <Typography.Text strong>
+                  {t('settings.repos.scripts.setup.label')}
+                </Typography.Text>
+                <TextArea
+                  value={draft.setup_script}
+                  autosize={{ maxRows: 12 }}
+                  placeholder={placeholders.setup}
+                  onChange={(value) =>
+                    updateDraft({ setup_script: String(value) })
+                  }
+                />
+                <Typography.Text type="tertiary">
+                  {t('settings.repos.scripts.setup.helper')}
+                </Typography.Text>
+
+                <Checkbox
+                  checked={draft.parallel_setup_script}
+                  disabled={!draft.setup_script.trim()}
                   onChange={(e) =>
                     updateDraft({
-                      cleanup_script: e.target.value,
+                      parallel_setup_script: Boolean(e.target.checked),
                     })
                   }
-                  placeholder={placeholders.cleanup}
-                  maxRows={12}
-                  className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring font-mono"
-                />
-                <p className="text-sm text-muted-foreground">
-                  {t('settings.repos.scripts.cleanup.helper')}
-                </p>
+                >
+                  {t('settings.repos.scripts.setup.parallelLabel')}
+                </Checkbox>
+                <Typography.Text type="tertiary">
+                  {t('settings.repos.scripts.setup.parallelHelper')}
+                </Typography.Text>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="copy-files">
+                <Typography.Text strong>
+                  {t('settings.repos.scripts.cleanup.label')}
+                </Typography.Text>
+                <TextArea
+                  value={draft.cleanup_script}
+                  autosize={{ maxRows: 12 }}
+                  placeholder={placeholders.cleanup}
+                  onChange={(value) =>
+                    updateDraft({ cleanup_script: String(value) })
+                  }
+                />
+                <Typography.Text type="tertiary">
+                  {t('settings.repos.scripts.cleanup.helper')}
+                </Typography.Text>
+              </div>
+
+              <div className="space-y-2">
+                <Typography.Text strong>
                   {t('settings.repos.scripts.copyFiles.label')}
-                </Label>
+                </Typography.Text>
                 <MultiFileSearchTextarea
                   value={draft.copy_files}
                   onChange={(value) => updateDraft({ copy_files: value })}
-                  placeholder={t(
-                    'settings.repos.scripts.copyFiles.placeholder'
-                  )}
+                  placeholder={t('settings.repos.scripts.copyFiles.placeholder')}
                   maxRows={6}
                   repoId={selectedRepo.id}
-                  className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring font-mono"
                 />
-                <p className="text-sm text-muted-foreground">
+                <Typography.Text type="tertiary">
                   {t('settings.repos.scripts.copyFiles.helper')}
-                </p>
+                </Typography.Text>
               </div>
 
-              {/* Save Buttons */}
               <div className="flex items-center justify-between pt-4 border-t">
                 {hasUnsavedChanges ? (
-                  <span className="text-sm text-muted-foreground">
+                  <Typography.Text type="tertiary">
                     {t('settings.repos.save.unsavedChanges')}
-                  </span>
+                  </Typography.Text>
                 ) : (
                   <span />
                 )}
                 <div className="flex gap-2">
                   <Button
-                    variant="outline"
+                    theme="outline"
                     onClick={handleDiscard}
                     disabled={!hasUnsavedChanges || saving}
                   >
                     {t('settings.repos.save.discard')}
                   </Button>
                   <Button
+                    type="primary"
                     onClick={handleSave}
                     disabled={!hasUnsavedChanges || saving}
+                    loading={saving}
                   >
-                    {saving && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
                     {t('settings.repos.save.button')}
                   </Button>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
         </>
       )}

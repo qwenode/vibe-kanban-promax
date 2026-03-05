@@ -27,6 +27,7 @@
     "generate-types:check": "cargo run --bin generate_types -- --check",
     "prepare-db": "node scripts/prepare-db.js",
     "prepare-db:check": "node scripts/prepare-db.js --check",
+    "semi:check": "node scripts/check-semi-overrides.js",
     "build:npx": "bash ./local-build.sh",
     "prepack": "pnpm run build:npx"
   },

@@ -3,7 +3,7 @@ import { KanbanCard } from '@/components/ui/shadcn-io/kanban';
 import { Link, Loader2, XCircle } from 'lucide-react';
 import type { TaskWithAttemptStatus } from 'shared/types';
 import { ActionsDropdown } from '@/components/ui/actions-dropdown';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import { useNavigateWithSearch } from '@/hooks';
 import { paths } from '@/lib/paths';
 import { attemptsApi } from '@/lib/api';
@@ -98,7 +98,8 @@ export function TaskCard({
               )}
               {task.parent_workspace_id && (
                 <Button
-                  variant="icon"
+                  theme="borderless"
+                  size="small"
                   onClick={handleParentClick}
                   onPointerDown={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}

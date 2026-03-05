@@ -1,14 +1,5 @@
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Alert } from '@/components/ui/alert';
+import { Banner, Modal, Space, Typography } from '@douyinfe/semi-ui';
 import { tasksApi } from '@/lib/api';
 import type { TaskWithAttemptStatus } from 'shared/types';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
@@ -61,50 +52,31 @@ const ClearDoneTasksConfirmationDialogImpl =
     };
 
     return (
-      <Dialog
-        open={modal.visible}
-        onOpenChange={(open) => !open && handleCancelDelete()}
+      <Modal
+        visible={modal.visible}
+        title="Clear Done Tasks"
+        okText={isDeleting ? 'Deleting...' : 'Clear Done'}
+        cancelText="Cancel"
+        onOk={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        closeOnEsc
+        maskClosable
+        okButtonProps={{ type: 'danger', disabled: isDeleting, loading: isDeleting }}
+        cancelButtonProps={{ theme: 'outline', disabled: isDeleting, autoFocus: true }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Clear Done Tasks</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete all{' '}
-              <span className="font-semibold">{taskCount}</span> {taskLabel} in
-              the <span className="font-semibold">"Done"</span> column?
-            </DialogDescription>
-          </DialogHeader>
-
-          <Alert variant="destructive" className="mb-4">
+        <Space vertical spacing={12} align="start" style={{ width: '100%' }}>
+          <Typography.Text type="tertiary">
+            Are you sure you want to delete all{' '}
+            <Typography.Text strong>{taskCount}</Typography.Text> {taskLabel}{' '}
+            in the <Typography.Text strong>"Done"</Typography.Text> column?
+          </Typography.Text>
+          <Banner type="danger" fullMode={false}>
             <strong>Warning:</strong> This action will permanently delete these
             tasks and cannot be undone.
-          </Alert>
-
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              {error}
-            </Alert>
-          )}
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCancelDelete}
-              disabled={isDeleting}
-              autoFocus
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Deleting...' : 'Clear Done'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </Banner>
+          {error && <Banner type="danger" fullMode={false} description={error} />}
+        </Space>
+      </Modal>
     );
   });
 

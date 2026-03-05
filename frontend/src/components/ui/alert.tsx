@@ -1,61 +1,93 @@
 import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
+import Banner from '@douyinfe/semi-ui/lib/es/banner';
+import type { BannerProps } from '@douyinfe/semi-ui/lib/es/banner';
 
-import { cn } from '@/lib/utils';
+export type AlertVariant = 'default' | 'destructive' | 'success';
 
-const alertVariants = cva(
-  'relative w-full border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground text-sm',
-  {
-    variants: {
-      variant: {
-        default: 'bg-background text-foreground',
-        destructive:
-          'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive',
-        success:
-          'border-success/50 bg-success/10 text-success-foreground [&>svg]:text-success',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
+type AlertProps = Omit<BannerProps, 'type' | 'title' | 'description' | 'icon'> & {
+  variant?: AlertVariant;
+};
 
-const Alert = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => (
-  <div
-    ref={ref}
-    role="alert"
-    className={cn(alertVariants({ variant }), className)}
-    {...props}
-  />
-));
-Alert.displayName = 'Alert';
-
-const AlertTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h5
-    ref={ref}
-    className={cn('mb-1 font-medium leading-none tracking-tight', className)}
-    {...props}
-  />
-));
+const AlertTitle = ({
+  children,
+  className,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}) => (className ? <div className={className}>{children}</div> : <>{children}</>);
 AlertTitle.displayName = 'AlertTitle';
 
-const AlertDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('text-sm [&_p]:leading-relaxed', className)}
-    {...props}
-  />
-));
+const AlertDescription = ({
+  children,
+  className,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}) => (className ? <div className={className}>{children}</div> : <>{children}</>);
 AlertDescription.displayName = 'AlertDescription';
+
+function mapVariant(variant: AlertVariant | undefined): BannerProps['type'] {
+  switch (variant) {
+    case 'destructive':
+      return 'danger';
+    case 'success':
+      return 'success';
+    case 'default':
+    default:
+      return 'info';
+  }
+}
+
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
+  ({ variant = 'default', children, ...props }, ref) => {
+    const nodes = React.Children.toArray(children) as React.ReactNode[];
+
+    let icon: React.ReactNode | undefined;
+    let title: React.ReactNode | undefined;
+    let description: React.ReactNode | undefined;
+
+    for (const node of nodes) {
+      if (!React.isValidElement(node)) continue;
+
+      if (node.type === AlertTitle) {
+        title = node.props.children;
+        continue;
+      }
+      if (node.type === AlertDescription) {
+        description = node.props.children;
+        continue;
+      }
+    }
+
+    const nonMetaChildren = nodes.filter((node) => {
+      if (!React.isValidElement(node)) return Boolean(node);
+      return node.type !== AlertTitle && node.type !== AlertDescription;
+    });
+
+    // If the first leftover child is an element, treat it as an icon
+    if (nonMetaChildren.length > 0 && React.isValidElement(nonMetaChildren[0])) {
+      icon = nonMetaChildren[0];
+    }
+
+    // If no explicit title/description, fall back to remaining children
+    if (title === undefined && description === undefined) {
+      const rest = icon ? nonMetaChildren.slice(1) : nonMetaChildren;
+      description = rest.length ? <>{rest}</> : undefined;
+    }
+
+    return (
+      <Banner
+        {...props}
+        // Banner uses a div root
+        ref={ref as never}
+        type={mapVariant(variant)}
+        icon={icon}
+        title={title}
+        description={description}
+      />
+    );
+  }
+);
+Alert.displayName = 'Alert';
 
 export { Alert, AlertTitle, AlertDescription };

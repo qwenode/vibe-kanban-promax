@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import type { IssuePriority } from '@/stores/useUiPreferencesStore';
 import {
   buildIssueCreatePath,
@@ -30,12 +30,14 @@ function isValidUuid(value: string): boolean {
  */
 export function useKanbanNavigation() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({
+    select: (s) => (s.location.search as Record<string, unknown>) ?? {},
+  });
 
   const routeState = useMemo(
-    () => parseProjectSidebarRoute(location.pathname),
-    [location.pathname]
+    () => parseProjectSidebarRoute(pathname),
+    [pathname]
   );
 
   const projectId = routeState?.projectId ?? null;
@@ -61,18 +63,23 @@ export function useKanbanNavigation() {
     routeState?.type === 'workspace-create' && draftId !== null;
   const isPanelOpen = !!routeState && routeState.type !== 'closed';
 
-  const createDefaultStatusId = searchParams.get('statusId');
-  const createDefaultPriority = searchParams.get(
-    'priority'
-  ) as IssuePriority | null;
+  const createDefaultStatusId =
+    typeof search.statusId === 'string' ? search.statusId : null;
+  const createDefaultPriority =
+    typeof search.priority === 'string'
+      ? (search.priority as IssuePriority)
+      : null;
   const createDefaultAssigneeIds =
-    searchParams.get('assignees')?.split(',').filter(Boolean) ?? null;
-  const createDefaultParentIssueId = searchParams.get('parentIssueId');
+    typeof search.assignees === 'string'
+      ? search.assignees.split(',').filter(Boolean)
+      : null;
+  const createDefaultParentIssueId =
+    typeof search.parentIssueId === 'string' ? search.parentIssueId : null;
 
   const openIssue = useCallback(
     (id: string) => {
       if (!projectId) return;
-      navigate(buildIssuePath(projectId, id));
+      navigate({ to: buildIssuePath(projectId, id) as never } as never);
     },
     [navigate, projectId]
   );
@@ -80,7 +87,9 @@ export function useKanbanNavigation() {
   const openIssueWorkspace = useCallback(
     (id: string, workspaceAttemptId: string) => {
       if (!projectId) return;
-      navigate(buildIssueWorkspacePath(projectId, id, workspaceAttemptId));
+      navigate({
+        to: buildIssueWorkspacePath(projectId, id, workspaceAttemptId) as never,
+      } as never);
     },
     [navigate, projectId]
   );
@@ -89,16 +98,20 @@ export function useKanbanNavigation() {
     (workspaceDraftId: string, options?: { issueId?: string | null }) => {
       if (!projectId) return;
       const targetIssueId = options?.issueId ?? issueId;
-      navigate(
-        buildWorkspaceCreatePath(projectId, workspaceDraftId, targetIssueId)
-      );
+      navigate({
+        to: buildWorkspaceCreatePath(
+          projectId,
+          workspaceDraftId,
+          targetIssueId
+        ) as never,
+      } as never);
     },
     [navigate, projectId, issueId]
   );
 
   const closePanel = useCallback(() => {
     if (!projectId) return;
-    navigate(buildProjectRootPath(projectId));
+    navigate({ to: buildProjectRootPath(projectId) as never } as never);
   }, [navigate, projectId]);
 
   const startCreate = useCallback(
@@ -109,7 +122,7 @@ export function useKanbanNavigation() {
       parentIssueId?: string;
     }) => {
       if (!projectId) return;
-      navigate(buildIssueCreatePath(projectId, options));
+      navigate({ to: buildIssueCreatePath(projectId, options) as never } as never);
     },
     [navigate, projectId]
   );
@@ -121,27 +134,27 @@ export function useKanbanNavigation() {
       assigneeIds?: string[];
     }) => {
       if (!projectId || !isCreateMode) return;
-
-      const params = new URLSearchParams(searchParams);
-      if (options.statusId !== undefined) {
-        params.set('statusId', options.statusId);
-      }
-      if (options.priority !== undefined) {
-        if (options.priority === null) {
-          params.delete('priority');
-        } else {
-          params.set('priority', options.priority);
-        }
-      }
-      if (options.assigneeIds !== undefined) {
-        params.set('assignees', options.assigneeIds.join(','));
-      }
-
-      const path = buildIssueCreatePath(projectId);
-      const query = params.toString();
-      navigate(query ? `${path}?${query}` : path, { replace: true });
+      navigate({
+        to: buildIssueCreatePath(projectId) as never,
+        replace: true,
+        search: ((prev: unknown) => {
+          const next = { ...(prev as Record<string, unknown>) } as Record<
+            string,
+            unknown
+          >;
+          if (options.statusId !== undefined) next.statusId = options.statusId;
+          if (options.priority !== undefined) {
+            if (options.priority === null) delete next.priority;
+            else next.priority = options.priority;
+          }
+          if (options.assigneeIds !== undefined) {
+            next.assignees = options.assigneeIds.join(',');
+          }
+          return next;
+        }) as never,
+      } as never);
     },
-    [navigate, projectId, isCreateMode, searchParams]
+    [navigate, projectId, isCreateMode]
   );
 
   return {

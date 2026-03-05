@@ -1,12 +1,6 @@
-import { memo, forwardRef, useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { ChevronDown, Settings2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Button, Dropdown } from '@douyinfe/semi-ui';
 import { cn } from '@/lib/utils';
 import type { ExecutorConfig } from 'shared/types';
 
@@ -18,8 +12,8 @@ type Props = {
   className?: string;
 };
 
-const VariantSelectorInner = forwardRef<HTMLButtonElement, Props>(
-  ({ currentProfile, selectedVariant, onChange, disabled, className }, ref) => {
+const VariantSelectorInner = memo(
+  ({ currentProfile, selectedVariant, onChange, disabled, className }: Props) => {
     // Bump-effect animation when cycling through variants
     const [isAnimating, setIsAnimating] = useState(false);
     useEffect(() => {
@@ -37,9 +31,8 @@ const VariantSelectorInner = forwardRef<HTMLButtonElement, Props>(
     if (!hasVariants) {
       return (
         <Button
-          ref={ref}
-          variant="outline"
-          size="sm"
+          theme="outline"
+          size="small"
           className={cn(
             'h-10 w-24 px-2 flex items-center justify-between',
             className
@@ -50,41 +43,42 @@ const VariantSelectorInner = forwardRef<HTMLButtonElement, Props>(
     }
 
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            ref={ref}
-            variant="secondary"
-            size="sm"
-            className={cn(
-              'px-2 flex items-center justify-between transition-all',
-              isAnimating && 'scale-105 bg-accent',
-              className
-            )}
-            disabled={disabled}
-          >
-            <Settings2 className="h-3 w-3 mr-1 flex-shrink-0" />
-            <span className="text-xs truncate flex-1 text-left">
-              {selectedVariant || 'DEFAULT'}
-            </span>
-            <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          {Object.entries(currentProfile).map(([variantLabel]) => (
-            <DropdownMenuItem
-              key={variantLabel}
-              onClick={() => onChange(variantLabel)}
-              className={selectedVariant === variantLabel ? 'bg-accent' : ''}
-            >
-              {variantLabel}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Dropdown
+        trigger="click"
+        position="bottom"
+        render={
+          <Dropdown.Menu>
+            {Object.entries(currentProfile).map(([variantLabel]) => (
+              <Dropdown.Item
+                key={variantLabel}
+                onClick={() => onChange(variantLabel)}
+              >
+                {variantLabel}
+              </Dropdown.Item>
+            ))}
+          </Dropdown.Menu>
+        }
+      >
+        <Button
+          type="secondary"
+          size="small"
+          className={cn(
+            'px-2 flex items-center justify-between transition-all',
+            isAnimating && 'scale-105 bg-accent',
+            className
+          )}
+          disabled={disabled}
+        >
+          <Settings2 className="h-3 w-3 mr-1 flex-shrink-0" />
+          <span className="text-xs truncate flex-1 text-left">
+            {selectedVariant || 'DEFAULT'}
+          </span>
+          <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
+        </Button>
+      </Dropdown>
     );
   }
 );
 
 VariantSelectorInner.displayName = 'VariantSelector';
-export const VariantSelector = memo(VariantSelectorInner);
+export const VariantSelector = VariantSelectorInner;

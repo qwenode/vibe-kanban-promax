@@ -2,17 +2,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
+import { Banner, Button, Checkbox, Modal, Spin, Typography } from '@douyinfe/semi-ui';
+import { MessageSquare, AlertCircle } from 'lucide-react';
 import { usePrComments } from '@/hooks/usePrComments';
 import { PrCommentCard } from '@/components/ui/pr-comment-card';
 import type { UnifiedPrComment } from 'shared/types';
@@ -91,13 +82,15 @@ const PrCommentsDialogImpl = NiceModal.create<PrCommentsDialogProps>(
     const errorMessage = isError ? getErrorMessage(error) : null;
 
     return (
-      <Dialog
-        open={modal.visible}
-        onOpenChange={handleOpenChange}
-        className="max-w-2xl p-0 overflow-hidden"
+      <Modal
+        visible={modal.visible}
+        onCancel={() => handleOpenChange(false)}
+        width={672}
+        footer={null}
+        bodyStyle={{ padding: 0 }}
       >
-        <DialogContent
-          className="p-0"
+        <div
+          className="overflow-hidden"
           onKeyDownCapture={(e) => {
             if (e.key === 'Escape') {
               e.stopPropagation();
@@ -106,40 +99,41 @@ const PrCommentsDialogImpl = NiceModal.create<PrCommentsDialogProps>(
             }
           }}
         >
-          <DialogHeader className="px-4 py-3 border-b">
-            <DialogTitle className="flex items-center gap-2">
+          <div className="px-4 py-3 border-b">
+            <Typography.Title heading={5} className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
               {t('tasks:prComments.dialog.title')}
-            </DialogTitle>
-          </DialogHeader>
+            </Typography.Title>
+          </div>
 
           <div className="max-h-[70vh] flex flex-col min-h-0">
             <div className="p-4 overflow-auto flex-1 min-h-0">
               {errorMessage ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{errorMessage}</AlertDescription>
-                </Alert>
+                <Banner
+                  type="danger"
+                  icon={<AlertCircle className="h-4 w-4" />}
+                  description={errorMessage}
+                  fullMode={false}
+                />
               ) : isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Spin />
                 </div>
               ) : comments.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
+                <Typography.Text type="tertiary" className="w-full text-center py-8">
                   {t('tasks:prComments.dialog.noComments')}
-                </p>
+                </Typography.Text>
               ) : (
                 <>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-muted-foreground">
+                    <Typography.Text type="tertiary">
                       {t('tasks:prComments.dialog.selectedCount', {
                         selected: selectedIds.size,
                         total: comments.length,
                       })}
-                    </span>
+                    </Typography.Text>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      theme="borderless"
                       onClick={isAllSelected ? deselectAll : selectAll}
                     >
                       {isAllSelected
@@ -157,8 +151,7 @@ const PrCommentsDialogImpl = NiceModal.create<PrCommentsDialogProps>(
                         >
                           <Checkbox
                             checked={selectedIds.has(id)}
-                            onCheckedChange={() => toggleSelection(id)}
-                            className="mt-3"
+                            onChange={() => toggleSelection(id)}
                           />
                           <PrCommentCard
                             author={comment.author}
@@ -196,18 +189,22 @@ const PrCommentsDialogImpl = NiceModal.create<PrCommentsDialogProps>(
           </div>
 
           {!errorMessage && !isLoading && comments.length > 0 && (
-            <DialogFooter className="px-4 py-3 border-t">
-              <Button variant="outline" onClick={() => handleOpenChange(false)}>
+            <div className="px-4 py-3 border-t flex items-center justify-end gap-2">
+              <Button theme="outline" onClick={() => handleOpenChange(false)}>
                 {t('common:buttons.cancel')}
               </Button>
-              <Button onClick={handleConfirm} disabled={selectedIds.size === 0}>
+              <Button
+                type="primary"
+                onClick={handleConfirm}
+                disabled={selectedIds.size === 0}
+              >
                 {t('tasks:prComments.dialog.add')}
                 {selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
               </Button>
-            </DialogFooter>
+            </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </Modal>
     );
   }
 );

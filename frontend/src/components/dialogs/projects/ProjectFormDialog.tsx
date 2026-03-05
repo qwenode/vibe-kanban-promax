@@ -1,18 +1,11 @@
 import { useEffect, useCallback, useRef } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { CreateProject, Project } from 'shared/types';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { useProjectMutations } from '@/hooks/useProjectMutations';
 import { defineModal } from '@/lib/modals';
 import { RepoPickerDialog } from '@/components/dialogs/shared/RepoPickerDialog';
+import { Banner, Modal, Spin, Typography } from '@douyinfe/semi-ui';
 
 export interface ProjectFormDialogProps {}
 
@@ -66,40 +59,38 @@ const ProjectFormDialogImpl = NiceModal.create<ProjectFormDialogProps>(() => {
     handlePickRepo();
   }, [modal.visible, handlePickRepo]);
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      modal.resolve({ status: 'canceled' } as ProjectFormDialogResult);
-      modal.hide();
-    }
-  };
-
   return (
-    <Dialog
-      open={modal.visible && createProject.isPending}
-      onOpenChange={handleOpenChange}
+    <Modal
+      visible={modal.visible && createProject.isPending}
+      onCancel={() => {
+        modal.resolve({ status: 'canceled' } as ProjectFormDialogResult);
+        modal.hide();
+      }}
+      footer={null}
+      width={400}
     >
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>Creating Project</DialogTitle>
-          <DialogDescription>Setting up your project...</DialogDescription>
-        </DialogHeader>
+      <div className="space-y-3">
+        <Typography.Title heading={5}>Creating Project</Typography.Title>
+        <Typography.Text type="tertiary">Setting up your project...</Typography.Text>
 
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+          <Spin size="large" />
         </div>
 
         {createProject.isError && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {createProject.error instanceof Error
+          <Banner
+            type="danger"
+            fullMode={false}
+            icon={<AlertCircle className="h-4 w-4" />}
+            description={
+              createProject.error instanceof Error
                 ? createProject.error.message
-                : 'Failed to create project'}
-            </AlertDescription>
-          </Alert>
+                : 'Failed to create project'
+            }
+          />
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </Modal>
   );
 });
 

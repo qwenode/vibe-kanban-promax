@@ -6,7 +6,7 @@ import { useUserSystem } from '@/components/ConfigProvider';
 import { getHighLightLanguageFromPath } from '@/utils/extToLanguage';
 import { getActualTheme } from '@/utils/theme';
 import { stripLineEnding } from '@/utils/string';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import { DiffSide } from '@/types/diff';
 import {
   ChevronRight,
@@ -279,8 +279,8 @@ export default function DiffCard({
       <div className="sticky top-0 z-[5] flex items-center px-4 py-2 bg-background border-b">
         {expandable && (
           <Button
-            variant="ghost"
-            size="sm"
+            theme="borderless"
+            size="small"
             onClick={onToggle}
             className="h-6 w-6 p-0 mr-2"
             title={expanded ? 'Collapse' : 'Expand'}
@@ -295,8 +295,8 @@ export default function DiffCard({
         )}
         {title}
         <Button
-          variant="ghost"
-          size="sm"
+          theme="borderless"
+          size="small"
           onClick={(e) => {
             e.stopPropagation();
             handleOpenInIDE();

@@ -1,13 +1,21 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { ProjectList } from '@/components/projects/ProjectList';
 import { ProjectDetail } from '@/components/projects/ProjectDetail';
 
 export function Projects() {
-  const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const projectId = useRouterState({
+    select: (s) => {
+      for (const match of s.matches as Array<{ params?: Record<string, unknown> }>) {
+        const value = match.params?.projectId;
+        if (typeof value === 'string' && value.length > 0) return value;
+      }
+      return undefined;
+    },
+  });
 
   const handleBack = () => {
-    navigate('/local-projects');
+    navigate({ to: '/local-projects' as never });
   };
 
   if (projectId) {

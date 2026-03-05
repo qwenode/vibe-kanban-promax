@@ -1,21 +1,37 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { twMerge } from 'tailwind-merge';
+import { Input as SemiInput } from '@douyinfe/semi-ui';
+import type { InputProps as SemiInputProps } from '@douyinfe/semi-ui/lib/es/input';
 
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export type InputProps = Omit<
+  SemiInputProps,
+  'onChange' | 'onKeyDown' | 'value' | 'defaultValue' | 'type' | 'className'
+> & {
+  value?: string;
+  defaultValue?: string;
+  type?: string;
+  className?: string;
   onCommandEnter?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onCommandShiftEnter?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-}
+  /**
+   * Semi Input's native callback shape is `(value, e)`.
+   * For compatibility, we keep `onChange(e)` and also offer `onValueChange(value)`.
+   */
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onValueChange?: (value: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+};
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
     {
       className,
       type,
+      onChange,
       onKeyDown,
       onCommandEnter,
       onCommandShiftEnter,
+      onValueChange,
       ...props
     },
     ref
@@ -35,17 +51,16 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     };
 
     return (
-      <input
-        ref={ref}
-        type={type}
-        onKeyDown={handleKeyDown}
-        className={twMerge(
-          cn(
-            'flex h-10 w-full border px-3 py-2 text-sm ring-offset-background file:border-0 bg-transparent file:text-sm file:font-medium focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-            className
-          )
-        )}
+      <SemiInput
         {...props}
+        ref={ref as never}
+        type={type}
+        onChange={(value, e) => {
+          onValueChange?.(value);
+          onChange?.(e);
+        }}
+        onKeyDown={handleKeyDown}
+        className={cn(className)}
       />
     );
   }

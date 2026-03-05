@@ -1,18 +1,9 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal, getErrorMessage } from '@/lib/modals';
 import { attemptsApi } from '@/lib/api';
 import type { GhCliSetupError } from 'shared/types';
 import { useRef, useState } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
+import { Banner, Button, Modal, Typography } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
 
 interface GhCliSetupDialogProps {
@@ -186,16 +177,11 @@ const GhCliSetupDialogImpl = NiceModal.create<GhCliSetupDialogProps>(
     };
 
     return (
-      <Dialog
-        open={modal.visible}
-        onOpenChange={(open) => !open && handleClose()}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
+      <Modal visible={modal.visible} onCancel={handleClose} footer={null}>
+        <div className="space-y-4">
+          <Typography.Title heading={5}>
               {t('settings:integrations.github.cliSetup.title')}
-            </DialogTitle>
-          </DialogHeader>
+          </Typography.Title>
           <div className="space-y-4">
             <p>{t('settings:integrations.github.cliSetup.description')}</p>
 
@@ -225,37 +211,36 @@ const GhCliSetupDialogImpl = NiceModal.create<GhCliSetupDialogProps>(
               </p>
             </div>
             {errorInfo && (
-              <Alert variant="destructive">
-                <AlertDescription className="space-y-2">
-                  <p>{errorInfo.message}</p>
-                  {errorInfo.variant && (
-                    <GhCliHelpInstructions variant={errorInfo.variant} t={t} />
-                  )}
-                </AlertDescription>
-              </Alert>
+              <Banner
+                type="danger"
+                fullMode={false}
+                description={
+                  <div className="space-y-2">
+                    <p>{errorInfo.message}</p>
+                    {errorInfo.variant && (
+                      <GhCliHelpInstructions variant={errorInfo.variant} t={t} />
+                    )}
+                  </div>
+                }
+              />
             )}
           </div>
-          <DialogFooter>
-            <Button onClick={handleRunSetup} disabled={isRunning}>
-              {isRunning ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('settings:integrations.github.cliSetup.running')}
-                </>
-              ) : (
-                t('settings:integrations.github.cliSetup.runSetup')
-              )}
+          <div className="flex items-center justify-end gap-2">
+            <Button onClick={handleRunSetup} disabled={isRunning} loading={isRunning}>
+              {isRunning
+                ? t('settings:integrations.github.cliSetup.running')
+                : t('settings:integrations.github.cliSetup.runSetup')}
             </Button>
             <Button
-              variant="outline"
+              theme="outline"
               onClick={handleClose}
               disabled={isRunning}
             >
               {t('common:buttons.close')}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </Modal>
     );
   }
 );

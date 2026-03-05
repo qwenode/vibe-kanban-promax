@@ -1,12 +1,5 @@
 import { Bot, ArrowDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Label } from '@/components/ui/label';
+import { Select, Typography } from '@douyinfe/semi-ui';
 import type { ExecutorProfileId, BaseCodingAgent } from 'shared/types';
 
 interface AgentSelectorProps {
@@ -36,49 +29,25 @@ export function AgentSelector({
   return (
     <div className="flex-1">
       {showLabel && (
-        <Label htmlFor="executor-profile" className="text-sm font-medium">
+        <Typography.Text className="text-sm font-medium">
           Agent
-        </Label>
+        </Typography.Text>
       )}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className={`w-full justify-between text-xs ${showLabel ? 'mt-1.5' : ''} ${className}`}
-            disabled={disabled}
-            aria-label="Select agent"
-          >
-            <div className="flex items-center gap-1.5 w-full">
-              <Bot className="h-3 w-3" />
-              <span className="truncate">{selectedAgent || 'Agent'}</span>
-            </div>
-            <ArrowDown className="h-3 w-3" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-60">
-          {agents.length === 0 ? (
-            <div className="p-2 text-sm text-muted-foreground text-center">
-              No agents available
-            </div>
-          ) : (
-            agents.map((agent) => (
-              <DropdownMenuItem
-                key={agent}
-                onClick={() => {
-                  onChange({
-                    executor: agent,
-                    variant: null,
-                  });
-                }}
-                className={selectedAgent === agent ? 'bg-accent' : ''}
-              >
-                {agent}
-              </DropdownMenuItem>
-            ))
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Select
+        value={selectedAgent}
+        disabled={disabled || agents.length === 0}
+        className={`w-full text-xs ${showLabel ? 'mt-1.5' : ''} ${className}`}
+        suffix={<ArrowDown className="h-3 w-3" />}
+        prefix={<Bot className="h-3 w-3" />}
+        placeholder="Agent"
+        optionList={agents.map((agent) => ({ value: agent, label: agent }))}
+        onChange={(value) => {
+          onChange({
+            executor: value as BaseCodingAgent,
+            variant: null,
+          });
+        }}
+      />
     </div>
   );
 }

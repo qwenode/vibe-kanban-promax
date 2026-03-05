@@ -2,7 +2,7 @@ import type {
   ArrayFieldTemplateProps,
   ArrayFieldItemTemplateProps,
 } from '@rjsf/utils';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import { Plus, X } from 'lucide-react';
 
 export const ArrayFieldTemplate = (props: ArrayFieldTemplateProps) => {
@@ -18,9 +18,9 @@ export const ArrayFieldTemplate = (props: ArrayFieldTemplateProps) => {
 
       {canAdd && (
         <Button
-          type="button"
-          variant="outline"
-          size="sm"
+          htmlType="button"
+          theme="outline"
+          size="small"
           onClick={onAddClick}
           disabled={disabled || readonly}
           className="w-full"
@@ -43,9 +43,9 @@ export const ArrayFieldItemTemplate = (props: ArrayFieldItemTemplateProps) => {
       {/* Remove button */}
       {buttonsProps.hasRemove && (
         <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+          htmlType="button"
+          theme="borderless"
+          size="small"
           onClick={buttonsProps.onRemoveItem}
           disabled={disabled || readonly || buttonsProps.disabled}
           className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200 shrink-0"

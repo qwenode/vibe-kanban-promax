@@ -11,7 +11,7 @@ import { Button } from '../ui/button';
 import { PlusIcon } from 'lucide-react';
 import { CreateAttemptDialog } from '@/components/dialogs/tasks/CreateAttemptDialog';
 import WYSIWYGEditor from '@/components/ui/wysiwyg';
-import { DataTable, type ColumnDef } from '@/components/ui/table';
+import { Table } from '@douyinfe/semi-ui';
 
 interface TaskPanelProps {
   task: TaskWithAttemptStatus | null;
@@ -76,23 +76,25 @@ const TaskPanel = ({ task }: TaskPanelProps) => {
   const titleContent = `# ${task.title || 'Task'}`;
   const descriptionContent = task.description || '';
 
-  const attemptColumns: ColumnDef<WorkspaceWithSession>[] = [
+  const attemptColumns = [
     {
-      id: 'executor',
-      header: '',
-      accessor: (attempt) => attempt.session?.executor || 'Base Agent',
+      title: '',
+      dataIndex: 'executor',
+      render: (_: unknown, attempt: WorkspaceWithSession) =>
+        attempt.session?.executor || 'Base Agent',
       className: 'pr-4',
     },
     {
-      id: 'branch',
-      header: '',
-      accessor: (attempt) => attempt.branch || '—',
+      title: '',
+      dataIndex: 'branch',
+      render: (_: unknown, attempt: WorkspaceWithSession) => attempt.branch || '—',
       className: 'pr-4',
     },
     {
-      id: 'time',
-      header: '',
-      accessor: (attempt) => formatTimeAgo(attempt.created_at),
+      title: '',
+      dataIndex: 'time',
+      render: (_: unknown, attempt: WorkspaceWithSession) =>
+        formatTimeAgo(attempt.created_at),
       className: 'pr-0 text-right',
     },
   ];
@@ -110,19 +112,20 @@ const TaskPanel = ({ task }: TaskPanelProps) => {
 
           <div className="mt-6 flex-shrink-0 space-y-4">
             {task.parent_workspace_id && (
-              <DataTable
-                data={parentAttempt ? [parentAttempt] : []}
+              <Table
+                dataSource={parentAttempt ? [parentAttempt] : []}
                 columns={attemptColumns}
-                keyExtractor={(attempt) => attempt.id}
-                onRowClick={(attempt) => {
-                  if (projectId) {
-                    navigate(
-                      paths.attempt(projectId, attempt.task_id, attempt.id)
-                    );
-                  }
-                }}
-                isLoading={isParentLoading}
-                headerContent="Parent Attempt"
+                rowKey="id"
+                pagination={false}
+                loading={isParentLoading}
+                title={() => 'Parent Attempt'}
+                onRow={(attempt) => ({
+                  onClick: () => {
+                    if (projectId && attempt) {
+                      navigate(paths.attempt(projectId, attempt.task_id, attempt.id));
+                    }
+                  },
+                })}
               />
             )}
 
@@ -135,17 +138,20 @@ const TaskPanel = ({ task }: TaskPanelProps) => {
                 {t('taskPanel.errorLoadingAttempts')}
               </div>
             ) : (
-              <DataTable
-                data={displayedAttempts}
+              <Table
+                dataSource={displayedAttempts}
                 columns={attemptColumns}
-                keyExtractor={(attempt) => attempt.id}
-                onRowClick={(attempt) => {
-                  if (projectId && task.id) {
-                    navigate(paths.attempt(projectId, task.id, attempt.id));
-                  }
-                }}
-                emptyState={t('taskPanel.noAttempts')}
-                headerContent={
+                rowKey="id"
+                pagination={false}
+                onRow={(attempt) => ({
+                  onClick: () => {
+                    if (projectId && task.id && attempt) {
+                      navigate(paths.attempt(projectId, task.id, attempt.id));
+                    }
+                  },
+                })}
+                empty={t('taskPanel.noAttempts')}
+                title={() =>
                   <div className="w-full flex text-left">
                     <span className="flex-1">
                       {t('taskPanel.attemptsCount', {

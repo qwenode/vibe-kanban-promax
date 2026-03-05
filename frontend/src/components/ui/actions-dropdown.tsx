@@ -1,13 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Button, Dropdown } from '@douyinfe/semi-ui';
 import { MoreHorizontal } from 'lucide-react';
 import type { TaskWithAttemptStatus } from 'shared/types';
 import { useOpenInEditor } from '@/hooks/useOpenInEditor';
@@ -20,8 +12,8 @@ import { EditBranchNameDialog } from '@/components/dialogs/tasks/EditBranchNameD
 import { useProject } from '@/contexts/ProjectContext';
 import { openTaskForm } from '@/lib/openTaskForm';
 
-import { useNavigate } from 'react-router-dom';
 import { WorkspaceWithSession } from '@/types/attempt';
+import { useNavigateWithSearch } from '@/hooks/useNavigateWithSearch';
 
 interface ActionsDropdownProps {
   task?: TaskWithAttemptStatus | null;
@@ -32,7 +24,7 @@ export function ActionsDropdown({ task, attempt }: ActionsDropdownProps) {
   const { t } = useTranslation('tasks');
   const { projectId } = useProject();
   const openInEditor = useOpenInEditor(attempt?.id);
-  const navigate = useNavigate();
+  const navigate = useNavigateWithSearch();
 
   const hasAttemptActions = Boolean(attempt);
   const hasTaskActions = Boolean(task);
@@ -83,7 +75,9 @@ export function ActionsDropdown({ task, attempt }: ActionsDropdownProps) {
       attempt,
       onNavigateToTask: (taskId: string) => {
         if (projectId) {
-          navigate(`/local-projects/${projectId}/tasks/${taskId}/attempts/latest`);
+          navigate(
+            `/local-projects/${projectId}/tasks/${taskId}/attempts/latest`
+          );
         }
       },
     });
@@ -129,86 +123,70 @@ export function ActionsDropdown({ task, attempt }: ActionsDropdownProps) {
   };
 
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="icon"
-            aria-label="Actions"
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+    <Dropdown
+      trigger="click"
+      position="bottomRight"
+      render={
+        <Dropdown.Menu>
           {hasAttemptActions && (
             <>
-              <DropdownMenuLabel>{t('actionsMenu.attempt')}</DropdownMenuLabel>
-              <DropdownMenuItem
-                disabled={!attempt?.id}
-                onClick={handleOpenInEditor}
-              >
+              <Dropdown.Title>{t('actionsMenu.attempt')}</Dropdown.Title>
+              <Dropdown.Item disabled={!attempt?.id} onClick={handleOpenInEditor}>
                 {t('actionsMenu.openInIde')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={!attempt?.id}
-                onClick={handleViewProcesses}
-              >
+              </Dropdown.Item>
+              <Dropdown.Item disabled={!attempt?.id} onClick={handleViewProcesses}>
                 {t('actionsMenu.viewProcesses')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={!attempt?.id}
-                onClick={handleViewRelatedTasks}
-              >
+              </Dropdown.Item>
+              <Dropdown.Item disabled={!attempt?.id} onClick={handleViewRelatedTasks}>
                 {t('actionsMenu.viewRelatedTasks')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleCreateNewAttempt}>
+              </Dropdown.Item>
+              <Dropdown.Item onClick={handleCreateNewAttempt}>
                 {t('actionsMenu.createNewAttempt')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
+              </Dropdown.Item>
+              <Dropdown.Item
                 disabled={!projectId || !attempt}
                 onClick={handleCreateSubtask}
               >
                 {t('actionsMenu.createSubtask')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
+              </Dropdown.Item>
+              <Dropdown.Item
                 disabled={!attempt?.id || !task}
                 onClick={handleGitActions}
               >
                 {t('actionsMenu.gitActions')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={!attempt?.id}
-                onClick={handleEditBranchName}
-              >
+              </Dropdown.Item>
+              <Dropdown.Item disabled={!attempt?.id} onClick={handleEditBranchName}>
                 {t('actionsMenu.editBranchName')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              </Dropdown.Item>
+              <Dropdown.Divider />
             </>
           )}
-
           {hasTaskActions && (
             <>
-              <DropdownMenuLabel>{t('actionsMenu.task')}</DropdownMenuLabel>
-              <DropdownMenuItem disabled={!projectId} onClick={handleEdit}>
+              <Dropdown.Title>{t('actionsMenu.task')}</Dropdown.Title>
+              <Dropdown.Item disabled={!projectId} onClick={handleEdit}>
                 {t('common:buttons.edit')}
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled={!projectId} onClick={handleDuplicate}>
+              </Dropdown.Item>
+              <Dropdown.Item disabled={!projectId} onClick={handleDuplicate}>
                 {t('actionsMenu.duplicate')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={!projectId}
-                onClick={handleDelete}
-                className="text-destructive"
-              >
+              </Dropdown.Item>
+              <Dropdown.Item disabled={!projectId} onClick={handleDelete}>
                 {t('common:buttons.delete')}
-              </DropdownMenuItem>
+              </Dropdown.Item>
             </>
           )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+        </Dropdown.Menu>
+      }
+    >
+      <Button
+        theme="borderless"
+        aria-label="Actions"
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </Button>
+    </Dropdown>
   );
 }

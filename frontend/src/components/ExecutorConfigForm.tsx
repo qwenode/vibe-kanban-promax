@@ -4,9 +4,7 @@ import type { IChangeEvent } from '@rjsf/core';
 import { RJSFValidationError } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Banner, Button, Card } from '@douyinfe/semi-ui';
 import { Loader2 } from 'lucide-react';
 import { shadcnTheme } from './rjsf';
 import { BaseCodingAgent } from 'shared/types';
@@ -105,18 +103,18 @@ export function ExecutorConfigForm({
 
   if (!schema) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>
-          Schema not found for executor type: {executor}
-        </AlertDescription>
-      </Alert>
+      <Banner
+        type="danger"
+        fullMode={false}
+        description={`Schema not found for executor type: ${executor}`}
+      />
     );
   }
 
   return (
     <div className="space-y-8">
       <Card>
-        <CardContent className="p-0">
+        <div className="p-0">
           <Form
             schema={schema}
             uiSchema={uiSchema}
@@ -136,7 +134,7 @@ export function ExecutorConfigForm({
             {onSave && (
               <div className="flex justify-end pt-4">
                 <Button
-                  type="submit"
+                  htmlType="submit"
                   disabled={!isDirty || validationErrors.length > 0 || isSaving}
                 >
                   {isSaving && (
@@ -147,12 +145,14 @@ export function ExecutorConfigForm({
               </div>
             )}
           </Form>
-        </CardContent>
+        </div>
       </Card>
 
       {validationErrors.length > 0 && (
-        <Alert variant="destructive">
-          <AlertDescription>
+        <Banner
+          type="danger"
+          fullMode={false}
+          description={
             <ul className="list-disc list-inside space-y-1">
               {validationErrors.map((error, index) => (
                 <li key={index}>
@@ -160,8 +160,8 @@ export function ExecutorConfigForm({
                 </li>
               ))}
             </ul>
-          </AlertDescription>
-        </Alert>
+          }
+        />
       )}
     </div>
   );

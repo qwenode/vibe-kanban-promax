@@ -1,11 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Button, Modal, Typography } from '@douyinfe/semi-ui';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal, type NoProps } from '@/lib/modals';
 import { useTranslation } from 'react-i18next';
@@ -23,18 +16,25 @@ const BetaWorkspacesDialogImpl = NiceModal.create<NoProps>(() => {
   };
 
   return (
-    <Dialog open={modal.visible} uncloseable>
-      <DialogContent className="sm:max-w-[640px]">
+    <Modal
+      visible={modal.visible}
+      closable={false}
+      maskClosable={false}
+      closeOnEsc={false}
+      footer={null}
+      width={640}
+    >
+      <div className="space-y-4">
         <img
           src="/beta-workspaces-preview.png"
           alt={t('betaWorkspaces.title')}
           className="w-full rounded-lg border"
         />
-        <DialogHeader>
-          <DialogTitle className="text-xl">
+        <div>
+          <Typography.Title heading={4}>
             {t('betaWorkspaces.title')}
-          </DialogTitle>
-        </DialogHeader>
+          </Typography.Title>
+        </div>
         <div className="text-muted-foreground space-y-4">
           <p>{t('betaWorkspaces.intro')}</p>
           <p>{t('betaWorkspaces.newUiDescription')}</p>
@@ -52,16 +52,16 @@ const BetaWorkspacesDialogImpl = NiceModal.create<NoProps>(() => {
           <p>{t('betaWorkspaces.transition')}</p>
           <p>{t('betaWorkspaces.optOutNote')}</p>
         </div>
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={handleMaybeLater}>
+        <div className="flex items-center justify-end gap-2">
+          <Button theme="outline" onClick={handleMaybeLater}>
             {t('betaWorkspaces.maybeLater')}
           </Button>
           <Button onClick={handleJoinBeta}>
             {t('betaWorkspaces.joinBeta')}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </Modal>
   );
 });
 

@@ -1,60 +1,116 @@
 import * as React from 'react';
-import { twMerge } from 'tailwind-merge';
-import { Slot } from '@radix-ui/react-slot';
-import { cva, type VariantProps } from 'class-variance-authority';
-
+import { Button as SemiButton } from '@douyinfe/semi-ui';
+import type { ButtonProps as SemiButtonProps } from '@douyinfe/semi-ui/lib/es/button';
 import { cn } from '@/lib/utils';
 
-const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
-  {
-    variants: {
-      variant: {
-        default:
-          'text-primary-foreground hover:bg-primary/90 border border-foreground',
-        destructive:
-          'border border-destructive text-destructive hover:bg-destructive/10',
-        outline:
-          'border border-input hover:bg-accent hover:text-accent-foreground',
-        secondary: 'text-secondary-foreground hover:bg-secondary/80 border',
-        ghost: 'hover:text-primary-foreground/50',
-        link: 'hover:underline',
-        icon: 'bg-transparent rounded text-muted-foreground hover:text-foreground',
-      },
-      size: {
-        default: 'h-10 px-4 py-2',
-        xs: 'h-8 px-2 text-xs',
-        sm: 'h-9 px-3',
-        lg: 'h-11 px-8',
-        icon: 'h-10 w-10',
-      },
-    },
-    compoundVariants: [{ variant: 'icon', class: 'p-0 h-4' }],
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
-    },
-  }
-);
+export type ButtonVariant =
+  | 'default'
+  | 'destructive'
+  | 'outline'
+  | 'secondary'
+  | 'ghost'
+  | 'link'
+  | 'icon';
+
+export type ButtonSize = 'default' | 'xs' | 'sm' | 'lg' | 'icon';
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends Omit<SemiButtonProps, 'type' | 'theme' | 'size' | 'children' | 'htmlType'> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   asChild?: boolean;
+  children?: React.ReactNode;
+  /**
+   * Backwards-compat with HTMLButtonElement's `type` attribute.
+   * Semi uses `htmlType`, but many callsites pass `type="button"`.
+   */
+  type?: 'button' | 'submit' | 'reset';
+  htmlType?: 'button' | 'submit' | 'reset';
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button';
+function mapVariant(variant: ButtonVariant | undefined): {
+  semiType?: SemiButtonProps['type'];
+  theme?: SemiButtonProps['theme'];
+} {
+  switch (variant) {
+    case 'destructive':
+      return { semiType: 'danger', theme: 'light' };
+    case 'outline':
+      return { theme: 'outline' };
+    case 'secondary':
+      return { semiType: 'secondary', theme: 'solid' };
+    case 'ghost':
+      return { theme: 'borderless' };
+    case 'link':
+      return { theme: 'borderless' };
+    case 'icon':
+      return { theme: 'borderless' };
+    case 'default':
+    default:
+      return { semiType: 'primary', theme: 'solid' };
+  }
+}
+
+function mapSize(size: ButtonSize | undefined): SemiButtonProps['size'] {
+  switch (size) {
+    case 'xs':
+    case 'sm':
+      return 'default';
+    case 'lg':
+      return 'large';
+    case 'icon':
+    case 'default':
+    default:
+      return 'default';
+  }
+}
+
+const Button = React.forwardRef<HTMLElement, ButtonProps>(
+  (
+    {
+      className,
+      variant = 'default',
+      size = 'default',
+      asChild,
+      children,
+      type,
+      htmlType,
+      ...props
+    },
+    ref
+  ) => {
+    const mapped = mapVariant(variant);
+    const semiSize = mapSize(size);
+
+    if (asChild && React.isValidElement(children)) {
+      const child = children as React.ReactElement<{ className?: string }>;
+      return React.cloneElement(child, {
+        ...props,
+        className: cn(className, child.props?.className),
+      });
+    }
+
     return (
-      <Comp
-        className={twMerge(cn(buttonVariants({ variant, size, className })))}
-        ref={ref}
-        {...props}
-      />
+      <SemiButton
+        {...(props as SemiButtonProps)}
+        ref={ref as never}
+        type={mapped.semiType}
+        theme={mapped.theme}
+        size={semiSize}
+        noHorizontalPadding={
+          size === 'icon' ? true : (props as SemiButtonProps).noHorizontalPadding
+        }
+        htmlType={htmlType ?? type}
+        className={cn(className)}
+      >
+        {children}
+      </SemiButton>
     );
   }
 );
 Button.displayName = 'Button';
 
-export { Button, buttonVariants };
+// Backwards-compat export (unused in repo but kept to avoid churn)
+export const buttonVariants = () => '';
+
+export { Button };

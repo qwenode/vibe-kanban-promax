@@ -1,31 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Banner, Button, Card, Select, Toast, Typography } from '@douyinfe/semi-ui';
 import { JSONEditor } from '@/components/ui/json-editor';
-import { Loader2 } from 'lucide-react';
+import { Carousel } from '@douyinfe/semi-ui';
 import type { BaseCodingAgent, ExecutorConfig } from 'shared/types';
 import { McpConfig } from 'shared/types';
 import { useUserSystem } from '@/components/ConfigProvider';
@@ -44,7 +21,6 @@ export function McpSettings() {
   );
   const [mcpApplying, setMcpApplying] = useState(false);
   const [mcpConfigPath, setMcpConfigPath] = useState<string>('');
-  const [success, setSuccess] = useState(false);
 
   // Initialize selected profile when config loads
   useEffect(() => {
@@ -171,8 +147,7 @@ export function McpSettings() {
           );
 
           // Show success feedback
-          setSuccess(true);
-          setTimeout(() => setSuccess(false), 3000);
+          Toast.success(t('settings.mcp.save.successMessage'));
         } catch (mcpErr) {
           if (mcpErr instanceof SyntaxError) {
             setMcpError(t('settings.mcp.errors.invalidJson'));
@@ -187,6 +162,7 @@ export function McpSettings() {
       }
     } catch (err) {
       setMcpError(t('settings.mcp.errors.applyFailed'));
+      Toast.error(t('settings.mcp.errors.applyFailed'));
       console.error('Error applying MCP servers:', err);
     } finally {
       setMcpApplying(false);
@@ -229,101 +205,88 @@ export function McpSettings() {
   ) as Record<string, unknown>;
   const getMetaFor = (key: string) => meta[key] || {};
 
+  const serverKeys = Object.keys(servers);
+  const chunkSize = 4;
+  const serverPages: string[][] = [];
+  for (let i = 0; i < serverKeys.length; i += chunkSize) {
+    serverPages.push(serverKeys.slice(i, i + chunkSize));
+  }
+
   if (!config) {
     return (
       <div className="py-8">
-        <Alert variant="destructive">
-          <AlertDescription>
-            {t('settings.mcp.errors.loadFailed')}
-          </AlertDescription>
-        </Alert>
+        <Banner
+          type="danger"
+          fullMode={false}
+          description={t('settings.mcp.errors.loadFailed')}
+        />
       </div>
     );
   }
 
+  const selectedProfileKey =
+    selectedProfile && profiles
+      ? Object.keys(profiles).find((key) => profiles[key] === selectedProfile) ||
+        ''
+      : '';
+
   return (
     <div className="space-y-6">
-      {mcpError && (
-        <Alert variant="destructive">
-          <AlertDescription>
-            {t('settings.mcp.errors.mcpError', { error: mcpError })}
-          </AlertDescription>
-        </Alert>
+      {!!mcpError && (
+        <Banner
+          type={mcpError.includes('does not support MCP') ? 'warning' : 'danger'}
+          fullMode={false}
+          description={t('settings.mcp.errors.mcpError', { error: mcpError })}
+        />
       )}
 
-      {success && (
-        <Alert variant="success">
-          <AlertDescription className="font-medium">
-            {t('settings.mcp.save.successMessage')}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('settings.mcp.title')}</CardTitle>
-          <CardDescription>{t('settings.mcp.description')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <Card
+        title={t('settings.mcp.title')}
+        headerExtraContent={
+          <Typography.Text type="tertiary">
+            {t('settings.mcp.description')}
+          </Typography.Text>
+        }
+      >
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="mcp-executor">
-              {t('settings.mcp.labels.agent')}
-            </Label>
+            <Typography.Text strong>{t('settings.mcp.labels.agent')}</Typography.Text>
             <Select
-              value={
-                selectedProfile
-                  ? Object.keys(profiles || {}).find(
-                      (key) => profiles![key] === selectedProfile
-                    ) || ''
-                  : ''
-              }
-              onValueChange={(value: string) => {
-                const profile = profiles?.[value];
+              value={selectedProfileKey}
+              placeholder={t('settings.mcp.labels.agentPlaceholder')}
+              optionList={Object.keys(profiles || {})
+                .sort((a, b) => a.localeCompare(b))
+                .map((profileKey) => ({
+                  value: profileKey,
+                  label: profileKey,
+                }))}
+              onChange={(value) => {
+                const profile = profiles?.[String(value)];
                 if (profile) setSelectedProfile(profile);
               }}
-            >
-              <SelectTrigger id="mcp-executor">
-                <SelectValue
-                  placeholder={t('settings.mcp.labels.agentPlaceholder')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {profiles &&
-                  Object.entries(profiles)
-                    .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map(([profileKey]) => (
-                      <SelectItem key={profileKey} value={profileKey}>
-                        {profileKey}
-                      </SelectItem>
-                    ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
+            />
+            <Typography.Text type="tertiary">
               {t('settings.mcp.labels.agentHelper')}
-            </p>
+            </Typography.Text>
           </div>
 
           {mcpError && mcpError.includes('does not support MCP') ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                    {t('settings.mcp.errors.notSupported')}
-                  </h3>
-                  <div className="mt-2 text-sm text-amber-700 dark:text-amber-300">
-                    <p>{mcpError}</p>
-                    <p className="mt-1">
-                      {t('settings.mcp.errors.supportMessage')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Banner
+              type="warning"
+              fullMode={false}
+              title={t('settings.mcp.errors.notSupported')}
+              description={
+                <>
+                  <div>{mcpError}</div>
+                  <div>{t('settings.mcp.errors.supportMessage')}</div>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-2">
-              <Label htmlFor="mcp-servers">
+              <Typography.Text strong>
                 {t('settings.mcp.labels.serverConfig')}
-              </Label>
+              </Typography.Text>
               <JSONEditor
                 id="mcp-servers"
                 placeholder={
@@ -339,118 +302,126 @@ export function McpSettings() {
                 minHeight={300}
               />
               {mcpError && !mcpError.includes('does not support MCP') && (
-                <p className="text-sm text-destructive dark:text-red-400">
-                  {mcpError}
-                </p>
+                <Typography.Text type="danger">{mcpError}</Typography.Text>
               )}
-              <div className="text-sm text-muted-foreground">
+              <Typography.Text type="tertiary">
                 {mcpLoading ? (
                   t('settings.mcp.loading.configuration')
                 ) : (
-                  <span>
-                    {t('settings.mcp.labels.saveLocation')}
-                    {mcpConfigPath && (
-                      <span className="ml-2 font-mono text-xs">
+                  <>
+                    {t('settings.mcp.labels.saveLocation')}{' '}
+                    {!!mcpConfigPath && (
+                      <Typography.Text code type="tertiary">
                         {mcpConfigPath}
-                      </span>
+                      </Typography.Text>
                     )}
-                  </span>
+                  </>
                 )}
-              </div>
+              </Typography.Text>
 
               {mcpConfig?.preconfigured &&
                 typeof mcpConfig.preconfigured === 'object' && (
                   <div className="pt-4">
-                    <Label>{t('settings.mcp.labels.popularServers')}</Label>
-                    <p className="text-sm text-muted-foreground mb-2">
+                    <Typography.Text strong>
+                      {t('settings.mcp.labels.popularServers')}
+                    </Typography.Text>
+                    <Typography.Text type="tertiary">
                       {t('settings.mcp.labels.serverHelper')}
-                    </p>
+                    </Typography.Text>
 
-                    <div className="relative overflow-hidden rounded-xl border bg-background">
-                      <Carousel className="w-full px-4 py-3">
-                        <CarouselContent>
-                          {Object.entries(servers).map(([key]) => {
-                            const metaObj = getMetaFor(key) as {
-                              name?: string;
-                              description?: string;
-                              url?: string;
-                              icon?: string;
-                            };
-                            const name = metaObj.name || key;
-                            const description =
-                              metaObj.description || 'No description';
-                            const icon = metaObj.icon
-                              ? `/${metaObj.icon}`
-                              : null;
+                    <div className="relative overflow-hidden rounded-xl border border-[var(--semi-color-border)]">
+                      <div className="w-full px-4 py-3">
+                        {serverPages.length === 0 ? (
+                          <Typography.Text type="tertiary">
+                            {t('settings.mcp.labels.noPopularServers', {
+                              defaultValue: 'No popular servers available.',
+                            })}
+                          </Typography.Text>
+                        ) : (
+                          <Carousel
+                            showArrow
+                            showIndicator={false}
+                            arrowType="hover"
+                            theme="light"
+                            className="w-full"
+                          >
+                            {serverPages.map((pageKeys, idx) => (
+                              <div key={idx} className="grid grid-cols-2 gap-3">
+                                {pageKeys.map((key) => {
+                                  const metaObj = getMetaFor(key) as {
+                                    name?: string;
+                                    description?: string;
+                                    url?: string;
+                                    icon?: string;
+                                  };
+                                  const name = metaObj.name || key;
+                                  const description =
+                                    metaObj.description || 'No description';
+                                  const icon = metaObj.icon
+                                    ? `/${metaObj.icon}`
+                                    : null;
 
-                            return (
-                              <CarouselItem
-                                key={name}
-                                className="sm:basis-1/3 lg:basis-1/4"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => addServer(key)}
-                                  aria-label={`Add ${name} to config`}
-                                  className="group w-full text-left outline-none"
-                                >
-                                  <Card className="h-32 rounded-xl border hover:shadow-md transition">
-                                    <CardHeader className="pb-0">
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-6 h-6 rounded-lg border bg-muted grid place-items-center overflow-hidden">
-                                          {icon ? (
-                                            <img
-                                              src={icon}
-                                              alt=""
-                                              className="w-full h-full object-cover"
-                                            />
-                                          ) : (
-                                            <span className="font-semibold">
-                                              {name.slice(0, 1).toUpperCase()}
-                                            </span>
-                                          )}
-                                        </div>
-                                        <CardTitle className="text-base font-medium truncate">
-                                          {name}
-                                        </CardTitle>
-                                      </div>
-                                    </CardHeader>
-
-                                    <CardContent className="pt-2 px-4">
-                                      <p className="text-sm text-muted-foreground line-clamp-3">
-                                        {description}
-                                      </p>
-                                    </CardContent>
-                                  </Card>
-                                </button>
-                              </CarouselItem>
-                            );
-                          })}
-                        </CarouselContent>
-
-                        <CarouselPrevious className="left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full border bg-background/80 shadow-sm backdrop-blur hover:bg-background" />
-                        <CarouselNext className="right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full border bg-background/80 shadow-sm backdrop-blur hover:bg-background" />
-                      </Carousel>
+                                  return (
+                                    <Button
+                                      key={key}
+                                      theme="borderless"
+                                      onClick={() => addServer(key)}
+                                      className="w-full p-0"
+                                    >
+                                      <Card
+                                        bordered
+                                        className="h-32"
+                                        title={
+                                          <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-6 h-6 rounded-lg border border-[var(--semi-color-border)] grid place-items-center overflow-hidden">
+                                              {icon ? (
+                                                <img
+                                                  src={icon}
+                                                  alt=""
+                                                  className="w-full h-full object-cover"
+                                                />
+                                              ) : (
+                                                <span className="font-semibold">
+                                                  {name.slice(0, 1).toUpperCase()}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <Typography.Text strong ellipsis>
+                                              {name}
+                                            </Typography.Text>
+                                          </div>
+                                        }
+                                      >
+                                        <Typography.Text type="tertiary">
+                                          {description}
+                                        </Typography.Text>
+                                      </Card>
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                            ))}
+                          </Carousel>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
 
       {/* Sticky Save Button */}
-      <div className="sticky bottom-0 z-10 bg-background/80 backdrop-blur-sm border-t py-4">
+      <div className="sticky bottom-0 z-10">
         <div className="flex justify-end">
           <Button
+            type="primary"
             onClick={handleApplyMcpServers}
-            disabled={mcpApplying || mcpLoading || !!mcpError || success}
+            disabled={mcpApplying || mcpLoading || !!mcpError}
+            loading={mcpApplying}
           >
-            {mcpApplying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {success && <span className="mr-2">✓</span>}
-            {success
-              ? t('settings.mcp.save.success')
-              : t('settings.mcp.save.button')}
+            {t('settings.mcp.save.button')}
           </Button>
         </div>
       </div>

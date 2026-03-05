@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Label } from '@/components/ui/label';
+import { Typography } from '@douyinfe/semi-ui';
 import BranchSelector from './BranchSelector';
 import type { RepoBranchConfig } from '@/hooks';
 
@@ -29,10 +29,10 @@ export function RepoBranchSelector({
     return (
       <div className={className}>
         {showLabel && (
-          <Label className="text-sm font-medium">
+          <Typography.Text className="text-sm font-medium">
             {t('repoBranchSelector.label')}{' '}
             <span className="text-destructive">*</span>
-          </Label>
+          </Typography.Text>
         )}
         <BranchSelector
           branches={config.branches}
@@ -53,10 +53,10 @@ export function RepoBranchSelector({
       <div className="space-y-3">
         {configs.map((config) => (
           <div key={config.repoId} className="space-y-1">
-            <Label className="text-sm font-medium">
+            <Typography.Text className="text-sm font-medium">
               {config.repoDisplayName}{' '}
               <span className="text-destructive">*</span>
-            </Label>
+            </Typography.Text>
             <BranchSelector
               branches={config.branches}
               selectedBranch={config.targetBranch}

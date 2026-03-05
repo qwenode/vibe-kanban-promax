@@ -1,13 +1,6 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useRouterState } from '@tanstack/react-router';
 import { useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Button, Dropdown, Select } from '@douyinfe/semi-ui';
 import {
   FolderOpen,
   Settings,
@@ -16,7 +9,6 @@ import {
   MessageCircle,
   Menu,
   Plus,
-  ChevronDown,
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { SearchBar } from '@/components/SearchBar';
@@ -27,6 +19,7 @@ import { useOpenProjectInEditor } from '@/hooks/useOpenProjectInEditor';
 import { OpenInIdeButton } from '@/components/ide/OpenInIdeButton';
 import { useProjectRepos } from '@/hooks';
 import { useProjects } from '@/hooks/useProjects';
+import { useNavigateWithSearch } from '@/hooks/useNavigateWithSearch';
 
 const INTERNAL_NAV = [
   { label: 'Projects', icon: FolderOpen, to: '/local-projects' },
@@ -61,8 +54,8 @@ function NavDivider() {
 }
 
 export function Navbar() {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigateWithSearch();
   const { projectId, project } = useProject();
   const { query, setQuery, active, clear, registerInputRef } = useSearch();
   const handleOpenInEditor = useOpenProjectInEditor(project || null);
@@ -94,23 +87,21 @@ export function Navbar() {
         return;
       }
 
-      const pathMatch = location.pathname.match(
-        /^\/local-projects\/[^/]+(\/.*)?$/
-      );
+      const pathMatch = pathname.match(/^\/local-projects\/[^/]+(\/.*)?$/);
       if (pathMatch) {
         const suffix = pathMatch[1] ?? '';
         if (suffix.startsWith('/tasks')) {
-          navigate(`/local-projects/${nextProjectId}/tasks${location.search}`);
+          navigate(`/local-projects/${nextProjectId}/tasks`);
           return;
         }
 
-        navigate(`/local-projects/${nextProjectId}${location.search}`);
+        navigate(`/local-projects/${nextProjectId}`);
         return;
       }
 
       navigate(`/local-projects/${nextProjectId}/tasks`);
     },
-    [location.pathname, location.search, navigate, projectId]
+    [navigate, pathname, projectId]
   );
 
   return (
@@ -121,35 +112,22 @@ export function Navbar() {
             <Link to="/local-projects">
               <Logo />
             </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="ml-3 h-8 w-44 justify-between gap-2 px-3 sm:w-64"
-                  aria-label="Select project"
-                >
-                  <span className="truncate text-sm font-medium">
-                    {project?.name ?? 'Select project'}
-                  </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-72">
-                {projects.length > 0 ? (
-                  projects.map((item) => (
-                    <DropdownMenuItem
-                      key={item.id}
-                      onSelect={() => handleProjectSwitch(item.id)}
-                      className={item.id === projectId ? 'bg-accent' : ''}
-                    >
-                      <span className="truncate">{item.name}</span>
-                    </DropdownMenuItem>
-                  ))
-                ) : (
-                  <DropdownMenuItem disabled>No projects</DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="ml-3 w-44 sm:w-64">
+              <Select
+                style={{ width: '100%' }}
+                value={projectId ?? undefined}
+                placeholder="Select project"
+                optionList={projects.map((item) => ({
+                  value: item.id,
+                  label: item.name,
+                }))}
+                onChange={(value) => {
+                  if (typeof value === 'string') {
+                    handleProjectSwitch(value);
+                  }
+                }}
+              />
+            </div>
           </div>
 
           <div className="hidden sm:flex items-center gap-2">
@@ -169,9 +147,8 @@ export function Navbar() {
               <>
                 <div className="flex items-center gap-1">
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9"
+                    theme="borderless"
+                    noHorizontalPadding
                     onClick={handleCreateTask}
                     aria-label="Create new task"
                   >
@@ -190,72 +167,59 @@ export function Navbar() {
 
             <div className="flex items-center gap-1">
               <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9"
-                asChild
+                theme="borderless"
+                noHorizontalPadding
                 aria-label="Settings"
+                onClick={() =>
+                  navigate((projectId ? '/settings/projects' : '/settings') as never)
+                }
               >
-                <Link
-                  to={
-                    projectId
-                      ? `/settings/projects?projectId=${projectId}`
-                      : '/settings'
-                  }
-                >
-                  <Settings className="h-4 w-4" />
-                </Link>
+                <Settings className="h-4 w-4" />
               </Button>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9"
-                    aria-label="Main navigation"
-                  >
-                    <Menu className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent align="end">
-                  {INTERNAL_NAV.map((item) => {
-                    const active = location.pathname.startsWith(item.to);
-                    const Icon = item.icon;
-                    return (
-                      <DropdownMenuItem
-                        key={item.to}
-                        asChild
-                        className={active ? 'bg-accent' : ''}
-                      >
-                        <Link to={item.to}>
-                          <Icon className="mr-2 h-4 w-4" />
-                          {item.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    );
-                  })}
-
-                  <DropdownMenuSeparator />
-
-                  {EXTERNAL_LINKS.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <DropdownMenuItem key={item.href} asChild>
-                        <a
-                          href={item.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
+              <Dropdown
+                trigger="click"
+                position="bottomRight"
+                render={
+                  <Dropdown.Menu>
+                    {INTERNAL_NAV.map((item) => {
+                      const active = pathname.startsWith(item.to);
+                      const Icon = item.icon;
+                      return (
+                        <Dropdown.Item
+                          key={item.to}
+                          className={active ? 'bg-accent' : ''}
+                          onClick={() => navigate(item.to as never)}
                         >
                           <Icon className="mr-2 h-4 w-4" />
                           {item.label}
-                        </a>
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                        </Dropdown.Item>
+                      );
+                    })}
+                    <Dropdown.Divider />
+                    {EXTERNAL_LINKS.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Dropdown.Item
+                          key={item.href}
+                          onClick={() => window.open(item.href, '_blank', 'noopener,noreferrer')}
+                        >
+                          <Icon className="mr-2 h-4 w-4" />
+                          {item.label}
+                        </Dropdown.Item>
+                      );
+                    })}
+                  </Dropdown.Menu>
+                }
+              >
+                <Button
+                  theme="borderless"
+                  noHorizontalPadding
+                  aria-label="Main navigation"
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </Dropdown>
             </div>
           </div>
         </div>

@@ -36,7 +36,7 @@ import PendingApprovalEntry from './PendingApprovalEntry';
 import { NextActionCard } from './NextActionCard';
 import { cn } from '@/lib/utils';
 import { useRetryUi } from '@/contexts/RetryUiContext';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import {
   ScriptFixerDialog,
   type ScriptType,
@@ -686,8 +686,8 @@ const ScriptToolCallCard: React.FC<{
       </div>
       {canFix && (
         <Button
-          variant="outline"
-          size="sm"
+          theme="outline"
+          size="small"
           onClick={handleFix}
           className="shrink-0 gap-1"
         >

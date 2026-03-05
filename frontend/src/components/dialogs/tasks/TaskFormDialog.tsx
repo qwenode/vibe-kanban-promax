@@ -6,23 +6,12 @@ import { useDropzone } from 'react-dropzone';
 import { useForm, useStore } from '@tanstack/react-form';
 import { Image as ImageIcon } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Button,
+  Modal,
+  Select as SemiSelect,
+  Switch as SemiSwitch,
+  Typography,
+} from '@douyinfe/semi-ui';
 import WYSIWYGEditor from '@/components/ui/wysiwyg';
 import type { LocalImageMetadata } from '@/components/ui/wysiwyg/context/task-attempt-context';
 import BranchSelector from '@/components/tasks/BranchSelector';
@@ -423,11 +412,14 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
 
   return (
     <>
-      <Dialog
-        open={modal.visible}
-        onOpenChange={handleDialogClose}
-        uncloseable={showDiscardWarning}
-        className="max-w-[700px] my-auto"
+      <Modal
+        visible={modal.visible}
+        onCancel={() => handleDialogClose(false)}
+        closable={!showDiscardWarning}
+        closeOnEsc={!showDiscardWarning}
+        maskClosable={!showDiscardWarning}
+        footer={null}
+        width={700}
       >
         <div
           {...getRootProps()}
@@ -473,37 +465,36 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
             <form.Field name="status">
               {(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="task-status" className="text-sm font-medium">
+                  <Typography.Text strong>
                     {t('taskFormDialog.statusLabel')}
-                  </Label>
-                  <Select
+                  </Typography.Text>
+                  <SemiSelect
                     value={field.state.value}
-                    onValueChange={(value) =>
-                      field.handleChange(value as TaskStatus)
-                    }
+                    optionList={[
+                      {
+                        value: 'todo',
+                        label: t('taskFormDialog.statusOptions.todo'),
+                      },
+                      {
+                        value: 'inprogress',
+                        label: t('taskFormDialog.statusOptions.inprogress'),
+                      },
+                      {
+                        value: 'inreview',
+                        label: t('taskFormDialog.statusOptions.inreview'),
+                      },
+                      {
+                        value: 'done',
+                        label: t('taskFormDialog.statusOptions.done'),
+                      },
+                      {
+                        value: 'cancelled',
+                        label: t('taskFormDialog.statusOptions.cancelled'),
+                      },
+                    ]}
+                    onChange={(value) => field.handleChange(value as TaskStatus)}
                     disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todo">
-                        {t('taskFormDialog.statusOptions.todo')}
-                      </SelectItem>
-                      <SelectItem value="inprogress">
-                        {t('taskFormDialog.statusOptions.inprogress')}
-                      </SelectItem>
-                      <SelectItem value="inreview">
-                        {t('taskFormDialog.statusOptions.inreview')}
-                      </SelectItem>
-                      <SelectItem value="done">
-                        {t('taskFormDialog.statusOptions.done')}
-                      </SelectItem>
-                      <SelectItem value="cancelled">
-                        {t('taskFormDialog.statusOptions.cancelled')}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  />
                 </div>
               )}
             </form.Field>
@@ -623,10 +614,10 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
             {/* Attach Image*/}
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
-                size="sm"
+                theme="outline"
+                size="small"
                 onClick={dropzoneOpen}
-                className="h-9 w-9 p-0 rounded-none"
+                noHorizontalPadding
                 aria-label={t('taskFormDialog.attachImage')}
               >
                 <ImageIcon className="h-4 w-4" />
@@ -639,22 +630,16 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
                 <form.Field name="autoStart">
                   {(field) => (
                     <div className="flex items-center gap-2">
-                      <Switch
+                      <SemiSwitch
                         id="autostart-switch"
                         checked={field.state.value}
-                        onCheckedChange={(checked) =>
-                          field.handleChange(checked)
-                        }
+                        onChange={(checked) => field.handleChange(checked)}
                         disabled={isSubmitting}
-                        className="data-[state=checked]:bg-gray-900 dark:data-[state=checked]:bg-gray-100"
                         aria-label={t('taskFormDialog.startLabel')}
                       />
-                      <Label
-                        htmlFor="autostart-switch"
-                        className="text-sm cursor-pointer"
-                      >
+                      <Typography.Text>
                         {t('taskFormDialog.startLabel')}
-                      </Label>
+                      </Typography.Text>
                     </div>
                   )}
                 </form.Field>
@@ -689,36 +674,24 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
             </div>
           </div>
         </div>
-      </Dialog>
+      </Modal>
       {showDiscardWarning && (
-        <div className="fixed inset-0 z-[10000] flex items-start justify-center p-4 overflow-y-auto">
-          <div
-            className="fixed inset-0 bg-black/50"
-            onClick={() => setShowDiscardWarning(false)}
-          />
-          <div className="relative z-[10000] grid w-full max-w-lg gap-4 bg-primary p-6 shadow-lg duration-200 sm:rounded-lg my-8">
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <div className="flex items-center gap-3">
-                  <DialogTitle>
-                    {t('taskFormDialog.discardDialog.title')}
-                  </DialogTitle>
-                </div>
-                <DialogDescription className="text-left pt-2">
-                  {t('taskFormDialog.discardDialog.description')}
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="gap-2">
-                <Button variant="outline" onClick={handleContinueEditing}>
-                  {t('taskFormDialog.discardDialog.continueEditing')}
-                </Button>
-                <Button variant="destructive" onClick={handleDiscardChanges}>
-                  {t('taskFormDialog.discardDialog.discardChanges')}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </div>
-        </div>
+        <Modal
+          visible={showDiscardWarning}
+          title={t('taskFormDialog.discardDialog.title')}
+          onCancel={handleContinueEditing}
+          onOk={handleDiscardChanges}
+          okButtonProps={{ type: 'danger' }}
+          okText={t('taskFormDialog.discardDialog.discardChanges')}
+          cancelText={t('taskFormDialog.discardDialog.continueEditing')}
+          closable={false}
+          maskClosable={false}
+          closeOnEsc={false}
+        >
+          <Typography.Text type="tertiary">
+            {t('taskFormDialog.discardDialog.description')}
+          </Typography.Text>
+        </Modal>
       )}
     </>
   );

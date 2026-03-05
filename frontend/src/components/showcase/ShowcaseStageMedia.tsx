@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader } from '@/components/ui/loader';
+import { Spin } from '@douyinfe/semi-ui';
 import { useVideoProgress } from '@/hooks/useVideoProgress';
 import type { ShowcaseMedia } from '@/types/showcase';
 import { RefreshCw } from 'lucide-react';
@@ -42,7 +42,7 @@ export function ShowcaseStageMedia({ media }: ShowcaseStageMediaProps) {
       <div className="relative w-full aspect-[16/10] bg-black">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Loader size={32} />
+            <Spin size="large" />
           </div>
         )}
         <video
@@ -84,7 +84,7 @@ export function ShowcaseStageMedia({ media }: ShowcaseStageMediaProps) {
     <div className="relative w-full aspect-[16/10] bg-muted">
       {!imageLoaded && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <Loader size={32} />
+          <Spin size="large" />
         </div>
       )}
       <img

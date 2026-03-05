@@ -1,18 +1,9 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { defineModal } from '@/lib/modals';
 import { useForcePush } from '@/hooks/useForcePush';
 import { useState } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Banner, Button, Modal, Typography } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
 
 export interface ForcePushDialogProps {
@@ -62,14 +53,16 @@ const ForcePushDialogImpl = NiceModal.create<ForcePushDialogProps>((props) => {
   const isProcessing = forcePush.isPending;
 
   return (
-    <Dialog open={modal.visible} onOpenChange={handleCancel}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+    <Modal visible={modal.visible} onCancel={handleCancel} footer={null} width={500}>
+      <div className="space-y-4">
+        <div>
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-6 w-6 text-destructive" />
-            <DialogTitle>{t('tasks:git.forcePushDialog.title')}</DialogTitle>
+            <Typography.Title heading={5}>
+              {t('tasks:git.forcePushDialog.title')}
+            </Typography.Title>
           </div>
-          <DialogDescription className="text-left pt-2 space-y-2">
+          <div className="text-left pt-2 space-y-2">
             <p>{t('tasks:git.forcePushDialog.description', { branchLabel })}</p>
             <p className="font-medium">
               {t('tasks:git.forcePushDialog.warning')}
@@ -77,34 +70,32 @@ const ForcePushDialogImpl = NiceModal.create<ForcePushDialogProps>((props) => {
             <p className="text-sm text-muted-foreground">
               {t('tasks:git.forcePushDialog.note')}
             </p>
-          </DialogDescription>
-        </DialogHeader>
+          </div>
+        </div>
         {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <Banner type="danger" fullMode={false} description={error} />
         )}
-        <DialogFooter className="gap-2">
+        <div className="gap-2 flex items-center justify-end">
           <Button
-            variant="outline"
+            theme="outline"
             onClick={handleCancel}
             disabled={isProcessing}
           >
             {t('common:buttons.cancel')}
           </Button>
           <Button
-            variant="destructive"
+            type="danger"
             onClick={handleConfirm}
             disabled={isProcessing}
+            loading={isProcessing}
           >
-            {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isProcessing
               ? t('tasks:git.states.forcePushing')
               : t('tasks:git.states.forcePush')}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </Modal>
   );
 });
 

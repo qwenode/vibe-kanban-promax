@@ -1,15 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=IBM+Plex+Mono:ital,wght@0,100..700;1,100..700&family=Noto+Emoji:wght@300..700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config '../../../tailwind.new.config.js';
+
+@layer tailwind-base, semi, tailwind-components, tailwind-utils;
+@layer tailwind-base {
+  @tailwind base;
+}
+@layer tailwind-components {
+  @tailwind components;
+}
+@layer tailwind-utils {
+  @tailwind utilities;
+}
 
 /* 1) THEME TOKENS scoped to .new-design */
 @layer base {
   /* Light defaults - New Design */
   .new-design {
     color-scheme: light;
-    --_background: 0 0% 95%;
+    --_background: 0 0% 100%;
     --_foreground: 0 0% 5%;
     --_primary: 0 0% 5%;
     --_primary-foreground: 0 0% 100%;
@@ -418,4 +427,3 @@
   }
 }
 
-@config '../../../tailwind.new.config.js';

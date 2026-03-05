@@ -1,5 +1,5 @@
 import { WidgetProps } from '@rjsf/utils';
-import { Input } from '@/components/ui/input';
+import { Input } from '@douyinfe/semi-ui';
 
 export const TextWidget = (props: WidgetProps) => {
   const {
@@ -14,8 +14,7 @@ export const TextWidget = (props: WidgetProps) => {
     options,
   } = props;
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = event.target.value;
+  const handleChange = (newValue: string) => {
     onChange(newValue === '' ? options.emptyValue : newValue);
   };
 
@@ -37,7 +36,7 @@ export const TextWidget = (props: WidgetProps) => {
       value={value ?? ''}
       placeholder={placeholder || ''}
       disabled={disabled || readonly}
-      onChange={handleChange}
+      onChange={(value) => handleChange(value)}
       onBlur={handleBlur}
       onFocus={handleFocus}
     />

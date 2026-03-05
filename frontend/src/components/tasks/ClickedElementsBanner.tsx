@@ -4,7 +4,7 @@ import {
   ArrowBigLeft,
   MoreHorizontal,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import type { ClickedEntry } from '@/contexts/ClickedElementsProvider';
 import { useState, useMemo } from 'react';
 import { Badge } from '../ui/badge';
@@ -152,8 +152,8 @@ const ClickedEntryCard = ({
       </div>
 
       <Button
-        size="sm"
-        variant="ghost"
+        size="small"
+        theme="borderless"
         className="px-0 ml-auto"
         onClick={onDelete}
         aria-label="Delete entry"

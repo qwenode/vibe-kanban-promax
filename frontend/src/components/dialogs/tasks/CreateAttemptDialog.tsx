@@ -1,14 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Banner, Button, Modal, Typography } from '@douyinfe/semi-ui';
 import RepoBranchSelector from '@/components/tasks/RepoBranchSelector';
 import { ExecutorProfileSelector } from '@/components/settings';
 import { useAttemptCreation } from '@/hooks/useAttemptCreation';
@@ -160,10 +152,6 @@ const CreateAttemptDialogImpl = NiceModal.create<CreateAttemptDialogProps>(
       }
     };
 
-    const handleOpenChange = (open: boolean) => {
-      if (!open) modal.hide();
-    };
-
     useKeySubmitTask(handleCreate, {
       enabled: modal.visible && canCreate,
       scope: Scope.DIALOG,
@@ -171,15 +159,16 @@ const CreateAttemptDialogImpl = NiceModal.create<CreateAttemptDialogProps>(
     });
 
     return (
-      <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{t('createAttemptDialog.title')}</DialogTitle>
-            <DialogDescription>
+      <Modal visible={modal.visible} onCancel={() => modal.hide()} footer={null} width={500}>
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Typography.Title heading={5}>
+              {t('createAttemptDialog.title')}
+            </Typography.Title>
+            <Typography.Text type="tertiary">
               {t('createAttemptDialog.description')}
-            </DialogDescription>
-          </DialogHeader>
-
+            </Typography.Text>
+          </div>
           <div className="space-y-4 py-4">
             {profiles && (
               <div className="space-y-2">
@@ -200,28 +189,30 @@ const CreateAttemptDialogImpl = NiceModal.create<CreateAttemptDialogProps>(
             />
 
             {error && (
-              <div className="text-sm text-destructive">
-                {t('createAttemptDialog.error')}
-              </div>
+              <Banner
+                type="danger"
+                fullMode={false}
+                description={t('createAttemptDialog.error')}
+              />
             )}
           </div>
 
-          <DialogFooter>
+          <div className="flex items-center justify-end gap-2">
             <Button
-              variant="outline"
+              theme="outline"
               onClick={() => modal.hide()}
               disabled={isCreating}
             >
               {t('common:buttons.cancel')}
             </Button>
-            <Button onClick={handleCreate} disabled={!canCreate}>
+            <Button type="primary" onClick={handleCreate} disabled={!canCreate}>
               {isCreating
                 ? t('createAttemptDialog.creating')
                 : t('createAttemptDialog.start')}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </Modal>
     );
   }
 );

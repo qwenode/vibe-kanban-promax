@@ -1,14 +1,11 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Modal, Typography } from '@douyinfe/semi-ui';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
-import { AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
+import {
+  IconAlertTriangle,
+  IconHelpCircle,
+  IconInfoCircle,
+  IconTickCircle,
+} from '@douyinfe/semi-icons';
 import { defineModal, type ConfirmResult } from '@/lib/modals';
 
 export interface ConfirmDialogProps {
@@ -33,10 +30,12 @@ const ConfirmDialogImpl = NiceModal.create<ConfirmDialogProps>((props) => {
 
   const handleConfirm = () => {
     modal.resolve('confirmed' as ConfirmResult);
+    modal.hide();
   };
 
   const handleCancel = () => {
     modal.resolve('canceled' as ConfirmResult);
+    modal.hide();
   };
 
   const getIcon = () => {
@@ -44,42 +43,39 @@ const ConfirmDialogImpl = NiceModal.create<ConfirmDialogProps>((props) => {
 
     switch (variant) {
       case 'destructive':
-        return <AlertTriangle className="h-6 w-6 text-destructive" />;
+        return <IconAlertTriangle style={{ color: 'var(--semi-color-danger)' }} />;
       case 'info':
-        return <Info className="h-6 w-6 text-blue-500" />;
+        return <IconInfoCircle style={{ color: 'var(--semi-color-info)' }} />;
       case 'success':
-        return <CheckCircle className="h-6 w-6 text-green-500" />;
+        return <IconTickCircle style={{ color: 'var(--semi-color-success)' }} />;
       default:
-        return <XCircle className="h-6 w-6 text-muted-foreground" />;
+        return <IconHelpCircle style={{ color: 'var(--semi-color-text-2)' }} />;
     }
   };
 
-  const getConfirmButtonVariant = () => {
-    return variant === 'destructive' ? 'destructive' : 'default';
-  };
+  const confirmType = variant === 'destructive' ? 'danger' : 'primary';
 
   return (
-    <Dialog open={modal.visible} onOpenChange={handleCancel}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <div className="flex items-center gap-3">
-            {getIcon()}
-            <DialogTitle>{title}</DialogTitle>
-          </div>
-          <DialogDescription className="text-left pt-2">
-            {message}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleCancel}>
-            {cancelText}
-          </Button>
-          <Button variant={getConfirmButtonVariant()} onClick={handleConfirm}>
-            {confirmText}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <Modal
+      visible={modal.visible}
+      title={
+        <div className="flex items-center gap-2">
+          {getIcon()}
+          <Typography.Text strong>{title}</Typography.Text>
+        </div>
+      }
+      okText={confirmText}
+      cancelText={cancelText}
+      okButtonProps={{ type: confirmType, theme: 'solid' }}
+      cancelButtonProps={{ theme: 'outline' }}
+      onOk={handleConfirm}
+      onCancel={handleCancel}
+      closable
+      closeOnEsc
+      maskClosable
+    >
+      <Typography.Text type="tertiary">{message}</Typography.Text>
+    </Modal>
   );
 });
 

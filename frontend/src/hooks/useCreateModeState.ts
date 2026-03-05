@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import type {
   DraftWorkspaceData,
   ExecutorProfileId,
@@ -209,7 +209,10 @@ export function useCreateModeState({
   initialState,
   draftId,
 }: UseCreateModeStateParams): UseCreateModeStateResult {
-  const location = useLocation();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const locationState = useRouterState({
+    select: (s) => (s.location.state as CreateModeInitialState | null) ?? null,
+  });
   const navigate = useNavigate();
   const { projectsById, isLoading: projectsLoading } = useProjects();
   const { profiles } = useUserSystem();
@@ -230,7 +233,7 @@ export function useCreateModeState({
       ? initialState
       : draftId
         ? null
-        : ((location.state as CreateModeInitialState | null) ?? null)
+        : locationState
   );
   const hasInitialized = useRef(false);
 
@@ -267,13 +270,12 @@ export function useCreateModeState({
         navState?.initialPrompt ||
         navState?.linkedIssue)
     ) {
-      navigate(
-        {
-          pathname: location.pathname,
-          search: location.search,
-        },
-        { replace: true, state: {} }
-      );
+      navigate({
+        to: pathname as never,
+        search: ((prev: unknown) => prev) as never,
+        replace: true,
+        state: {} as never,
+      } as never);
     }
 
     // Determine initialization source and execute
@@ -298,8 +300,7 @@ export function useCreateModeState({
     scratch,
     isValidProfile,
     navigate,
-    location.pathname,
-    location.search,
+    pathname,
   ]);
 
   // ============================================================================

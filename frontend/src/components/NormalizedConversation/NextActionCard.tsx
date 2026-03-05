@@ -10,7 +10,6 @@ import {
   GitBranch,
   Settings,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { ViewProcessesDialog } from '@/components/dialogs/tasks/ViewProcessesDialog';
 import { CreateAttemptDialog } from '@/components/dialogs/tasks/CreateAttemptDialog';
 import { GitActionsDialog } from '@/components/dialogs/tasks/GitActionsDialog';
@@ -18,7 +17,7 @@ import { useOpenInEditor } from '@/hooks/useOpenInEditor';
 import { useDiffSummary } from '@/hooks/useDiffSummary';
 import { useDevServer } from '@/hooks/useDevServer';
 import { useHasDevServerScript } from '@/hooks/useHasDevServerScript';
-import { Button } from '@/components/ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import { IdeIcon } from '@/components/ide/IdeIcon';
 import { useUserSystem } from '@/components/ConfigProvider';
 import { getIdeName } from '@/components/ide/IdeIcon';
@@ -36,6 +35,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useNavigateWithSearch } from '@/hooks/useNavigateWithSearch';
 
 type NextActionCardProps = {
   attemptId?: string;
@@ -59,7 +59,7 @@ export function NextActionCard({
   const { t } = useTranslation('tasks');
   const { config } = useUserSystem();
   const { projectId } = useProject();
-  const navigate = useNavigate();
+  const navigate = useNavigateWithSearch();
   const [copied, setCopied] = useState(false);
 
   const { data: attempt } = useQuery({
@@ -211,8 +211,8 @@ export function NextActionCard({
           {failed &&
             (needsSetup ? (
               <Button
-                variant="default"
-                size="sm"
+                type="primary"
+                size="small"
                 onClick={handleRunSetup}
                 disabled={!attempt}
                 className="text-sm w-full sm:w-auto"
@@ -223,8 +223,8 @@ export function NextActionCard({
             ) : (
               execution_processes <= 2 && (
                 <Button
-                  variant="destructive"
-                  size="sm"
+                  type="danger"
+                  size="small"
                   onClick={handleTryAgain}
                   disabled={!attempt?.task_id}
                   className="text-sm w-full sm:w-auto"
@@ -241,8 +241,8 @@ export function NextActionCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
-                    size="sm"
+                    theme="borderless"
+                    size="small"
                     className="h-7 w-7 p-0"
                     onClick={handleOpenDiffs}
                     aria-label={t('attempt.diffs')}
@@ -257,8 +257,8 @@ export function NextActionCard({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      theme="borderless"
+                      size="small"
                       className="h-7 w-7 p-0"
                       onClick={handleCopy}
                       aria-label={t('attempt.clickToCopy')}
@@ -279,8 +279,8 @@ export function NextActionCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
-                    size="sm"
+                    theme="borderless"
+                    size="small"
                     className="h-7 w-7 p-0"
                     onClick={handleOpenInEditor}
                     disabled={!attemptId}
@@ -303,8 +303,8 @@ export function NextActionCard({
                 <TooltipTrigger asChild>
                   <span className="inline-block">
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      theme="borderless"
+                      size="small"
                       className="h-7 w-7 p-0"
                       onClick={
                         hasRunningDevServer ? () => stop() : () => start()
@@ -341,8 +341,8 @@ export function NextActionCard({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      theme="borderless"
+                      size="small"
                       className="h-7 w-7 p-0"
                       onClick={handleViewLogs}
                       disabled={!attemptId}
@@ -358,8 +358,8 @@ export function NextActionCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
-                    size="sm"
+                    theme="borderless"
+                    size="small"
                     className="h-7 w-7 p-0"
                     onClick={handleGitActions}
                     disabled={!attemptId}

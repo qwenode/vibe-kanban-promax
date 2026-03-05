@@ -1,19 +1,13 @@
 import { Columns, FileText, Pilcrow, WrapText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { Button, Radio, Tooltip } from '@douyinfe/semi-ui';
 import {
   useDiffViewMode,
   useDiffViewStore,
   useIgnoreWhitespaceDiff,
   useWrapTextDiff,
 } from '@/stores/useDiffViewStore';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 type Props = {
   className?: string;
@@ -28,98 +22,46 @@ export default function DiffViewSwitch({ className }: Props) {
   const wrapText = useWrapTextDiff();
   const setWrapText = useDiffViewStore((s) => s.setWrapText);
 
-  const whitespaceValue = ignoreWhitespace ? ['ignoreWhitespace'] : [];
-  const wrapTextValue = wrapText ? ['wrapText'] : [];
-
   return (
-    <TooltipProvider>
-      <div className={cn('inline-flex gap-4', className)}>
-        <ToggleGroup
-          type="single"
-          value={mode ?? ''}
-          onValueChange={(v) => v && setMode(v as 'unified' | 'split')}
-          className="inline-flex gap-4"
-          aria-label="Diff view mode"
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <ToggleGroupItem
-                value="unified"
-                aria-label="Inline view"
-                active={mode === 'unified'}
-              >
-                <FileText className="h-4 w-4" />
-              </ToggleGroupItem>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t('diff.viewModes.inline')}
-            </TooltipContent>
-          </Tooltip>
+    <div className={cn('inline-flex items-center gap-3', className)}>
+      <Radio.Group
+        type="button"
+        buttonSize="middle"
+        value={mode ?? 'unified'}
+        onChange={(e) => setMode(e.target.value as 'unified' | 'split')}
+        aria-label="Diff view mode"
+      >
+        <Tooltip content={t('diff.viewModes.inline')} position="bottom">
+          <Radio value="unified" aria-label="Inline view">
+            <FileText className="h-4 w-4" />
+          </Radio>
+        </Tooltip>
+        <Tooltip content={t('diff.viewModes.split')} position="bottom">
+          <Radio value="split" aria-label="Split view">
+            <Columns className="h-4 w-4" />
+          </Radio>
+        </Tooltip>
+      </Radio.Group>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <ToggleGroupItem
-                value="split"
-                aria-label="Split view"
-                active={mode === 'split'}
-              >
-                <Columns className="h-4 w-4" />
-              </ToggleGroupItem>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t('diff.viewModes.split')}
-            </TooltipContent>
-          </Tooltip>
-        </ToggleGroup>
-
-        <ToggleGroup
-          type="multiple"
-          value={whitespaceValue}
-          onValueChange={(values) =>
-            setIgnoreWhitespace(values.includes('ignoreWhitespace'))
-          }
-          className="inline-flex gap-4"
+      <Tooltip content={t('diff.ignoreWhitespace')} position="bottom">
+        <Button
+          theme={ignoreWhitespace ? 'light' : 'borderless'}
+          type={ignoreWhitespace ? 'primary' : 'tertiary'}
+          icon={<Pilcrow className="h-4 w-4" />}
           aria-label={t('diff.ignoreWhitespace')}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <ToggleGroupItem
-                value="ignoreWhitespace"
-                aria-label={t('diff.ignoreWhitespace')}
-                active={ignoreWhitespace}
-              >
-                <Pilcrow className="h-4 w-4" />
-              </ToggleGroupItem>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t('diff.ignoreWhitespace')}
-            </TooltipContent>
-          </Tooltip>
-        </ToggleGroup>
+          onClick={() => setIgnoreWhitespace(!ignoreWhitespace)}
+        />
+      </Tooltip>
 
-        <ToggleGroup
-          type="multiple"
-          value={wrapTextValue}
-          onValueChange={(values) => setWrapText(values.includes('wrapText'))}
-          className="inline-flex gap-4"
+      <Tooltip content={t('diff.wrapText', 'Wrap text')} position="bottom">
+        <Button
+          theme={wrapText ? 'light' : 'borderless'}
+          type={wrapText ? 'primary' : 'tertiary'}
+          icon={<WrapText className="h-4 w-4" />}
           aria-label={t('diff.wrapText', 'Wrap text')}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <ToggleGroupItem
-                value="wrapText"
-                aria-label={t('diff.wrapText', 'Wrap text')}
-                active={wrapText}
-              >
-                <WrapText className="h-4 w-4" />
-              </ToggleGroupItem>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t('diff.wrapText', 'Wrap text')}
-            </TooltipContent>
-          </Tooltip>
-        </ToggleGroup>
-      </div>
-    </TooltipProvider>
+          onClick={() => setWrapText(!wrapText)}
+        />
+      </Tooltip>
+    </div>
   );
 }

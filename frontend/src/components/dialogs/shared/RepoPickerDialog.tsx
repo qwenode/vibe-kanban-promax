@@ -1,23 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Banner, Button, Card, Input, Modal, Spin, Typography } from '@douyinfe/semi-ui';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  AlertCircle,
   ArrowLeft,
   Folder,
   FolderGit,
   FolderPlus,
-  Loader2,
   Search,
 } from 'lucide-react';
 import { fileSystemApi, repoApi } from '@/lib/api';
@@ -169,12 +157,6 @@ const RepoPickerDialogImpl = NiceModal.create<RepoPickerDialogProps>(
       modal.hide();
     };
 
-    const handleOpenChange = (open: boolean) => {
-      if (!open && !isWorking) {
-        handleCancel();
-      }
-    };
-
     const goBack = () => {
       setStage('options');
       setError('');
@@ -182,83 +164,97 @@ const RepoPickerDialogImpl = NiceModal.create<RepoPickerDialogProps>(
 
     return (
       <div className="fixed inset-0 z-[10000] pointer-events-none [&>*]:pointer-events-auto">
-        <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
-          <DialogContent className="max-w-[500px] w-full">
-            <DialogHeader>
-              <DialogTitle>{title}</DialogTitle>
-              <DialogDescription>{description}</DialogDescription>
-            </DialogHeader>
+        <Modal
+          visible={modal.visible}
+          onCancel={() => {
+            if (!isWorking) handleCancel();
+          }}
+          footer={null}
+          width={500}
+        >
+          <div className="space-y-1 pb-2">
+            <Typography.Title heading={5}>{title}</Typography.Title>
+            <Typography.Text type="tertiary">{description}</Typography.Text>
+          </div>
 
             <div className="space-y-4">
               {/* Stage: Options */}
               {stage === 'options' && (
                 <>
-                  <div
-                    className="p-4 border cursor-pointer hover:shadow-md transition-shadow rounded-lg bg-card"
-                    onClick={() => setStage('existing')}
-                  >
-                    <div className="flex items-start gap-3">
-                      <FolderGit className="h-5 w-5 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-foreground">
-                          From Git Repository
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Select an existing repository from your system
-                        </div>
+                  <Card
+                    bordered
+                    shadows="hover"
+                    title={
+                      <div className="flex items-center gap-2">
+                        <FolderGit size={18} />
+                        <Typography.Text strong>From Git Repository</Typography.Text>
                       </div>
-                    </div>
-                  </div>
+                    }
+                    headerExtraContent={
+                      <Button theme="borderless" onClick={() => setStage('existing')}>
+                        {t('repoSearch.choose', { defaultValue: 'Choose' })}
+                      </Button>
+                    }
+                  >
+                    <Typography.Text type="tertiary">
+                      Select an existing repository from your system
+                    </Typography.Text>
+                  </Card>
 
-                  <div
-                    className="p-4 border cursor-pointer hover:shadow-md transition-shadow rounded-lg bg-card"
-                    onClick={() => setStage('new')}
-                  >
-                    <div className="flex items-start gap-3">
-                      <FolderPlus className="h-5 w-5 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-foreground">
+                  <Card
+                    bordered
+                    shadows="hover"
+                    title={
+                      <div className="flex items-center gap-2">
+                        <FolderPlus size={18} />
+                        <Typography.Text strong>
                           Create New Repository
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Initialize a new git repository
-                        </div>
+                        </Typography.Text>
                       </div>
-                    </div>
-                  </div>
+                    }
+                    headerExtraContent={
+                      <Button theme="borderless" onClick={() => setStage('new')}>
+                        {t('repoSearch.create', { defaultValue: 'Create' })}
+                      </Button>
+                    }
+                  >
+                    <Typography.Text type="tertiary">
+                      Initialize a new git repository
+                    </Typography.Text>
+                  </Card>
                 </>
               )}
 
               {/* Stage: Existing */}
               {stage === 'existing' && (
                 <>
-                  <button
-                    className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+                  <Button
+                    theme="borderless"
+                    icon={<ArrowLeft size={14} />}
                     onClick={goBack}
                     disabled={isWorking}
                   >
-                    <ArrowLeft className="h-3 w-3" />
                     Back to options
-                  </button>
+                  </Button>
 
                   {reposLoading && (
-                    <div className="p-4 border rounded-lg bg-card">
+                    <Card bordered>
                       <div className="flex items-center gap-3">
-                        <div className="animate-spin h-5 w-5 border-2 border-muted-foreground border-t-transparent rounded-full" />
-                        <div className="text-sm text-muted-foreground">
+                        <Spin />
+                        <Typography.Text type="tertiary">
                           {loadingDuration < 2
                             ? t('repoSearch.searching')
                             : t('repoSearch.stillSearching', {
                                 seconds: loadingDuration,
                               })}
-                        </div>
+                        </Typography.Text>
                       </div>
                       {loadingDuration >= 3 && (
-                        <div className="text-xs text-muted-foreground mt-2 ml-8">
+                        <Typography.Text type="tertiary">
                           {t('repoSearch.takingLonger')}
-                        </div>
+                        </Typography.Text>
                       )}
-                    </div>
+                    </Card>
                   )}
 
                   {!reposLoading && allRepos.length > 0 && (
@@ -266,40 +262,48 @@ const RepoPickerDialogImpl = NiceModal.create<RepoPickerDialogProps>(
                       {allRepos
                         .slice(0, showMoreRepos ? allRepos.length : 3)
                         .map((repo) => (
-                          <div
+                          <Button
                             key={repo.path}
-                            className="p-4 border cursor-pointer hover:shadow-md transition-shadow rounded-lg bg-card"
                             onClick={() => !isWorking && handleSelectRepo(repo)}
+                            theme="borderless"
+                            className="w-full"
+                            noHorizontalPadding
+                            disabled={isWorking}
                           >
-                            <div className="flex items-start gap-3">
-                              <FolderGit className="h-5 w-5 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                              <div className="min-w-0 flex-1">
-                                <div className="font-medium text-foreground">
-                                  {repo.name}
+                            <Card
+                              bordered
+                              shadows="hover"
+                              title={
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <FolderGit size={18} />
+                                  <Typography.Text strong ellipsis>
+                                    {repo.name}
+                                  </Typography.Text>
                                 </div>
-                                <div className="text-xs text-muted-foreground truncate mt-1">
-                                  {repo.path}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                              }
+                            >
+                              <Typography.Text type="tertiary" ellipsis>
+                                {repo.path}
+                              </Typography.Text>
+                            </Card>
+                          </Button>
                         ))}
 
                       {!showMoreRepos && allRepos.length > 3 && (
-                        <button
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+                        <Button
+                          theme="borderless"
                           onClick={() => setShowMoreRepos(true)}
                         >
                           Show {allRepos.length - 3} more repositories
-                        </button>
+                        </Button>
                       )}
                       {showMoreRepos && allRepos.length > 3 && (
-                        <button
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+                        <Button
+                          theme="borderless"
                           onClick={() => setShowMoreRepos(false)}
                         >
                           Show less
-                        </button>
+                        </Button>
                       )}
                     </div>
                   )}
@@ -309,87 +313,86 @@ const RepoPickerDialogImpl = NiceModal.create<RepoPickerDialogProps>(
                     hasSearched &&
                     allRepos.length === 0 &&
                     !error && (
-                      <div className="p-4 border rounded-lg bg-card">
+                      <Card bordered>
                         <div className="flex items-start gap-3">
-                          <Folder className="h-5 w-5 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                          <div>
-                            <div className="text-sm text-muted-foreground">
+                          <Folder size={18} />
+                          <div className="min-w-0">
+                            <Typography.Text type="tertiary">
                               {t('repoSearch.noReposFound')}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
+                            </Typography.Text>
+                            <Typography.Text type="tertiary">
                               {t('repoSearch.browseHint')}
-                            </div>
+                            </Typography.Text>
                           </div>
                         </div>
-                      </div>
+                      </Card>
                     )}
 
-                  <div
-                    className="p-4 border border-dashed cursor-pointer hover:shadow-md transition-shadow rounded-lg bg-card"
-                    onClick={() => !isWorking && handleBrowseForRepo()}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Search className="h-5 w-5 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-foreground">
-                          Browse for repository
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Browse and select any repository on your system
-                        </div>
+                  <Card
+                    bordered
+                    shadows="hover"
+                    title={
+                      <div className="flex items-center gap-2">
+                        <Search size={18} />
+                        <Typography.Text strong>Browse for repository</Typography.Text>
                       </div>
-                    </div>
-                  </div>
+                    }
+                    headerExtraContent={
+                      <Button
+                        theme="borderless"
+                        onClick={() => !isWorking && handleBrowseForRepo()}
+                      >
+                        Browse
+                      </Button>
+                    }
+                  >
+                    <Typography.Text type="tertiary">
+                      Browse and select any repository on your system
+                    </Typography.Text>
+                  </Card>
                 </>
               )}
 
               {/* Stage: New */}
               {stage === 'new' && (
                 <>
-                  <button
-                    className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+                  <Button
+                    theme="borderless"
+                    icon={<ArrowLeft size={14} />}
                     onClick={goBack}
                     disabled={isWorking}
                   >
-                    <ArrowLeft className="h-3 w-3" />
                     Back to options
-                  </button>
+                  </Button>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="repo-name">
-                        Repository Name <span className="text-red-500">*</span>
-                      </Label>
+                      <Typography.Text strong>Repository Name *</Typography.Text>
                       <Input
-                        id="repo-name"
-                        type="text"
                         value={repoName}
-                        onChange={(e) => setRepoName(e.target.value)}
+                        onChange={(value) => setRepoName(String(value))}
                         placeholder="my-project"
                         disabled={isWorking}
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <Typography.Text type="tertiary">
                         This will be the folder name for your new repository
-                      </p>
+                      </Typography.Text>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="parent-path">Parent Directory</Label>
+                      <Typography.Text strong>Parent Directory</Typography.Text>
                       <div className="flex space-x-2">
                         <Input
-                          id="parent-path"
-                          type="text"
                           value={parentPath}
-                          onChange={(e) => setParentPath(e.target.value)}
+                          onChange={(value) => setParentPath(String(value))}
                           placeholder="Current Directory"
-                          className="flex-1"
                           disabled={isWorking}
                         />
                         <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
+                          theme="outline"
+                          htmlType="button"
                           disabled={isWorking}
+                          icon={<Folder size={16} />}
                           onClick={async () => {
                             const selectedPath = await FolderPickerDialog.show({
                               title: 'Select Parent Directory',
@@ -401,49 +404,44 @@ const RepoPickerDialogImpl = NiceModal.create<RepoPickerDialogProps>(
                               setParentPath(selectedPath);
                             }
                           }}
-                        >
-                          <Folder className="h-4 w-4" />
-                        </Button>
+                        />
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <Typography.Text type="tertiary">
                         Leave empty to use your current working directory
-                      </p>
+                      </Typography.Text>
                     </div>
 
                     <Button
                       onClick={handleCreateRepo}
                       disabled={isWorking || !repoName.trim()}
-                      className="w-full"
+                      loading={isWorking}
+                      type="primary"
+                      block
                     >
-                      {isWorking ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Creating...
-                        </>
-                      ) : (
-                        'Create Repository'
-                      )}
+                      {isWorking ? 'Creating...' : 'Create Repository'}
                     </Button>
                   </div>
                 </>
               )}
 
               {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
+                <Banner
+                  type="danger"
+                  fullMode={false}
+                  description={error}
+                />
               )}
 
               {isWorking && stage === 'existing' && (
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Registering repository...
+                <div className="flex items-center justify-center gap-2">
+                  <Spin />
+                  <Typography.Text type="tertiary">
+                    Registering repository...
+                  </Typography.Text>
                 </div>
               )}
             </div>
-          </DialogContent>
-        </Dialog>
+        </Modal>
       </div>
     );
   }

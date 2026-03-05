@@ -8,13 +8,7 @@ import {
 } from 'react';
 import type { ReactNode } from 'react';
 import type { ApprovalStatus, ToolStatus } from 'shared/types';
-import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Button, Tooltip } from '@douyinfe/semi-ui';
 import { approvalsApi } from '@/lib/api';
 import { Check, X } from 'lucide-react';
 import WYSIWYGEditor from '@/components/ui/wysiwyg';
@@ -85,40 +79,30 @@ function ActionButtons({
 }) {
   return (
     <div className="flex items-center gap-1.5 pr-4">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            onClick={onApprove}
-            variant="ghost"
-            className="h-8 w-8 rounded-full p-0"
-            disabled={disabled}
-            aria-label={isResponding ? 'Submitting approval' : 'Approve'}
-            aria-busy={isResponding}
-          >
-            <Check className="h-5 w-5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{isResponding ? 'Submitting…' : 'Approve request'}</p>
-        </TooltipContent>
+      <Tooltip content={isResponding ? 'Submitting…' : 'Approve request'}>
+        <Button
+          onClick={onApprove}
+          theme="borderless"
+          className="h-8 w-8 rounded-full p-0"
+          disabled={disabled}
+          aria-label={isResponding ? 'Submitting approval' : 'Approve'}
+          aria-busy={isResponding}
+        >
+          <Check className="h-5 w-5" />
+        </Button>
       </Tooltip>
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            onClick={onStartDeny}
-            variant="ghost"
-            className="h-8 w-8 rounded-full p-0"
-            disabled={disabled}
-            aria-label={isResponding ? 'Submitting denial' : 'Deny'}
-            aria-busy={isResponding}
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{isResponding ? 'Submitting…' : 'Provide denial reason'}</p>
-        </TooltipContent>
+      <Tooltip content={isResponding ? 'Submitting…' : 'Provide denial reason'}>
+        <Button
+          onClick={onStartDeny}
+          theme="borderless"
+          className="h-8 w-8 rounded-full p-0"
+          disabled={disabled}
+          aria-label={isResponding ? 'Submitting denial' : 'Deny'}
+          aria-busy={isResponding}
+        >
+          <X className="h-5 w-5" />
+        </Button>
       </Tooltip>
     </div>
   );
@@ -152,14 +136,14 @@ function DenyReasonForm({
       />
       <div className="flex flex-wrap items-center justify-end gap-2">
         <Button
-          variant="ghost"
-          size="sm"
+          theme="borderless"
+          size="small"
           onClick={onCancel}
           disabled={isResponding}
         >
           Cancel
         </Button>
-        <Button size="sm" onClick={onSubmit} disabled={isResponding}>
+        <Button size="small" onClick={onSubmit} disabled={isResponding}>
           Deny
         </Button>
       </div>
@@ -319,24 +303,23 @@ const PendingApprovalEntry = ({
         {children}
 
         <div className="bg-background px-2 py-1.5 text-xs sm:text-sm">
-          <TooltipProvider>
-            <div className="flex items-center justify-between gap-1.5 pl-4">
-              <div className="flex items-center gap-1.5">
-                {!isEnteringReason && (
-                  <span className="text-muted-foreground">
-                    Would you like to approve this?
-                  </span>
-                )}
-              </div>
+          <div className="flex items-center justify-between gap-1.5 pl-4">
+            <div className="flex items-center gap-1.5">
               {!isEnteringReason && (
-                <ActionButtons
-                  disabled={disabled}
-                  isResponding={isResponding}
-                  onApprove={handleApprove}
-                  onStartDeny={handleStartDeny}
-                />
+                <span className="text-muted-foreground">
+                  Would you like to approve this?
+                </span>
               )}
             </div>
+            {!isEnteringReason && (
+              <ActionButtons
+                disabled={disabled}
+                isResponding={isResponding}
+                onApprove={handleApprove}
+                onStartDeny={handleStartDeny}
+              />
+            )}
+          </div>
 
             {error && (
               <div
@@ -348,17 +331,16 @@ const PendingApprovalEntry = ({
               </div>
             )}
 
-            {isEnteringReason && !hasResponded && (
-              <DenyReasonForm
-                isResponding={isResponding}
-                value={denyReason}
-                onChange={setDenyReason}
-                onCancel={handleCancelDeny}
-                onSubmit={handleSubmitDeny}
-                projectId={projectId}
-              />
-            )}
-          </TooltipProvider>
+          {isEnteringReason && !hasResponded && (
+            <DenyReasonForm
+              isResponding={isResponding}
+              value={denyReason}
+              onChange={setDenyReason}
+              onCancel={handleCancelDeny}
+              onSubmit={handleSubmitDeny}
+              projectId={projectId}
+            />
+          )}
         </div>
       </div>
     </div>

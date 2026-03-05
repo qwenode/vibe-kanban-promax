@@ -1,7 +1,7 @@
 // VS Code webview integration - install keyboard/clipboard bridge
 import '@/vscode/bridge';
 
-import { useParams } from 'react-router-dom';
+import { useRouterState } from '@tanstack/react-router';
 import { AppWithStyleOverride } from '@/utils/StyleOverride';
 import { WebviewContextMenu } from '@/vscode/ContextMenu';
 import TaskAttemptPanel from '@/components/panels/TaskAttemptPanel';
@@ -12,15 +12,20 @@ import { ReviewProvider } from '@/contexts/ReviewProvider';
 import { ClickedElementsProvider } from '@/contexts/ClickedElementsProvider';
 
 export function FullAttemptLogsPage() {
-  const {
-    projectId = '',
-    taskId = '',
-    attemptId = '',
-  } = useParams<{
-    projectId: string;
-    taskId: string;
-    attemptId: string;
-  }>();
+  const { projectId, taskId, attemptId } = useRouterState({
+    select: (s) => {
+      const last = s.matches[s.matches.length - 1] as
+        | { params?: Record<string, unknown> }
+        | undefined;
+      const params = last?.params ?? {};
+      return {
+        projectId: typeof params.projectId === 'string' ? params.projectId : '',
+        taskId: typeof params.taskId === 'string' ? params.taskId : '',
+        attemptId:
+          typeof params.attemptId === 'string' ? params.attemptId : '',
+      };
+    },
+  });
 
   const { data: attempt } = useTaskAttemptWithSession(attemptId);
   const { tasksById } = useProjectTasks(projectId);

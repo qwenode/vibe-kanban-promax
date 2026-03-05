@@ -1,20 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Button, Modal, Select, Typography } from '@douyinfe/semi-ui';
 import { EditorType } from 'shared/types';
 import { useOpenInEditor } from '@/hooks/useOpenInEditor';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
@@ -47,48 +32,38 @@ const EditorSelectionDialogImpl = NiceModal.create<EditorSelectionDialogProps>(
     };
 
     return (
-      <Dialog
-        open={modal.visible}
-        onOpenChange={(open) => !open && handleCancel()}
-      >
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Choose Editor</DialogTitle>
-            <DialogDescription>
+      <Modal visible={modal.visible} onCancel={handleCancel} footer={null} width={425}>
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Typography.Title heading={5}>Choose Editor</Typography.Title>
+            <Typography.Text type="tertiary">
               The default editor failed to open. Please select an alternative
               editor to open the task worktree.
-            </DialogDescription>
-          </DialogHeader>
+            </Typography.Text>
+          </div>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Editor</label>
+              <Typography.Text strong>Editor</Typography.Text>
               <Select
                 value={selectedEditor}
-                onValueChange={(value) =>
-                  setSelectedEditor(value as EditorType)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(EditorType).map((editor) => (
-                    <SelectItem key={editor} value={editor}>
-                      {editor}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                optionList={Object.values(EditorType).map((editor) => ({
+                  value: editor,
+                  label: editor,
+                }))}
+                onChange={(value) => setSelectedEditor(value as EditorType)}
+              />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCancel}>
+          <div className="flex items-center justify-end gap-2">
+            <Button theme="outline" onClick={handleCancel}>
               Cancel
             </Button>
-            <Button onClick={handleConfirm}>Open Editor</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <Button type="primary" onClick={handleConfirm}>
+              Open Editor
+            </Button>
+          </div>
+        </div>
+      </Modal>
     );
   }
 );

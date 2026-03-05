@@ -1,18 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert } from '@/components/ui/alert';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Loader2 } from 'lucide-react';
+import { Banner, Button, Input, Modal, Typography } from '@douyinfe/semi-ui';
+import TextArea from '@douyinfe/semi-ui/lib/es/input/textarea';
 import { tagsApi } from '@/lib/api';
 import type { Tag, CreateTag, UpdateTag } from 'shared/types';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
@@ -94,50 +83,41 @@ const TagEditDialogImpl = NiceModal.create<TagEditDialogProps>(({ tag }) => {
     modal.hide();
   };
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      // Reset form data when dialog closes
-      setFormData({
-        tag_name: '',
-        content: '',
-      });
-      setError(null);
-      handleCancel();
-    }
-  };
-
   return (
-    <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
+    <Modal
+      visible={modal.visible}
+      onCancel={handleCancel}
+      footer={null}
+      width={500}
+    >
+      <div className="space-y-4">
+        <Typography.Title heading={5}>
             {isEditMode
               ? t('settings.general.tags.dialog.editTitle')
               : t('settings.general.tags.dialog.createTitle')}
-          </DialogTitle>
-        </DialogHeader>
+        </Typography.Title>
         <div className="space-y-4 py-4">
           <div>
-            <Label htmlFor="tag-name">
+            <Typography.Text strong>
               {t('settings.general.tags.dialog.tagName.label')}{' '}
-              <span className="text-destructive">
+              <Typography.Text type="danger">
                 {t('settings.general.tags.dialog.tagName.required')}
-              </span>
-            </Label>
-            <p className="text-xs text-muted-foreground mb-1.5">
+              </Typography.Text>
+            </Typography.Text>
+            <Typography.Text type="tertiary" style={{ fontSize: 12 }}>
               {t('settings.general.tags.dialog.tagName.hint', {
                 tagName: formData.tag_name || 'tag_name',
               })}
-            </p>
+            </Typography.Text>
             <Input
               id="tag-name"
               value={formData.tag_name}
-              onChange={(e) => {
-                const value = e.target.value;
-                setFormData({ ...formData, tag_name: value });
+              onChange={(value) => {
+                const nextValue = String(value);
+                setFormData({ ...formData, tag_name: nextValue });
 
                 // Validate in real-time for spaces
-                if (value.includes(' ')) {
+                if (nextValue.includes(' ')) {
                   setTagNameError(
                     t('settings.general.tags.dialog.tagName.error')
                   );
@@ -150,32 +130,28 @@ const TagEditDialogImpl = NiceModal.create<TagEditDialogProps>(({ tag }) => {
               )}
               disabled={saving}
               autoFocus
-              aria-invalid={!!tagNameError}
-              className={tagNameError ? 'border-destructive' : undefined}
+              validateStatus={tagNameError ? 'error' : 'default'}
             />
             {tagNameError && (
-              <p className="text-sm text-destructive">{tagNameError}</p>
+              <Typography.Text type="danger">{tagNameError}</Typography.Text>
             )}
           </div>
           <div>
-            <Label htmlFor="tag-content">
+            <Typography.Text strong>
               {t('settings.general.tags.dialog.content.label')}{' '}
-              <span className="text-destructive">
+              <Typography.Text type="danger">
                 {t('settings.general.tags.dialog.content.required')}
-              </span>
-            </Label>
-            <p className="text-xs text-muted-foreground mb-1.5">
+              </Typography.Text>
+            </Typography.Text>
+            <Typography.Text type="tertiary" style={{ fontSize: 12 }}>
               {t('settings.general.tags.dialog.content.hint', {
                 tagName: formData.tag_name || 'tag_name',
               })}
-            </p>
-            <Textarea
+            </Typography.Text>
+            <TextArea
               id="tag-content"
               value={formData.content}
-              onChange={(e) => {
-                const value = e.target.value;
-                setFormData({ ...formData, content: value });
-              }}
+              onChange={(value) => setFormData({ ...formData, content: String(value) })}
               placeholder={t(
                 'settings.general.tags.dialog.content.placeholder'
               )}
@@ -183,24 +159,25 @@ const TagEditDialogImpl = NiceModal.create<TagEditDialogProps>(({ tag }) => {
               disabled={saving}
             />
           </div>
-          {error && <Alert variant="destructive">{error}</Alert>}
+          {error && <Banner type="danger" fullMode={false} description={error} />}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={handleCancel} disabled={saving}>
+        <div className="flex items-center justify-end gap-2">
+          <Button theme="outline" onClick={handleCancel} disabled={saving}>
             {t('settings.general.tags.dialog.buttons.cancel')}
           </Button>
           <Button
+            type="primary"
             onClick={handleSave}
             disabled={saving || !!tagNameError || !formData.content.trim()}
+            loading={saving}
           >
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEditMode
               ? t('settings.general.tags.dialog.buttons.update')
               : t('settings.general.tags.dialog.buttons.create')}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </Modal>
   );
 });
 

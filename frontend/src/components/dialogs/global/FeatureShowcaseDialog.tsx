@@ -4,7 +4,7 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button, Modal } from '@douyinfe/semi-ui';
 import { ShowcaseStageMedia } from '@/components/showcase/ShowcaseStageMedia';
 import type { ShowcaseConfig } from '@/types/showcase';
 
@@ -61,17 +61,17 @@ const FeatureShowcaseDialogImpl = NiceModal.create<FeatureShowcaseDialogProps>(
     };
 
     return (
-      <Dialog
-        open={modal.visible}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleClose();
-          }
-        }}
-        uncloseable
-        className="max-w-none xl:max-w-[min(66.66vw,calc((100svh-20rem)*1.6))] p-0 overflow-hidden"
+      <Modal
+        visible={modal.visible}
+        onCancel={handleClose}
+        closable={false}
+        closeOnEsc={false}
+        maskClosable={false}
+        width="min(66.66vw,calc((100svh-20rem)*1.6))"
+        footer={null}
+        bodyStyle={{ padding: 0 }}
       >
-        <DialogContent className="p-0 gap-0">
+        <div className="flex flex-col gap-0 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStage}
@@ -112,30 +112,32 @@ const FeatureShowcaseDialogImpl = NiceModal.create<FeatureShowcaseDialogProps>(
                 {totalStages > 1 && (
                   <div className="flex justify-end gap-2 pt-2">
                     {currentStage > 0 && (
-                      <button
+                      <Button
                         onClick={handlePrevious}
-                        className="h-10 px-4 py-2 inline-flex items-center justify-center gap-2 text-sm font-medium border border-input hover:bg-accent hover:text-accent-foreground transition-colors"
+                        theme="outline"
+                        icon={<ChevronLeft className="h-4 w-4" />}
                       >
-                        <ChevronLeft className="h-4 w-4" />
                         {t('showcases.buttons.previous')}
-                      </button>
+                      </Button>
                     )}
-                    <button
+                    <Button
                       onClick={handleNext}
-                      className="h-10 px-4 py-2 inline-flex items-center justify-center gap-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 border border-foreground transition-colors"
+                      type="primary"
+                      theme="solid"
+                      icon={<ChevronRight className="h-4 w-4" />}
+                      iconPosition="right"
                     >
                       {currentStage === totalStages - 1
                         ? t('showcases.buttons.finish')
                         : t('showcases.buttons.next')}
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
             </motion.div>
           </AnimatePresence>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </Modal>
     );
   }
 );

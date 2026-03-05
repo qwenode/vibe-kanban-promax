@@ -1,12 +1,7 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
 import { useTranslation } from 'react-i18next';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Modal, Typography } from '@douyinfe/semi-ui';
 import ProcessesTab from '@/components/tasks/TaskDetails/ProcessesTab';
 import { ProcessSelectionProvider } from '@/contexts/ProcessSelectionContext';
 
@@ -20,19 +15,15 @@ const ViewProcessesDialogImpl = NiceModal.create<ViewProcessesDialogProps>(
     const { t } = useTranslation('tasks');
     const modal = useModal();
 
-    const handleOpenChange = (open: boolean) => {
-      if (!open) {
-        modal.hide();
-      }
-    };
-
     return (
-      <Dialog
-        open={modal.visible}
-        onOpenChange={handleOpenChange}
-        className="max-w-5xl w-[92vw] p-0 overflow-x-hidden"
+      <Modal
+        visible={modal.visible}
+        onCancel={() => modal.hide()}
+        footer={null}
+        width={1024}
+        bodyStyle={{ padding: 0 }}
       >
-        <DialogContent
+        <div
           className="p-0 min-w-0"
           onKeyDownCapture={(e) => {
             if (e.key === 'Escape') {
@@ -41,16 +32,18 @@ const ViewProcessesDialogImpl = NiceModal.create<ViewProcessesDialogProps>(
             }
           }}
         >
-          <DialogHeader className="px-4 py-3 border-b">
-            <DialogTitle>{t('viewProcessesDialog.title')}</DialogTitle>
-          </DialogHeader>
+          <div className="px-4 py-3 border-b">
+            <Typography.Title heading={5}>
+              {t('viewProcessesDialog.title')}
+            </Typography.Title>
+          </div>
           <div className="h-[75vh] flex flex-col min-h-0 min-w-0">
             <ProcessSelectionProvider initialProcessId={initialProcessId}>
               <ProcessesTab sessionId={sessionId} />
             </ProcessSelectionProvider>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </Modal>
     );
   }
 );

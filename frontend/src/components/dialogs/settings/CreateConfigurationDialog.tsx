@@ -1,23 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Banner, Button, Input, Modal, Select, Typography } from '@douyinfe/semi-ui';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
 
@@ -90,23 +72,30 @@ const CreateConfigurationDialogImpl =
       };
 
       return (
-        <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create New Configuration</DialogTitle>
-              <DialogDescription>
+        <Modal visible={modal.visible} onCancel={() => handleOpenChange(false)} footer={null}>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-1">
+              <Typography.Title heading={4} className="!mb-0">
+                Create New Configuration
+              </Typography.Title>
+              <Typography.Text type="tertiary">
                 Add a new configuration for the {executorType} executor.
-              </DialogDescription>
-            </DialogHeader>
+              </Typography.Text>
+            </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="config-name">Configuration Name</Label>
+                <label
+                  htmlFor="config-name"
+                  className="text-sm font-medium leading-none"
+                >
+                  Configuration Name
+                </label>
                 <Input
                   id="config-name"
                   value={configName}
-                  onChange={(e) => {
-                    setConfigName(e.target.value);
+                  onChange={(value) => {
+                    setConfigName(value);
                     setError(null);
                   }}
                   placeholder="e.g., PRODUCTION, DEVELOPMENT"
@@ -116,44 +105,41 @@ const CreateConfigurationDialogImpl =
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="clone-from">Clone from (optional)</Label>
+                <label htmlFor="clone-from" className="text-sm font-medium leading-none">
+                  Clone from (optional)
+                </label>
                 <Select
+                  style={{ width: '100%' }}
                   value={cloneFrom || '__blank__'}
-                  onValueChange={(value) =>
-                    setCloneFrom(value === '__blank__' ? null : value)
+                  placeholder="Start blank or clone existing"
+                  optionList={[
+                    { value: '__blank__', label: 'Start blank' },
+                    ...existingConfigs.map((configuration) => ({
+                      value: configuration,
+                      label: `Clone from ${configuration}`,
+                    })),
+                  ]}
+                  onChange={(value) =>
+                    setCloneFrom(String(value) === '__blank__' ? null : String(value))
                   }
-                >
-                  <SelectTrigger id="clone-from">
-                    <SelectValue placeholder="Start blank or clone existing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__blank__">Start blank</SelectItem>
-                    {existingConfigs.map((configuration) => (
-                      <SelectItem key={configuration} value={configuration}>
-                        Clone from {configuration}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
 
               {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
+                <Banner type="danger" description={error} />
               )}
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={handleCancel}>
+            <div className="flex items-center justify-end gap-2">
+              <Button theme="outline" onClick={handleCancel}>
                 Cancel
               </Button>
               <Button onClick={handleCreate} disabled={!configName.trim()}>
                 Create Configuration
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </div>
+          </div>
+        </Modal>
       );
     }
   );

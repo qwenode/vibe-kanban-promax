@@ -4,8 +4,7 @@ import WYSIWYGEditor from '@/components/ui/wysiwyg';
 import { useProject } from '@/contexts/ProjectContext';
 import { cn } from '@/lib/utils';
 import { VariantSelector } from '@/components/tasks/VariantSelector';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Banner, Button } from '@douyinfe/semi-ui';
 import { AlertCircle, Loader2, Paperclip, Send, X } from 'lucide-react';
 import { imagesApi } from '@/lib/api';
 import type { WorkspaceWithSession } from '@/types/attempt';
@@ -169,7 +168,7 @@ export function RetryEditorInline({
         />
         <div className="ml-auto flex items-center gap-2">
           <Button
-            variant="outline"
+            theme="outline"
             onClick={handleAttachClick}
             disabled={isSending}
             title="Attach image"
@@ -177,7 +176,7 @@ export function RetryEditorInline({
           >
             <Paperclip className="h-3 w-3" />
           </Button>
-          <Button variant="outline" onClick={onCancel} disabled={isSending}>
+          <Button theme="outline" onClick={onCancel} disabled={isSending}>
             <X className="h-3 w-3 mr-1" />{' '}
             {t('buttons.cancel', { ns: 'common' })}
           </Button>
@@ -189,10 +188,12 @@ export function RetryEditorInline({
       </div>
 
       {sendError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{sendError}</AlertDescription>
-        </Alert>
+        <Banner
+          type="danger"
+          fullMode={false}
+          icon={<AlertCircle className="h-4 w-4" />}
+          description={sendError}
+        />
       )}
     </div>
   );

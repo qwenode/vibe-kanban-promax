@@ -1,16 +1,4 @@
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card.tsx';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu.tsx';
-import { Button } from '@/components/ui/button.tsx';
+import { Button, Card, Dropdown, Modal, Typography } from '@douyinfe/semi-ui';
 import {
   Calendar,
   Edit,
@@ -20,7 +8,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Project } from 'shared/types';
-import { useEffect, useRef } from 'react';
+import { useEffect, type MouseEvent } from 'react';
 import { useOpenProjectInEditor } from '@/hooks/useOpenProjectInEditor';
 import { useNavigateWithSearch, useProjectRepos } from '@/hooks';
 import { projectsApi } from '@/lib/api';
@@ -35,34 +23,36 @@ type Props = {
 
 function ProjectCard({ project, isFocused, setError, onEdit }: Props) {
   const navigate = useNavigateWithSearch();
-  const ref = useRef<HTMLDivElement>(null);
   const handleOpenInEditor = useOpenProjectInEditor(project);
   const { t } = useTranslation('projects');
+  const cardDomId = `project-card-${project.id}`;
 
   const { data: repos } = useProjectRepos(project.id);
   const isSingleRepoProject = repos?.length === 1;
 
   useEffect(() => {
-    if (isFocused && ref.current) {
-      ref.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      ref.current.focus();
+    const cardEl = document.getElementById(cardDomId);
+    if (isFocused && cardEl) {
+      cardEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      cardEl.focus();
     }
-  }, [isFocused]);
+  }, [cardDomId, isFocused]);
 
   const handleDelete = async (id: string, name: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${name}"? This action cannot be undone.`
-      )
-    )
-      return;
-
-    try {
-      await projectsApi.delete(id);
-    } catch (error) {
-      console.error('Failed to delete project:', error);
-      setError('Failed to delete project');
-    }
+    Modal.warning({
+      title: t('common:buttons.delete'),
+      content: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      okType: 'danger',
+      hasCancel: true,
+      onOk: async () => {
+        try {
+          await projectsApi.delete(id);
+        } catch (error) {
+          console.error('Failed to delete project:', error);
+          setError('Failed to delete project');
+        }
+      },
+    });
   };
 
   const handleEdit = (project: Project) => {
@@ -74,74 +64,86 @@ function ProjectCard({ project, isFocused, setError, onEdit }: Props) {
   };
 
   return (
-    <Card
-      className={`hover:shadow-md transition-shadow cursor-pointer focus:ring-2 focus:ring-primary outline-none border`}
+    <div
+      id={cardDomId}
+      className="cursor-pointer outline-none transition-shadow hover:shadow-md focus:ring-2 focus:ring-primary"
       onClick={() => navigate(`/local-projects/${project.id}/tasks`)}
       tabIndex={isFocused ? 0 : -1}
-      ref={ref}
     >
-      <CardHeader>
+      <Card>
+        <div className="p-4">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-lg">{project.name}</CardTitle>
+          <Typography.Title heading={5} className="text-lg !mb-0">
+            {project.name}
+          </Typography.Title>
           <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/local-projects/${project.id}`);
-                  }}
-                >
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  {t('viewProject')}
-                </DropdownMenuItem>
-                {isSingleRepoProject && (
-                  <DropdownMenuItem
+            <Dropdown
+              trigger="click"
+              position="bottomRight"
+              render={
+                <Dropdown.Menu>
+                  <Dropdown.Item
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleOpenInIDE();
+                      navigate(`/local-projects/${project.id}`);
                     }}
                   >
-                    <FolderOpen className="mr-2 h-4 w-4" />
-                    {t('openInIDE')}
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEdit(project);
-                  }}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  {t('common:buttons.edit')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(project.id, project.name);
-                  }}
-                  className="text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  {t('common:buttons.delete')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    {t('viewProject')}
+                  </Dropdown.Item>
+                  {isSingleRepoProject && (
+                    <Dropdown.Item
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenInIDE();
+                      }}
+                    >
+                      <FolderOpen className="mr-2 h-4 w-4" />
+                      {t('openInIDE')}
+                    </Dropdown.Item>
+                  )}
+                  <Dropdown.Item
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(project);
+                    }}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    {t('common:buttons.edit')}
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(project.id, project.name);
+                    }}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t('common:buttons.delete')}
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              }
+            >
+              <Button
+                theme="borderless"
+                noHorizontalPadding
+                onClick={(e: MouseEvent) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </Dropdown>
           </div>
         </div>
-        <CardDescription className="flex items-center">
+        <Typography.Text type="tertiary" className="flex items-center">
           <Calendar className="mr-1 h-3 w-3" />
           {t('createdDate', {
             date: new Date(project.created_at).toLocaleDateString(),
           })}
-        </CardDescription>
-      </CardHeader>
-    </Card>
+        </Typography.Text>
+        </div>
+      </Card>
+      </div>
+    
   );
 }
 

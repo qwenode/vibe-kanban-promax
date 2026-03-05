@@ -1,16 +1,11 @@
 import { useCallback } from 'react';
 import {
   useNavigate,
-  useSearchParams,
-  parsePath,
-  type To,
-  type NavigateOptions,
-  type Path,
-  type NavigateFunction,
-} from 'react-router-dom';
+  useRouter,
+} from '@tanstack/react-router';
 
 /**
- * Custom hook that wraps React Router's useNavigate to automatically preserve
+ * Custom hook that wraps TanStack Router's navigate to automatically preserve
  * search parameters (like ?view=preview or ?view=diffs) during navigation.
  *
  * This ensures that fullscreen modes and other URL state are maintained when
@@ -49,68 +44,88 @@ import {
  * // Numeric navigation (back/forward)
  * navigate(-1); // Goes back
  */
-export function useNavigateWithSearch(): NavigateFunction {
+type NavigateLikeOptions = {
+  replace?: boolean;
+};
+
+type NavigateLikeTo =
+  | string
+  | number
+  | {
+      pathname?: string;
+      search?: string;
+      hash?: string;
+    };
+
+function parseSearch(search: string): Record<string, string> {
+  const params = new URLSearchParams(search.startsWith('?') ? search : `?${search}`);
+  const out: Record<string, string> = {};
+  for (const [k, v] of params.entries()) {
+    out[k] = v;
+  }
+  return out;
+}
+
+function parseToString(to: string): {
+  pathname: string;
+  search?: string;
+  hash?: string;
+} {
+  const [pathAndSearch, rawHash] = to.split('#', 2);
+  const [pathname, rawSearch] = pathAndSearch.split('?', 2);
+  return {
+    pathname: pathname || '/',
+    search: rawSearch !== undefined ? `?${rawSearch}` : undefined,
+    hash: rawHash !== undefined ? `#${rawHash}` : undefined,
+  };
+}
+
+export function useNavigateWithSearch() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const router = useRouter();
 
   return useCallback(
-    (to: To | number, options?: NavigateOptions) => {
+    (to: NavigateLikeTo, options?: NavigateLikeOptions) => {
       // Handle numeric navigation (back/forward)
       if (typeof to === 'number') {
-        navigate(to);
+        router.history.go(to);
         return;
       }
 
       // Handle object-style navigation
       if (typeof to === 'object') {
-        // Only add current search params if none provided
-        const currentSearch = searchParams.toString();
+        const hash =
+          to.hash !== undefined ? to.hash.replace(/^#/, '') : undefined;
 
-        // Build the final navigation object, preserving undefined values
-        // so React Router can use current pathname/hash when not specified
-        const finalTo: Partial<Path> = {};
+        const hasSearch = to.search !== undefined;
+        const search = hasSearch ? parseSearch(to.search || '') : undefined;
 
-        // Only set pathname if it was provided
-        if (to.pathname !== undefined) {
-          finalTo.pathname = to.pathname;
-        }
-
-        // Set search: use provided, or preserve current if not provided
-        if (to.search !== undefined) {
-          finalTo.search = to.search;
-        } else if (currentSearch) {
-          finalTo.search = `?${currentSearch}`;
-        }
-
-        // Only set hash if it was provided
-        if (to.hash !== undefined) {
-          finalTo.hash = to.hash;
-        }
-
-        navigate(finalTo, options);
+        navigate({
+          to: (to.pathname || undefined) as never,
+          search: hasSearch
+            ? (search as never)
+            : ((prev: unknown) => prev) as never,
+          hash: hash as never,
+          replace: options?.replace,
+        } as never);
         return;
       }
 
-      // Handle string-style navigation - parse pathname?search#hash
-      const parsed = parsePath(to);
+      const parsed = parseToString(to);
+      const hasSearch = parsed.search !== undefined;
+      const search = hasSearch ? parseSearch(parsed.search || '') : undefined;
+      const hash =
+        parsed.hash !== undefined ? parsed.hash.replace(/^#/, '') : undefined;
 
-      // Only preserve current search params if none provided in the path
-      const currentSearch = searchParams.toString();
-      const finalSearch = parsed.search
-        ? parsed.search
-        : currentSearch
-          ? `?${currentSearch}`
-          : '';
-
-      navigate(
-        {
-          pathname: parsed.pathname,
-          search: finalSearch,
-          hash: parsed.hash,
-        },
-        options
-      );
+      navigate({
+        to: parsed.pathname as never,
+        search: hasSearch
+          ? (search as never)
+          : ((prev: unknown) => prev) as never,
+        hash: hash as never,
+        replace: options?.replace,
+      } as never);
     },
-    [navigate, searchParams]
-  ) as NavigateFunction;
+    [navigate, router.history]
+  );
 }

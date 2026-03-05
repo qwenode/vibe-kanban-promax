@@ -1,16 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
 import { useNavigateWithSearch } from '@/hooks';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Banner, Button, Card, Modal, Spin, Tag, Typography } from '@douyinfe/semi-ui';
 import { projectsApi } from '@/lib/api';
 import { useProjects } from '@/hooks/useProjects';
 import {
@@ -20,7 +11,6 @@ import {
   CheckSquare,
   Clock,
   Edit,
-  Loader2,
   Trash2,
 } from 'lucide-react';
 
@@ -39,22 +29,23 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
 
   const handleDelete = async () => {
     if (!project) return;
-    if (
-      !confirm(
-        `Are you sure you want to delete "${project.name}"? This action cannot be undone.`
-      )
-    )
-      return;
-
-    try {
-      await projectsApi.delete(projectId);
-      onBack();
-    } catch (error) {
-      console.error('Failed to delete project:', error);
-      // @ts-expect-error it is type ApiError
-      setDeleteError(error.message || t('errors.deleteFailed'));
-      setTimeout(() => setDeleteError(''), 5000);
-    }
+    Modal.warning({
+      title: t('common:buttons.delete'),
+      content: `Are you sure you want to delete "${project.name}"? This action cannot be undone.`,
+      okType: 'danger',
+      hasCancel: true,
+      onOk: async () => {
+        try {
+          await projectsApi.delete(projectId);
+          onBack();
+        } catch (error) {
+          console.error('Failed to delete project:', error);
+          // @ts-expect-error it is type ApiError
+          setDeleteError(error.message || t('errors.deleteFailed'));
+          setTimeout(() => setDeleteError(''), 5000);
+        }
+      },
+    });
   };
 
   const handleEditClick = () => {
@@ -63,9 +54,8 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading project...
+      <div className="py-12 flex items-center justify-center">
+        <Spin />
       </div>
     );
   }
@@ -76,12 +66,12 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
       : t('projectNotFound');
     return (
       <div className="space-y-4 py-12 px-4">
-        <Button variant="outline" onClick={onBack}>
+        <Button theme="outline" onClick={onBack}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Projects
         </Button>
         <Card>
-          <CardContent className="py-12 text-center">
+          <div className="py-12 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
               <AlertCircle className="h-6 w-6 text-muted-foreground" />
             </div>
@@ -90,7 +80,7 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
             <Button className="mt-4" onClick={onBack}>
               Back to Projects
             </Button>
-          </CardContent>
+          </div>
         </Card>
       </div>
     );
@@ -100,7 +90,7 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
     <div className="space-y-6 py-12 px-4">
       <div className="flex justify-between items-start">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" onClick={onBack}>
+          <Button theme="outline" onClick={onBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Projects
           </Button>
@@ -118,12 +108,12 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
             <CheckSquare className="mr-2 h-4 w-4" />
             View Tasks
           </Button>
-          <Button variant="outline" onClick={handleEditClick}>
+          <Button theme="outline" onClick={handleEditClick}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>
           <Button
-            variant="outline"
+            theme="outline"
             onClick={handleDelete}
             className="text-destructive hover:text-destructive-foreground hover:bg-destructive/10"
           >
@@ -134,26 +124,28 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
       </div>
 
       {deleteError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{deleteError}</AlertDescription>
-        </Alert>
+        <Banner
+          type="danger"
+          fullMode={false}
+          icon={<AlertCircle className="h-4 w-4" />}
+          description={deleteError}
+        />
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
+          <div className="p-4 border-b">
+            <Typography.Title heading={5} className="flex items-center">
               <Calendar className="mr-2 h-5 w-5" />
               Project Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </Typography.Title>
+          </div>
+          <div className="space-y-4 p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">
                 Status
               </span>
-              <Badge variant="secondary">Active</Badge>
+              <Tag color="grey" type="light">Active</Tag>
             </div>
             <div className="space-y-2">
               <div className="flex items-center text-sm">
@@ -171,17 +163,17 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
                 </span>
               </div>
             </div>
-          </CardContent>
+          </div>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Project Details</CardTitle>
-            <CardDescription>
+          <div className="p-4 border-b">
+            <Typography.Title heading={5}>Project Details</Typography.Title>
+            <Typography.Text type="tertiary">
               Technical information about this project
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            </Typography.Text>
+          </div>
+          <div className="space-y-3 p-4">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground">
                 Project ID
@@ -206,7 +198,7 @@ export function ProjectDetail({ projectId, onBack }: ProjectDetailProps) {
                 {new Date(project.updated_at).toLocaleString()}
               </p>
             </div>
-          </CardContent>
+          </div>
         </Card>
       </div>
     </div>

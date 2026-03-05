@@ -1,22 +1,40 @@
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+import TextArea from '@douyinfe/semi-ui/lib/es/input/textarea';
 
-const Textarea = React.forwardRef<
-  HTMLTextAreaElement,
-  React.ComponentProps<'textarea'>
->(({ className, ...props }, ref) => {
+export type TextareaProps = Omit<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+  'onChange' | 'value' | 'defaultValue'
+> & {
+  value?: string;
+  defaultValue?: string;
+  /**
+   * Legacy React Textarea API: `onChange(e)`
+   */
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  /**
+   * Semi TextArea API: `onValueChange(value)`
+   */
+  onValueChange?: (value: string) => void;
+};
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, onChange, onValueChange, ...props }, ref) => {
   return (
-    <textarea
-      className={cn(
-        'flex min-h-[80px] w-full bg-transparent border px-3 py-2 text-sm ring-offset-background focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-        className
-      )}
-      ref={ref}
-      {...props}
+    <TextArea
+      {...(props as unknown as Record<string, unknown>)}
+      ref={ref as never}
+      onChange={(value: string, e: unknown) => {
+        onValueChange?.(value);
+        // Best-effort compatibility for callsites expecting `e.target.value`
+        if (onChange) onChange(e as React.ChangeEvent<HTMLTextAreaElement>);
+      }}
+      className={cn(className)}
     />
   );
-});
+  }
+);
 Textarea.displayName = 'Textarea';
 
 export { Textarea };

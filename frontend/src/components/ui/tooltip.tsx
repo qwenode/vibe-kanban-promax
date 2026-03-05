@@ -1,34 +1,39 @@
 import * as React from 'react';
-import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import { Tooltip as SemiTooltip } from '@douyinfe/semi-ui';
 
-import { cn } from '@/lib/utils';
-import { usePortalContainer } from '@/contexts/PortalContainerContext';
+type TooltipTriggerProps = {
+  asChild?: boolean;
+  children?: React.ReactNode;
+};
+type TooltipContentProps = {
+  children?: React.ReactNode;
+  className?: string;
+  side?: string;
+  align?: string;
+};
 
-const TooltipProvider = TooltipPrimitive.Provider;
+export function TooltipProvider({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
 
-const Tooltip = TooltipPrimitive.Root;
+export function TooltipTrigger({ children }: TooltipTriggerProps) {
+  return <>{children}</>;
+}
 
-const TooltipTrigger = TooltipPrimitive.Trigger;
+export function TooltipContent({ children }: TooltipContentProps) {
+  return <>{children}</>;
+}
 
-const TooltipContent = React.forwardRef<
-  React.ElementRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => {
-  const container = usePortalContainer();
-  return (
-    <TooltipPrimitive.Portal container={container}>
-      <TooltipPrimitive.Content
-        ref={ref}
-        sideOffset={sideOffset}
-        className={cn(
-          'z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-tooltip-content-transform-origin]',
-          className
-        )}
-        {...props}
-      />
-    </TooltipPrimitive.Portal>
-  );
-});
-TooltipContent.displayName = TooltipPrimitive.Content.displayName;
+export function Tooltip({ children }: { children: React.ReactNode }) {
+  const nodes = React.Children.toArray(children) as React.ReactElement[];
+  const triggerEl = nodes.find((n) => React.isValidElement(n) && n.type === TooltipTrigger);
+  const contentEl = nodes.find((n) => React.isValidElement(n) && n.type === TooltipContent);
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+  const trigger = triggerEl?.props?.children ?? null;
+  const content = contentEl?.props?.children ?? null;
+
+  if (!trigger) return null;
+  if (!content) return <>{trigger}</>;
+
+  return <SemiTooltip content={content}>{trigger}</SemiTooltip>;
+}

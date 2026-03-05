@@ -1,5 +1,5 @@
-import { Loader2 } from 'lucide-react';
 import React from 'react';
+import { Spin, Typography } from '@douyinfe/semi-ui';
 
 interface LoaderProps {
   message?: string | React.ReactElement;
@@ -15,12 +15,14 @@ export const Loader: React.FC<LoaderProps> = ({
   <div
     className={`flex flex-col items-center justify-center gap-2 ${className}`}
   >
-    <Loader2
-      className="animate-spin text-muted-foreground"
-      style={{ width: size, height: size }}
+    <Spin
+      size={size >= 32 ? 'large' : 'middle'}
+      wrapperClassName="inline-flex"
     />
     {!!message && (
-      <div className="text-center text-muted-foreground">{message}</div>
+      <Typography.Text type="tertiary" style={{ textAlign: 'center' }}>
+        {message}
+      </Typography.Text>
     )}
   </div>
 );

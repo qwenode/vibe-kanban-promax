@@ -9,20 +9,7 @@ import {
   Terminal,
   MessageSquare,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Banner, Button, Dropdown, Tooltip } from '@douyinfe/semi-ui';
 //
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { ScratchType, type TaskWithAttemptStatus } from 'shared/types';
@@ -713,10 +700,12 @@ export function TaskFollowUpSection({
       <div className="overflow-y-auto min-h-0 p-4">
         <div className="space-y-2">
           {followUpError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{followUpError}</AlertDescription>
-            </Alert>
+            <Banner
+              type="danger"
+              fullMode={false}
+              icon={<AlertCircle className="h-4 w-4" />}
+              description={followUpError}
+            />
           )}
           <div className="space-y-2">
             {/* Review comments preview */}
@@ -814,8 +803,8 @@ export function TaskFollowUpSection({
           <Button
             onClick={handleAttachClick}
             disabled={!isEditable}
-            size="sm"
-            variant="outline"
+            size="small"
+            theme="outline"
             title="Attach image"
             aria-label="Attach image"
           >
@@ -826,8 +815,8 @@ export function TaskFollowUpSection({
           <Button
             onClick={handlePrCommentClick}
             disabled={!isEditable}
-            size="sm"
-            variant="outline"
+            size="small"
+            theme="outline"
             title="Insert PR comment"
             aria-label="Insert PR comment"
           >
@@ -836,37 +825,37 @@ export function TaskFollowUpSection({
 
           {/* Scripts dropdown - only show if project has any scripts */}
           {hasAnyScript && (
-            <DropdownMenu>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={isAttemptRunning}
-                        aria-label="Run scripts"
-                      >
-                        <Terminal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  {isAttemptRunning && (
-                    <TooltipContent side="bottom">
-                      {t('followUp.scriptsDisabledWhileRunning')}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleRunSetupScript}>
-                  {t('followUp.runSetupScript')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleRunCleanupScript}>
-                  {t('followUp.runCleanupScript')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Dropdown
+              trigger="click"
+              position="bottomRight"
+              render={
+                <Dropdown.Menu>
+                  <Dropdown.Item onClick={handleRunSetupScript}>
+                    {t('followUp.runSetupScript')}
+                  </Dropdown.Item>
+                  <Dropdown.Item onClick={handleRunCleanupScript}>
+                    {t('followUp.runCleanupScript')}
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              }
+            >
+              <Tooltip
+                content={
+                  isAttemptRunning
+                    ? t('followUp.scriptsDisabledWhileRunning')
+                    : undefined
+                }
+              >
+                <Button
+                  size="small"
+                  theme="outline"
+                  disabled={isAttemptRunning}
+                  aria-label="Run scripts"
+                >
+                  <Terminal className="h-4 w-4" />
+                </Button>
+              </Tooltip>
+            </Dropdown>
           )}
 
           {isAttemptRunning ? (
@@ -876,8 +865,8 @@ export function TaskFollowUpSection({
                 <Button
                   onClick={cancelQueue}
                   disabled={isQueueLoading}
-                  size="sm"
-                  variant="outline"
+                  size="small"
+                  theme="outline"
                 >
                   {isQueueLoading ? (
                     <Loader2 className="animate-spin h-4 w-4 mr-2" />
@@ -898,7 +887,7 @@ export function TaskFollowUpSection({
                       !reviewMarkdown &&
                       !clickedMarkdown)
                   }
-                  size="sm"
+                  size="small"
                 >
                   {isQueueLoading ? (
                     <Loader2 className="animate-spin h-4 w-4 mr-2" />
@@ -913,8 +902,8 @@ export function TaskFollowUpSection({
               <Button
                 onClick={stopExecution}
                 disabled={isStopping}
-                size="sm"
-                variant="destructive"
+                size="small"
+                type="danger"
               >
                 {isStopping ? (
                   <Loader2 className="animate-spin h-4 w-4 mr-2" />
@@ -931,8 +920,8 @@ export function TaskFollowUpSection({
               {comments.length > 0 && (
                 <Button
                   onClick={clearComments}
-                  size="sm"
-                  variant="destructive"
+                  size="small"
+                  type="danger"
                   disabled={!isEditable}
                 >
                   {t('followUp.clearReviewComments')}
@@ -941,7 +930,7 @@ export function TaskFollowUpSection({
               <Button
                 onClick={onSendFollowUp}
                 disabled={!canSendFollowUp || !isEditable}
-                size="sm"
+                size="small"
               >
                 {isSendingFollowUp ? (
                   <Loader2 className="animate-spin h-4 w-4 mr-2" />
