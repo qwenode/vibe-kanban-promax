@@ -7,7 +7,7 @@ import { paths } from '@/lib/paths';
 import type { TaskWithAttemptStatus } from 'shared/types';
 import type { WorkspaceWithSession } from '@/types/attempt';
 import { NewCardContent } from '../ui/new-card';
-import { Button } from '../ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import { PlusIcon } from 'lucide-react';
 import { CreateAttemptDialog } from '@/components/dialogs/tasks/CreateAttemptDialog';
 import WYSIWYGEditor from '@/components/ui/wysiwyg';
@@ -160,14 +160,15 @@ const TaskPanel = ({ task }: TaskPanelProps) => {
                     </span>
                     <span>
                       <Button
-                        variant="icon"
+                        theme="borderless"
+                        size="small"
                         onClick={() =>
                           CreateAttemptDialog.show({
                             taskId: task.id,
                           })
                         }
+                        icon={<PlusIcon size={16} />}
                       >
-                        <PlusIcon size={16} />
                       </Button>
                     </span>
                   </div>

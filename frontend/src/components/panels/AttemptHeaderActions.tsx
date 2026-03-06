@@ -1,13 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Eye, FileDiff, X } from 'lucide-react';
-import { Button } from '../ui/button';
+import { Button, Tooltip } from '@douyinfe/semi-ui';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../ui/tooltip';
 import type { LayoutMode } from '../layout/TasksLayout';
 import type { TaskWithAttemptStatus } from 'shared/types';
 import { ActionsDropdown } from '../ui/actions-dropdown';
@@ -33,46 +27,35 @@ export const AttemptHeaderActions = ({
   return (
     <>
       {typeof mode !== 'undefined' && onModeChange && (
-        <TooltipProvider>
-          <ToggleGroup
-            type="single"
-            value={mode ?? ''}
-            onValueChange={(v) => {
-              const newMode = (v as LayoutMode) || null;
-              onModeChange(newMode);
-            }}
-            className="inline-flex gap-4"
-            aria-label="Layout mode"
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem
-                  value="preview"
-                  aria-label="Preview"
-                  active={mode === 'preview'}
-                >
-                  <Eye className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t('attemptHeaderActions.preview')}
-              </TooltipContent>
-            </Tooltip>
+        <ToggleGroup
+          type="single"
+          value={mode ?? ''}
+          onValueChange={(v) => {
+            const newMode = (v as LayoutMode) || null;
+            onModeChange(newMode);
+          }}
+          className="inline-flex gap-4"
+          aria-label="Layout mode"
+        >
+          <Tooltip content={t('attemptHeaderActions.preview')} position="bottom">
+            <ToggleGroupItem
+              value="preview"
+              aria-label="Preview"
+              active={mode === 'preview'}
+            >
+              <Eye className="h-4 w-4" />
+            </ToggleGroupItem>
+          </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem
-                  value="diffs"
-                  aria-label="Diffs"
-                  active={mode === 'diffs'}
-                >
-                  <FileDiff className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t('attemptHeaderActions.diffs')}
-              </TooltipContent>
-            </Tooltip>
+          <Tooltip content={t('attemptHeaderActions.diffs')} position="bottom">
+            <ToggleGroupItem
+              value="diffs"
+              aria-label="Diffs"
+              active={mode === 'diffs'}
+            >
+              <FileDiff className="h-4 w-4" />
+            </ToggleGroupItem>
+          </Tooltip>
             {/* {attempt?.id && (
               <>
                 <div className="h-4 w-px bg-border" />
@@ -92,16 +75,19 @@ export const AttemptHeaderActions = ({
                 </Tooltip>
               </>
             )} */}
-          </ToggleGroup>
-        </TooltipProvider>
+        </ToggleGroup>
       )}
       {typeof mode !== 'undefined' && onModeChange && (
         <div className="h-4 w-px bg-border" />
       )}
       <ActionsDropdown task={task} attempt={attempt} />
-      <Button variant="icon" aria-label="Close" onClick={onClose}>
-        <X size={16} />
-      </Button>
+      <Button
+        theme="borderless"
+        size="small"
+        icon={<X size={16} />}
+        aria-label="Close"
+        onClick={onClose}
+      />
     </>
   );
 };

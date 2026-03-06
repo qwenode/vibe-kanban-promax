@@ -31,10 +31,7 @@ import {
 } from 'shared/types';
 import {
   Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@douyinfe/semi-ui';
 import { useNavigateWithSearch } from '@/hooks/useNavigateWithSearch';
 
 type NextActionCardProps = {
@@ -167,213 +164,185 @@ export function NextActionCard({
   }
 
   return (
-    <TooltipProvider>
-      <div className="pt-4 pb-8">
-        <div
-          className={`px-3 py-1 text-background flex ${failed ? 'bg-destructive' : 'bg-foreground'}`}
-        >
-          <span className="font-semibold flex-1">
-            {t('attempt.labels.summaryAndActions')}
-          </span>
-        </div>
+    <div className="pt-4 pb-8">
+      <div
+        className={`px-3 py-1 text-background flex ${failed ? 'bg-destructive' : 'bg-foreground'}`}
+      >
+        <span className="font-semibold flex-1">
+          {t('attempt.labels.summaryAndActions')}
+        </span>
+      </div>
 
-        {/* Display setup help text when setup is needed */}
-        {needsSetup && setupHelpText && (
-          <div
-            className={`border-x border-t ${failed ? 'border-destructive' : 'border-foreground'} px-3 py-2 flex items-start gap-2`}
+      {needsSetup && setupHelpText && (
+        <div
+          className={`border-x border-t ${failed ? 'border-destructive' : 'border-foreground'} px-3 py-2 flex items-start gap-2`}
+        >
+          <Settings className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <span className="text-sm">{setupHelpText}</span>
+        </div>
+      )}
+
+      <div
+        className={`border px-3 py-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 min-w-0 ${failed ? 'border-destructive' : 'border-foreground'} ${needsSetup && setupHelpText ? 'border-t-0' : ''}`}
+      >
+        {!error && (
+          <button
+            onClick={handleOpenDiffs}
+            className="flex items-center gap-1.5 text-sm shrink-0 cursor-pointer hover:underline transition-all"
+            aria-label={t('attempt.diffs')}
           >
-            <Settings className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span className="text-sm">{setupHelpText}</span>
-          </div>
+            <span>{t('diff.filesChanged', { count: fileCount })}</span>
+            <span className="opacity-50">•</span>
+            <span className="text-green-600 dark:text-green-400">+{added}</span>
+            <span className="opacity-50">•</span>
+            <span className="text-red-600 dark:text-red-400">-{deleted}</span>
+          </button>
         )}
 
-        <div
-          className={`border px-3 py-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 min-w-0 ${failed ? 'border-destructive' : 'border-foreground'} ${needsSetup && setupHelpText ? 'border-t-0' : ''}`}
-        >
-          {/* Left: Diff summary */}
-          {!error && (
-            <button
-              onClick={handleOpenDiffs}
-              className="flex items-center gap-1.5 text-sm shrink-0 cursor-pointer hover:underline transition-all"
-              aria-label={t('attempt.diffs')}
+        {failed &&
+          (needsSetup ? (
+            <Button
+              type="primary"
+              size="small"
+              onClick={handleRunSetup}
+              disabled={!attempt}
+              className="text-sm w-full sm:w-auto"
+              aria-label={t('attempt.runSetup')}
             >
-              <span>{t('diff.filesChanged', { count: fileCount })}</span>
-              <span className="opacity-50">•</span>
-              <span className="text-green-600 dark:text-green-400">
-                +{added}
-              </span>
-              <span className="opacity-50">•</span>
-              <span className="text-red-600 dark:text-red-400">-{deleted}</span>
-            </button>
-          )}
-
-          {/* Run Setup or Try Again button */}
-          {failed &&
-            (needsSetup ? (
+              {t('attempt.runSetup')}
+            </Button>
+          ) : (
+            execution_processes <= 2 && (
               <Button
-                type="primary"
+                type="danger"
                 size="small"
-                onClick={handleRunSetup}
-                disabled={!attempt}
+                onClick={handleTryAgain}
+                disabled={!attempt?.task_id}
                 className="text-sm w-full sm:w-auto"
-                aria-label={t('attempt.runSetup')}
+                aria-label={t('attempt.tryAgain')}
               >
-                {t('attempt.runSetup')}
+                {t('attempt.tryAgain')}
               </Button>
-            ) : (
-              execution_processes <= 2 && (
+            )
+          ))}
+
+        {fileCount > 0 && (
+          <div className="flex items-center gap-1 shrink-0 sm:ml-auto">
+            <Tooltip content={t('attempt.diffs')}>
+              <Button
+                theme="borderless"
+                size="small"
+                className="h-7 w-7 p-0"
+                onClick={handleOpenDiffs}
+                aria-label={t('attempt.diffs')}
+              >
+                <FileDiff className="h-3.5 w-3.5" />
+              </Button>
+            </Tooltip>
+
+            {containerRef && (
+              <Tooltip
+                content={copied ? t('attempt.copied') : t('attempt.clickToCopy')}
+              >
                 <Button
-                  type="danger"
+                  theme="borderless"
                   size="small"
-                  onClick={handleTryAgain}
-                  disabled={!attempt?.task_id}
-                  className="text-sm w-full sm:w-auto"
-                  aria-label={t('attempt.tryAgain')}
+                  className="h-7 w-7 p-0"
+                  onClick={handleCopy}
+                  aria-label={t('attempt.clickToCopy')}
                 >
-                  {t('attempt.tryAgain')}
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5 text-green-600" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
                 </Button>
-              )
-            ))}
-
-          {/* Right: Icon buttons */}
-          {fileCount > 0 && (
-            <div className="flex items-center gap-1 shrink-0 sm:ml-auto">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    theme="borderless"
-                    size="small"
-                    className="h-7 w-7 p-0"
-                    onClick={handleOpenDiffs}
-                    aria-label={t('attempt.diffs')}
-                  >
-                    <FileDiff className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t('attempt.diffs')}</TooltipContent>
               </Tooltip>
+            )}
 
-              {containerRef && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      theme="borderless"
-                      size="small"
-                      className="h-7 w-7 p-0"
-                      onClick={handleCopy}
-                      aria-label={t('attempt.clickToCopy')}
-                    >
-                      {copied ? (
-                        <Check className="h-3.5 w-3.5 text-green-600" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {copied ? t('attempt.copied') : t('attempt.clickToCopy')}
-                  </TooltipContent>
-                </Tooltip>
-              )}
+            <Tooltip content={t('attempt.openInEditor', { editor: editorName })}>
+              <Button
+                theme="borderless"
+                size="small"
+                className="h-7 w-7 p-0"
+                onClick={handleOpenInEditor}
+                disabled={!attemptId}
+                aria-label={t('attempt.openInEditor', {
+                  editor: editorName,
+                })}
+              >
+                <IdeIcon
+                  editorType={config?.editor?.editor_type}
+                  className="h-3.5 w-3.5"
+                />
+              </Button>
+            </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    theme="borderless"
-                    size="small"
-                    className="h-7 w-7 p-0"
-                    onClick={handleOpenInEditor}
-                    disabled={!attemptId}
-                    aria-label={t('attempt.openInEditor', {
-                      editor: editorName,
-                    })}
-                  >
-                    <IdeIcon
-                      editorType={config?.editor?.editor_type}
-                      className="h-3.5 w-3.5"
-                    />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t('attempt.openInEditor', { editor: editorName })}
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-block">
-                    <Button
-                      theme="borderless"
-                      size="small"
-                      className="h-7 w-7 p-0"
-                      onClick={
-                        hasRunningDevServer ? () => stop() : () => start()
-                      }
-                      disabled={
-                        (hasRunningDevServer ? isStopping : isStarting) ||
-                        !attemptId ||
-                        !projectHasDevScript
-                      }
-                      aria-label={
-                        hasRunningDevServer
-                          ? t('attempt.pauseDev')
-                          : t('attempt.startDev')
-                      }
-                    >
-                      {hasRunningDevServer ? (
-                        <Pause className="h-3.5 w-3.5 text-destructive" />
-                      ) : (
-                        <Play className="h-3.5 w-3.5" />
-                      )}
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {!projectHasDevScript
-                    ? t('attempt.devScriptMissingTooltip')
-                    : hasRunningDevServer
+            <Tooltip
+              content={
+                !projectHasDevScript
+                  ? t('attempt.devScriptMissingTooltip')
+                  : hasRunningDevServer
+                    ? t('attempt.pauseDev')
+                    : t('attempt.startDev')
+              }
+            >
+              <span className="inline-block">
+                <Button
+                  theme="borderless"
+                  size="small"
+                  className="h-7 w-7 p-0"
+                  onClick={hasRunningDevServer ? () => stop() : () => start()}
+                  disabled={
+                    (hasRunningDevServer ? isStopping : isStarting) ||
+                    !attemptId ||
+                    !projectHasDevScript
+                  }
+                  aria-label={
+                    hasRunningDevServer
                       ? t('attempt.pauseDev')
-                      : t('attempt.startDev')}
-                </TooltipContent>
-              </Tooltip>
+                      : t('attempt.startDev')
+                  }
+                >
+                  {hasRunningDevServer ? (
+                    <Pause className="h-3.5 w-3.5 text-destructive" />
+                  ) : (
+                    <Play className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </span>
+            </Tooltip>
 
-              {devServerProcesses.length > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      theme="borderless"
-                      size="small"
-                      className="h-7 w-7 p-0"
-                      onClick={handleViewLogs}
-                      disabled={!attemptId}
-                      aria-label={t('attempt.viewDevLogs')}
-                    >
-                      <Terminal className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t('attempt.viewDevLogs')}</TooltipContent>
-                </Tooltip>
-              )}
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    theme="borderless"
-                    size="small"
-                    className="h-7 w-7 p-0"
-                    onClick={handleGitActions}
-                    disabled={!attemptId}
-                    aria-label={t('attempt.gitActions')}
-                  >
-                    <GitBranch className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t('attempt.gitActions')}</TooltipContent>
+            {devServerProcesses.length > 0 && (
+              <Tooltip content={t('attempt.viewDevLogs')}>
+                <Button
+                  theme="borderless"
+                  size="small"
+                  className="h-7 w-7 p-0"
+                  onClick={handleViewLogs}
+                  disabled={!attemptId}
+                  aria-label={t('attempt.viewDevLogs')}
+                >
+                  <Terminal className="h-3.5 w-3.5" />
+                </Button>
               </Tooltip>
-            </div>
-          )}
-        </div>
+            )}
+
+            <Tooltip content={t('attempt.gitActions')}>
+              <Button
+                theme="borderless"
+                size="small"
+                className="h-7 w-7 p-0"
+                onClick={handleGitActions}
+                disabled={!attemptId}
+                aria-label={t('attempt.gitActions')}
+              >
+                <GitBranch className="h-3.5 w-3.5" />
+              </Button>
+            </Tooltip>
+          </div>
+        )}
       </div>
-    </TooltipProvider>
+    </div>
   );
 }

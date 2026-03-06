@@ -1,7 +1,6 @@
 import { Circle, Check, CircleDot, ChevronUp } from 'lucide-react';
 import { useEntries } from '@/contexts/EntriesContext';
 import { useTodos } from '@/hooks/useTodos';
-import { Card } from '../ui/card';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -40,13 +39,13 @@ function TodoPanel() {
       onToggle={(e) => setIsOpen(e.currentTarget.open)}
     >
       <summary className="list-none cursor-pointer">
-        <Card className="bg-muted p-3 text-sm flex items-center justify-between">
+        <div className="bg-muted p-3 text-sm flex items-center justify-between">
           <span>{t('todos.title', { count: todos.length })}</span>
           <ChevronUp
             aria-hidden
             className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180"
           />
-        </Card>
+        </div>
       </summary>
       <div className="px-3 pb-2">
         <ul className="space-y-2">

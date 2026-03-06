@@ -1,12 +1,6 @@
 'use client';
 
-import { Card } from '@/components/ui/card';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Button, Tooltip } from '@douyinfe/semi-ui';
 import { cn } from '@/lib/utils';
 import type { DragEndEvent, Modifier } from '@dnd-kit/core';
 import {
@@ -24,7 +18,6 @@ import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from 'lucide-react';
 import type { ClientRect } from '@dnd-kit/core';
 import type { Transform } from '@dnd-kit/utilities';
-import { Button } from '../../button';
 export type { DragEndEvent } from '@dnd-kit/core';
 
 export type Status = {
@@ -110,7 +103,7 @@ export const KanbanCard = ({
   };
 
   return (
-    <Card
+    <div
       className={cn(
         'p-3 outline-none border-b flex-col space-y-2',
         isDragging && 'cursor-grabbing',
@@ -131,7 +124,7 @@ export const KanbanCard = ({
       }}
     >
       {children ?? <p className="m-0 font-medium text-sm">{name}</p>}
-    </Card>
+    </div>
   );
 };
 
@@ -170,7 +163,7 @@ export const KanbanHeader = (props: KanbanHeaderProps) => {
     t('actions.clearDoneTasks', { defaultValue: 'Clear done tasks' });
 
   return (
-    <Card
+    <div
       className={cn(
         'sticky top-0 z-20 flex shrink-0 items-center gap-2 p-3 border-b border-dashed flex gap-2',
         'bg-background',
@@ -188,40 +181,30 @@ export const KanbanHeader = (props: KanbanHeaderProps) => {
 
         <p className="m-0 text-sm">{props.name}</p>
       </span>
-      <TooltipProvider>
-        {props.onClearColumn && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-destructive/60 hover:text-destructive"
-                onClick={props.onClearColumn}
-                disabled={props.clearDisabled}
-                aria-label={clearLabel}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">{clearLabel}</TooltipContent>
-          </Tooltip>
-        )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-foreground/50 hover:text-foreground"
-              onClick={props.onAddTask}
-              aria-label={t('actions.addTask')}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{t('actions.addTask')}</TooltipContent>
+      {props.onClearColumn && (
+        <Tooltip content={clearLabel} position="top">
+          <Button
+            theme="borderless"
+            size="small"
+            className="h-7 w-7 text-destructive/60 hover:text-destructive"
+            onClick={props.onClearColumn}
+            disabled={props.clearDisabled}
+            aria-label={clearLabel}
+            icon={<Trash2 className="h-4 w-4" />}
+          />
         </Tooltip>
-      </TooltipProvider>
-    </Card>
+      )}
+      <Tooltip content={t('actions.addTask')} position="top">
+        <Button
+          theme="borderless"
+          size="small"
+          className="h-7 w-7 text-foreground/50 hover:text-foreground"
+          onClick={props.onAddTask}
+          aria-label={t('actions.addTask')}
+          icon={<Plus className="h-4 w-4" />}
+        />
+      </Tooltip>
+    </div>
   );
 };
 

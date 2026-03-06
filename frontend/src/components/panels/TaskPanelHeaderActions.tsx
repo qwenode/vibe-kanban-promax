@@ -1,4 +1,4 @@
-import { Button } from '../ui/button';
+import { Button } from '@douyinfe/semi-ui';
 import { X } from 'lucide-react';
 import type { TaskWithAttemptStatus } from 'shared/types';
 import { ActionsDropdown } from '../ui/actions-dropdown';
@@ -17,9 +17,13 @@ export const TaskPanelHeaderActions = ({
   return (
     <>
       <ActionsDropdown task={task} />
-      <Button variant="icon" aria-label="Close" onClick={onClose}>
-        <X size={16} />
-      </Button>
+      <Button
+        theme="borderless"
+        size="small"
+        icon={<X size={16} />}
+        aria-label="Close"
+        onClick={onClose}
+      />
     </>
   );
 };

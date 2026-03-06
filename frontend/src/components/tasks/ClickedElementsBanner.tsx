@@ -4,10 +4,9 @@ import {
   ArrowBigLeft,
   MoreHorizontal,
 } from 'lucide-react';
-import { Button } from '@douyinfe/semi-ui';
+import { Button, Tag } from '@douyinfe/semi-ui';
 import type { ClickedEntry } from '@/contexts/ClickedElementsProvider';
 import { useState, useMemo } from 'react';
-import { Badge } from '../ui/badge';
 import { useClickedElements } from '@/contexts/ClickedElementsProvider';
 
 export type Props = Readonly<{
@@ -139,14 +138,14 @@ const ClickedEntryCard = ({
         {overflowRight > 0 && (
           <div className="flex items-center">
             <ArrowBigLeft className="h-4 w-4 opacity-60" aria-hidden />
-            <Badge
-              variant="secondary"
+            <Tag
+              color="grey"
+              type="light"
               className="text-xs opacity-70 select-none"
-              title={`${overflowRight} more outer components`}
             >
               <MoreHorizontal className="h-3 w-3" />
               <span className="ml-1">{overflowRight}</span>
-            </Badge>
+            </Tag>
           </div>
         )}
       </div>
